@@ -2,8 +2,7 @@ import core.Connection
 import core.PacketInfo
 import core.packet.Packet
 import core.packet.PacketType
-import core.packet.TestPacket
-import core.security.SecurityUtils
+import core.packet.SendECPublicKeyPacketPayloadV1
 import handler.TestPacketHandler
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.Socket
@@ -79,7 +78,7 @@ class Server {
         return
       }
 
-      val bodySize = readChannel.readShort().toInt()
+      val bodySize = readChannel.readInt()
 
       val packetInfo = IoBuffer.Pool.borrow().use { buffer ->
         readChannel.readFully(buffer, bodySize)
@@ -93,12 +92,16 @@ class Server {
         val packetArray = ByteArray(buffer.readRemaining)
         buffer.readFully(packetArray)
 
-        return@use PacketInfo(packetId, version, packetType, TestPacket.fromByteArray(packetArray))
+        return@use when (packetType) {
+          PacketType.SendECPublicKeyPacketPayload -> {
+            PacketInfo(packetId, version, packetType, SendECPublicKeyPacketPayloadV1.fromByteArray(packetArray))
+          }
+        }
       }
 
       when (packetInfo.packetType) {
-        PacketType.TestPacket -> {
-          testPacketHandler.handle(packetInfo.packetId, packetInfo.packetVersion, packetInfo.packet, connection)
+        PacketType.SendECPublicKeyPacketPayload -> {
+          testPacketHandler.handle(packetInfo.packetId, packetInfo.packetVersion, packetInfo.packetPayload, connection)
         }
       }
     }

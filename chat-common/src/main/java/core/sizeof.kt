@@ -11,6 +11,7 @@ inline fun <reified T> sizeof(obj: T? = null): Int {
     Float::class -> 4
     Double::class -> 8
     String::class -> 4 + (obj as String).length
+    ByteArray::class -> 4 + (obj as ByteArray).size
     else -> throw RuntimeException("Not Implemented!")
   }
 }

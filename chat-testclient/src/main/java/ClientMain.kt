@@ -1,6 +1,7 @@
+import core.packet.IPacketPayload
 import core.packet.Packet
-import core.packet.PacketType
-import core.packet.TestPacket
+import core.packet.SendECPublicKeyPacketPayloadV1
+import core.security.SecurityUtils
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -14,46 +15,47 @@ import java.net.InetSocketAddress
 import java.security.SecureRandom
 
 fun main(args: Array<String>) {
+  Client().run()
+}
 
-  val random = SecureRandom()
+class Client {
+  private val ecKeyPair = SecurityUtils.Exchange.generateECKeyPair()
+  private val publicKeyEncoded = ecKeyPair.public.encoded
 
-  fun packetToBytes(id: Long, data: ByteArray): ByteArray {
-    val totalBodySize = (Packet.PACKET_BODY_SIZE + data.size).toShort()
-
-    if (totalBodySize > Short.MAX_VALUE) {
-      throw RuntimeException("bodySize exceeds Short.MAX_VALUE: $totalBodySize")
+  private fun packetToBytes(id: Long, packetPayload: IPacketPayload): ByteArray {
+    val totalBodySize = (Packet.PACKET_BODY_SIZE + packetPayload.getPayloadSize())
+    if (totalBodySize > Int.MAX_VALUE) {
+      throw RuntimeException("bodySize exceeds Int.MAX_VALUE: $totalBodySize")
     }
 
     val packetBody = Packet.PacketBody(
       id,
-      TestPacket.PACKET_VERSION,
-      PacketType.TestPacket,
-      random.nextLong(),
-      random.nextLong(),
-      data
-    )
+      packetPayload.getPacketVersion(),
+      packetPayload.getPacketType(),
+      packetPayload.toByteBuffer().array()
+    ).toByteBuffer().array()
 
-    val packet = Packet(
+    return Packet(
       Packet.MAGIC_NUMBER,
       totalBodySize,
       packetBody
-    )
-
-    return packet.toByteArray()
+    ).toByteArray()
   }
 
-  runBlocking {
-    val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(InetSocketAddress("127.0.0.1", 2323))
-    val input = socket.openReadChannel()
-    val output = socket.openWriteChannel(autoFlush = false)
+  fun run() {
+    runBlocking {
+      val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(InetSocketAddress("127.0.0.1", 2323))
+      val input = socket.openReadChannel()
+      val output = socket.openWriteChannel(autoFlush = false)
 
-    val packetBytes = packetToBytes(1L, TestPacket(System.currentTimeMillis(), "This is a test message").toByteBuffer().array())
+      val packetBytes = packetToBytes(1L, SendECPublicKeyPacketPayloadV1(publicKeyEncoded))
 
-    output.writeAvailable(packetBytes)
-    output.flush()
+      output.writeAvailable(packetBytes)
+      output.flush()
 
-    val response = input.readUTF8Line()
+      val response = input.readUTF8Line()
 
-    println("Server said: '$response'")
+      println("Server said: '$response'")
+    }
   }
 }

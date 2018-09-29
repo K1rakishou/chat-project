@@ -17,6 +17,25 @@ object SecurityUtils {
   const val SHA384withECDSA = "SHA384withECDSA"
   const val ECDSA = "ECDSA"
 
+  private val alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
+  private val secureRandom = SecureRandom.getInstanceStrong()
+
+  object Generation {
+    fun generateRandomString(len: Int): String {
+      val bytes = ByteArray(len)
+      secureRandom.nextBytes(bytes)
+
+      val sb = StringBuilder()
+      val alphabetLen = alphabet.length
+
+      for (i in 0 until len) {
+        sb.append(alphabet[Math.abs(bytes[i] % alphabetLen)])
+      }
+
+      return sb.toString()
+    }
+  }
+
   object Encryption {
     fun chaCha20(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, doEncryption: Boolean, tempBufferSize: Int = 4096): ByteArray {
       require(key.size == 32)

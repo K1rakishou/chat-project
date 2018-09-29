@@ -1,8 +1,8 @@
 package handler
 
 import core.Connection
-import core.packet.IPacket
+import core.packet.IPacketPayload
 
 abstract class BasePacketHandler {
-  abstract suspend fun handle(packetId: Long, packetVersion: Int, packet: IPacket, connection: Connection)
+  abstract suspend fun handle(packetId: Long, packetVersion: Int, packetPayload: IPacketPayload, connection: Connection)
 }

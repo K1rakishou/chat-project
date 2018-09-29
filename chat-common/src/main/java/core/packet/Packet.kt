@@ -5,9 +5,9 @@ import java.nio.ByteBuffer
 
 class Packet(
   val magicNumber: Int,       //4
-  val bodySize: Short,        //2
+  val bodySize: Int,          //4
 
-  val packetBody: PacketBody
+  val packetBody: ByteArray
 ) {
 
   fun getPacketHeaderSize(): Int {
@@ -15,16 +15,15 @@ class Packet(
   }
 
   fun getPacketFullSize(): Int {
-    return getPacketHeaderSize() + packetBody.getSize()
+    return getPacketHeaderSize() + packetBody.size
   }
 
   fun toByteArray(): ByteArray {
-    val bodyArray = packetBody.toByteBuffer().array()
     val packetBuffer = ByteBuffer.allocate(getPacketFullSize())
 
     packetBuffer.putInt(magicNumber)
-    packetBuffer.putShort(bodySize)
-    packetBuffer.put(bodyArray)
+    packetBuffer.putInt(bodySize)
+    packetBuffer.put(packetBody)
 
     return packetBuffer.array()
   }
@@ -33,8 +32,6 @@ class Packet(
     val id: Long,                 //8
     val version: Int,             //4
     val type: PacketType,         //2
-    private val random1: Long,    //8
-    private val random2: Long,    //8
     val data: ByteArray
   ) {
 
@@ -48,8 +45,6 @@ class Packet(
       buffer.putLong(id)
       buffer.putInt(version)
       buffer.putShort(type.value)
-      buffer.putLong(random1)
-      buffer.putLong(random2)
       buffer.put(data)
 
       return buffer
@@ -58,13 +53,13 @@ class Packet(
 
   companion object {
     const val MAGIC_NUMBER = 0x69691911
-    const val PACKET_HEADER_SIZE = 4 + 2
-    const val PACKET_BODY_SIZE = 8 + 4 + 2 + 8 + 8
+    const val PACKET_HEADER_SIZE = 4 + 4
+    const val PACKET_BODY_SIZE = 8 + 4 + 2
   }
 }
 
 enum class PacketType(val value: Short) {
-  TestPacket(0);
+  SendECPublicKeyPacketPayload(0);
 
   companion object {
     fun fromShort(type: Short): PacketType {
