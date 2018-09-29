@@ -18,6 +18,8 @@ import kotlinx.coroutines.experimental.yield
 import kotlinx.io.core.IoBuffer
 import kotlinx.io.core.readFully
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import tornadofx.launch
+import ui.MyApp
 import java.net.InetSocketAddress
 import java.security.Security
 
@@ -25,7 +27,9 @@ fun main(args: Array<String>) {
   Security.setProperty("crypto.policy", "unlimited")
   Security.addProvider(BouncyCastleProvider())
 
-  Client().run()
+
+  launch<MyApp>(args)
+//  Client().run()
 }
 
 class Client {

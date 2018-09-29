@@ -12,6 +12,9 @@ class UserInRoom(
       return false
     }
 
+    if (other === this) {
+      return true
+    }
 
     return user == other
   }

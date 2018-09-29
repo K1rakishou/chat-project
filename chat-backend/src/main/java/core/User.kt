@@ -14,6 +14,10 @@ class User(
       return false
     }
 
+    if (other === this) {
+      return true
+    }
+
     return other.userName == this.userName
   }
 
