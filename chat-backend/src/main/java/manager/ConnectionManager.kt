@@ -51,7 +51,7 @@ class ConnectionManager {
     connection.writeChannel.flush()
   }
 
-  suspend fun sendToMany(clientAddressList: List<String>, response: BaseResponse) {
+  suspend fun broadcast(clientAddressList: List<String>, response: BaseResponse) {
     val connections = mutex.withLock { connections.getMany(clientAddressList) }
     if (connections.isEmpty()) {
       return
@@ -67,7 +67,8 @@ class ConnectionManager {
       }
 
       connection.writeChannel.writeFully(byteArray.getArray())
-      connection.writeChannel.flush()
     }
+
+    connections.forEach { it.writeChannel.flush() }
   }
 }

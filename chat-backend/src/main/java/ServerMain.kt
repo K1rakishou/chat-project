@@ -1,4 +1,6 @@
 import core.Connection
+import core.PacketInfo
+import core.extensions.autoRelease
 import core.extensions.toHex
 import core.packet.Packet
 import core.packet.PacketType
@@ -77,23 +79,25 @@ class Server {
         return
       }
 
-      val buffer = IoBuffer.Pool.borrow()
+      val packetInfo = IoBuffer.Pool.autoRelease { buffer ->
+        val bodySize = readChannel.readInt()
+        readChannel.readFully(buffer, bodySize)
 
-      val bodySize = readChannel.readInt()
-      readChannel.readFully(buffer, bodySize)
+        val packetId = buffer.readLong()
+        val packetType = PacketType.fromShort(buffer.readShort())
 
-      val packetId = buffer.readLong()
-      val packetType = PacketType.fromShort(buffer.readShort())
+        val packetPayloadRaw = ByteArray(buffer.readRemaining)
+        buffer.readFully(packetPayloadRaw)
 
-      val packetPayloadRaw = ByteArray(buffer.readRemaining)
-      buffer.readFully(packetPayloadRaw)
+        return@autoRelease PacketInfo(packetId, packetType, packetPayloadRaw)
+      }
 
-      println(" >>> RECEIVING: ${packetPayloadRaw.toHex()}")
+      println(" >>> RECEIVING: ${packetInfo.packetPayloadRaw.toHex()}")
 
-      when (packetType) {
+      when (packetInfo.packetType) {
         PacketType.SendECPublicKeyPacketPayload -> TODO() //SendECPublicKeyPacketPayload.fromByteArray()
         PacketType.CreateRoomPacketPayload -> {
-          createRoomPacketHandler.handle(packetId, packetPayloadRaw, clientAddress)
+          createRoomPacketHandler.handle(packetInfo.packetId, packetInfo.packetPayloadRaw, clientAddress)
         }
       }
     }
