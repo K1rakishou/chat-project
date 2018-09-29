@@ -6,7 +6,8 @@ import kotlinx.coroutines.experimental.sync.withLock
 data class ChatRoom(
   val roomName: String,
   val roomPasswordHash: String?,
-  val isPublic: Boolean
+  val isPublic: Boolean,
+  val createdOn: Long
 ) {
   private val mutex = Mutex()
   private val userList = mutableListOf<UserInRoom>()
@@ -25,5 +26,9 @@ data class ChatRoom(
         .firstOrNull { it.user.userName == userName }
         ?.let { true } ?: false
     }
+  }
+
+  override fun toString(): String {
+    return "[roomName: $roomName, roomPasswordHash: $roomPasswordHash, isPublic: $isPublic, createdOn: $createdOn]"
   }
 }

@@ -1,11 +1,9 @@
 import core.Connection
-import core.PacketInfo
+import core.extensions.toHex
 import core.packet.Packet
 import core.packet.PacketType
-import core.packet.SendECPublicKeyPacketPayloadV1
-import handler.TestPacketHandler
+import handler.CreateRoomPacketHandler
 import io.ktor.network.selector.ActorSelectorManager
-import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
@@ -16,6 +14,7 @@ import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
 import kotlinx.io.core.IoBuffer
 import kotlinx.io.core.readFully
+import manager.ChatRoomManager
 import manager.ConnectionManager
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.net.InetSocketAddress
@@ -31,7 +30,9 @@ fun main(args: Array<String>) {
 
 class Server {
   private val connectionManager = ConnectionManager()
-  private val testPacketHandler = TestPacketHandler(connectionManager)
+  private val chatRoomManager = ChatRoomManager()
+
+  private val createRoomPacketHandler = CreateRoomPacketHandler(connectionManager, chatRoomManager)
 
   fun run() {
     runBlocking {
@@ -47,16 +48,15 @@ class Server {
         launch {
           clientSocket.use { socket ->
             val clientAddress = socket.remoteAddress.toString()
-            println("Socket accepted: $clientAddress")
-
             val readChannel = socket.openReadChannel()
-            val connection = Connection(clientAddress, socket.openWriteChannel(autoFlush = false))
-            connectionManager.addConnection(clientAddress, connection)
 
             try {
-              listenClient(readChannel, socket, connection)
+              connectionManager.addConnection(clientAddress, Connection(clientAddress, socket.openWriteChannel(autoFlush = false)))
+              listenClient(readChannel, clientAddress)
             } catch (error: Throwable) {
               error.printStackTrace()
+            } finally {
+              connectionManager.removeConnection(clientAddress)
             }
           }
         }
@@ -64,7 +64,7 @@ class Server {
     }
   }
 
-  private suspend fun listenClient(readChannel: ByteReadChannel, socket: Socket, connection: Connection) {
+  private suspend fun listenClient(readChannel: ByteReadChannel, clientAddress: String) {
     while (!readChannel.isClosedForRead && !readChannel.isClosedForWrite) {
       if (readChannel.availableForRead < Packet.PACKET_HEADER_SIZE) {
         yield()
@@ -74,34 +74,26 @@ class Server {
       val magicNumber = readChannel.readInt()
       if (magicNumber != Packet.MAGIC_NUMBER) {
         println("Bad magic number: $magicNumber")
-        socket.close()
         return
       }
 
+      val buffer = IoBuffer.Pool.borrow()
+
       val bodySize = readChannel.readInt()
+      readChannel.readFully(buffer, bodySize)
 
-      val packetInfo = IoBuffer.Pool.borrow().use { buffer ->
-        readChannel.readFully(buffer, bodySize)
+      val packetId = buffer.readLong()
+      val packetType = PacketType.fromShort(buffer.readShort())
 
-        val packetId = buffer.readLong()
-        val version = buffer.readInt()
-        val packetType = PacketType.fromShort(buffer.readShort())
-        val random1 = buffer.readLong()
-        val random2 = buffer.readLong()
+      val packetPayloadRaw = ByteArray(buffer.readRemaining)
+      buffer.readFully(packetPayloadRaw)
 
-        val packetArray = ByteArray(buffer.readRemaining)
-        buffer.readFully(packetArray)
+      println(" >>> RECEIVING: ${packetPayloadRaw.toHex()}")
 
-        return@use when (packetType) {
-          PacketType.SendECPublicKeyPacketPayload -> {
-            PacketInfo(packetId, version, packetType, SendECPublicKeyPacketPayloadV1.fromByteArray(packetArray))
-          }
-        }
-      }
-
-      when (packetInfo.packetType) {
-        PacketType.SendECPublicKeyPacketPayload -> {
-          testPacketHandler.handle(packetInfo.packetId, packetInfo.packetVersion, packetInfo.packetPayload, connection)
+      when (packetType) {
+        PacketType.SendECPublicKeyPacketPayload -> TODO() //SendECPublicKeyPacketPayload.fromByteArray()
+        PacketType.CreateRoomPacketPayload -> {
+          createRoomPacketHandler.handle(packetId, packetPayloadRaw, clientAddress)
         }
       }
     }

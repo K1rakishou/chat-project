@@ -30,7 +30,6 @@ class Packet(
 
   class PacketBody(
     val id: Long,                 //8
-    val version: Int,             //4
     val type: PacketType,         //2
     val data: ByteArray
   ) {
@@ -43,7 +42,6 @@ class Packet(
       val buffer = ByteBuffer.allocate(getSize())
 
       buffer.putLong(id)
-      buffer.putInt(version)
       buffer.putShort(type.value)
       buffer.put(data)
 
@@ -52,14 +50,15 @@ class Packet(
   }
 
   companion object {
-    const val MAGIC_NUMBER = 0x69691911
+    const val MAGIC_NUMBER = 0x44455355
     const val PACKET_HEADER_SIZE = 4 + 4
-    const val PACKET_BODY_SIZE = 8 + 4 + 2
+    const val PACKET_BODY_SIZE = 8 + 2
   }
 }
 
 enum class PacketType(val value: Short) {
-  SendECPublicKeyPacketPayload(0);
+  SendECPublicKeyPacketPayload(0),
+  CreateRoomPacketPayload(1);
 
   companion object {
     fun fromShort(type: Short): PacketType {

@@ -5,6 +5,7 @@ import core.PublicChatRoom
 import core.User
 import core.UserInRoom
 import core.security.SecurityUtils
+import core.utils.TimeUtils
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 
@@ -21,7 +22,7 @@ class ChatRoomManager {
     chatRoomPasswordHash: String? = null
   ): ChatRoom {
     val roomName = (chatRoomName ?: SecurityUtils.Generation.generateRandomString(defaultChatRoomLength))
-    val chatRoom = ChatRoom(roomName, chatRoomPasswordHash, isPublic)
+    val chatRoom = ChatRoom(roomName, chatRoomPasswordHash, isPublic, TimeUtils.getCurrentTime())
 
     mutex.withLock {
       require(chatRooms.size < maxUsersInRoom)

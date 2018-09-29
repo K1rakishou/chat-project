@@ -1,6 +1,7 @@
-import core.packet.IPacketPayload
+import core.extensions.toHex
+import core.packet.AbstractPacketPayload
+import core.packet.CreateRoomPacketPayload
 import core.packet.Packet
-import core.packet.SendECPublicKeyPacketPayloadV1
 import core.security.SecurityUtils
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
@@ -10,11 +11,14 @@ import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.io.readUTF8Line
 import kotlinx.coroutines.experimental.io.writeAvailable
 import kotlinx.coroutines.experimental.runBlocking
-import java.lang.RuntimeException
+import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.net.InetSocketAddress
-import java.security.SecureRandom
+import java.security.Security
 
 fun main(args: Array<String>) {
+  Security.setProperty("crypto.policy", "unlimited")
+  Security.addProvider(BouncyCastleProvider())
+
   Client().run()
 }
 
@@ -22,7 +26,7 @@ class Client {
   private val ecKeyPair = SecurityUtils.Exchange.generateECKeyPair()
   private val publicKeyEncoded = ecKeyPair.public.encoded
 
-  private fun packetToBytes(id: Long, packetPayload: IPacketPayload): ByteArray {
+  private fun packetToBytes(id: Long, packetPayload: AbstractPacketPayload): ByteArray {
     val totalBodySize = (Packet.PACKET_BODY_SIZE + packetPayload.getPayloadSize())
     if (totalBodySize > Int.MAX_VALUE) {
       throw RuntimeException("bodySize exceeds Int.MAX_VALUE: $totalBodySize")
@@ -30,9 +34,8 @@ class Client {
 
     val packetBody = Packet.PacketBody(
       id,
-      packetPayload.getPacketVersion(),
       packetPayload.getPacketType(),
-      packetPayload.toByteBuffer().array()
+      packetPayload.toByteArray().getArray()
     ).toByteBuffer().array()
 
     return Packet(
@@ -48,7 +51,8 @@ class Client {
       val input = socket.openReadChannel()
       val output = socket.openWriteChannel(autoFlush = false)
 
-      val packetBytes = packetToBytes(1L, SendECPublicKeyPacketPayloadV1(publicKeyEncoded))
+      val packetBytes = packetToBytes(1L, CreateRoomPacketPayload(true, "test_room", "test_password"))
+      println(" <<< SENDING: ${packetBytes.toHex()}")
 
       output.writeAvailable(packetBytes)
       output.flush()
