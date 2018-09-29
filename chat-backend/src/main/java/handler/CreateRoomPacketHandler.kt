@@ -3,7 +3,7 @@ package handler
 import core.Status
 import core.packet.CreateRoomPacketPayload
 import core.response.BaseResponse
-import core.response.ChatRoomCreatedResponse
+import core.response.CreateRoomResponsePayload
 import manager.ChatRoomManager
 import manager.ConnectionManager
 
@@ -26,7 +26,7 @@ class CreateRoomPacketHandler(
   private suspend fun handleInternalV1(packet: CreateRoomPacketPayload): BaseResponse {
     if (chatRoomManager.exists(packet.chatRoomName)) {
       println("ChatRoom with name ${packet.chatRoomName} already exists")
-      return ChatRoomCreatedResponse(Status.ChatRoomWithThisNameAlreadyExists, null)
+      return CreateRoomResponsePayload(Status.ChatRoomWithThisNameAlreadyExists, null)
     }
 
     val chatRoom = chatRoomManager.createChatRoom(
@@ -36,7 +36,7 @@ class CreateRoomPacketHandler(
     )
 
     println("ChatRoom ${chatRoom} has been successfully created!")
-    return ChatRoomCreatedResponse(Status.Ok, chatRoom.roomName)
+    return CreateRoomResponsePayload(Status.Ok, chatRoom.roomName)
   }
 
 }

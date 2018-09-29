@@ -4,6 +4,7 @@ import core.Connection
 import core.PositionAwareByteArray
 import core.extensions.getMany
 import core.extensions.toHex
+import core.packet.Packet
 import core.response.BaseResponse
 import kotlinx.coroutines.experimental.io.writeFully
 import kotlinx.coroutines.experimental.sync.Mutex
@@ -43,11 +44,10 @@ class ConnectionManager {
       return
     }
 
-    val byteArray = PositionAwareByteArray.createWithInitialSize(response.getSize())
-    response.toByteArray(byteArray)
-    println(" <<< SENDING BACK: ${byteArray.getArray().toHex()}")
+    val byteArray = responseToBytes(0L, response)
+    println(" <<< SENDING BACK: ${byteArray.toHex()}")
 
-    connection.writeChannel.writeFully(byteArray.getArray())
+    connection.writeChannel.writeFully(byteArray)
     connection.writeChannel.flush()
   }
 
@@ -57,18 +57,39 @@ class ConnectionManager {
       return
     }
 
-    val byteArray = PositionAwareByteArray.createWithInitialSize(response.getSize())
-    response.toByteArray(byteArray)
-    println(" <<< SENDING BACK: ${byteArray.getArray().toHex()}")
+    val byteArray = responseToBytes(0L, response)
+    println(" <<< SENDING BACK: ${byteArray.toHex()}")
 
     for (connection in connections) {
       if (connection.writeChannel.isClosedForWrite) {
         continue
       }
 
-      connection.writeChannel.writeFully(byteArray.getArray())
+      connection.writeChannel.writeFully(byteArray)
     }
 
     connections.forEach { it.writeChannel.flush() }
+  }
+
+  private fun responseToBytes(id: Long, response: BaseResponse): ByteArray {
+    val totalBodySize = (Packet.PACKET_BODY_SIZE + response.getSize())
+    if (totalBodySize > Int.MAX_VALUE) {
+      throw RuntimeException("bodySize exceeds Int.MAX_VALUE: $totalBodySize")
+    }
+
+    val byteArray = PositionAwareByteArray.createWithInitialSize(totalBodySize)
+    response.toByteArray(byteArray)
+
+    val packetBody = Packet.PacketBody(
+      id,
+      response.getResponseType().value,
+      byteArray.getArray()
+    ).toByteBuffer().array()
+
+    return Packet(
+      Packet.MAGIC_NUMBER,
+      totalBodySize,
+      packetBody
+    ).toByteArray()
   }
 }

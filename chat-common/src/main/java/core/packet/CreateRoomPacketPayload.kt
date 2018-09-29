@@ -24,17 +24,11 @@ class CreateRoomPacketPayload(
 
       when (CURRENT_PACKET_VERSION) {
         CreateRoomPacketPayload.PacketVersion.V1 -> {
-          serializePacketV1(this)
+          writeBoolean(isPublic)
+          writeString(chatRoomName)
+          writeString(chatRoomPasswordHash)
         }
       }
-    }
-  }
-
-  private fun serializePacketV1(byteArray: PositionAwareByteArray) {
-    byteArray.apply {
-      writeBoolean(isPublic)
-      writeString(chatRoomName)
-      writeString(chatRoomPasswordHash)
     }
   }
 
@@ -57,17 +51,13 @@ class CreateRoomPacketPayload(
 
       return when (packetVersion) {
         CreateRoomPacketPayload.PacketVersion.V1 -> {
-          deserializePacketV1(byteArray)
+          val isPublic = byteArray.readBoolean()
+          val chatRoomName = byteArray.readString()
+          val chatRoomPasswordHash = byteArray.readString()
+
+          CreateRoomPacketPayload(isPublic, chatRoomName, chatRoomPasswordHash)
         }
       }
-    }
-
-    private fun deserializePacketV1(byteArray: PositionAwareByteArray): CreateRoomPacketPayload {
-      val isPublic = byteArray.readBoolean()
-      val chatRoomName = byteArray.readString()
-      val chatRoomPasswordHash = byteArray.readString()
-
-      return CreateRoomPacketPayload(isPublic, chatRoomName, chatRoomPasswordHash)
     }
   }
 }

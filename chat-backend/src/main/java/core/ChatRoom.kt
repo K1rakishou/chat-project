@@ -28,6 +28,21 @@ data class ChatRoom(
     }
   }
 
+  suspend fun getUser(userName: String): UserInRoom? {
+    return mutex.withLock {
+      return@withLock userList.firstOrNull { it.user.userName == userName }
+    }
+  }
+
+  suspend fun getEveryoneExcept(userName: String): List<UserInRoom> {
+    return mutex.withLock {
+      return@withLock mutableListOf<UserInRoom>()
+        .apply {
+          addAll(userList.filter { it.user.userName == userName })
+        }
+    }
+  }
+
   override fun toString(): String {
     return "[roomName: $roomName, roomPasswordHash: $roomPasswordHash, isPublic: $isPublic, createdOn: $createdOn]"
   }

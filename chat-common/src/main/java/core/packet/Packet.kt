@@ -1,6 +1,5 @@
 package core.packet
 
-import java.lang.IllegalArgumentException
 import java.nio.ByteBuffer
 
 class Packet(
@@ -29,8 +28,8 @@ class Packet(
   }
 
   class PacketBody(
-    val id: Long,                 //8
-    val type: PacketType,         //2
+    val id: Long,             //8
+    val type: Short,          //2
     val data: ByteArray
   ) {
 
@@ -42,7 +41,7 @@ class Packet(
       val buffer = ByteBuffer.allocate(getSize())
 
       buffer.putLong(id)
-      buffer.putShort(type.value)
+      buffer.putShort(type)
       buffer.put(data)
 
       return buffer
@@ -53,17 +52,5 @@ class Packet(
     const val MAGIC_NUMBER = 0x44455355
     const val PACKET_HEADER_SIZE = 4 + 4
     const val PACKET_BODY_SIZE = 8 + 2
-  }
-}
-
-enum class PacketType(val value: Short) {
-  SendECPublicKeyPacketPayload(0),
-  CreateRoomPacketPayload(1);
-
-  companion object {
-    fun fromShort(type: Short): PacketType {
-      return PacketType.values().firstOrNull { it.value == type }
-        ?: throw IllegalArgumentException("Unknown packetType: $type")
-    }
   }
 }
