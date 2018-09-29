@@ -37,13 +37,31 @@ object SecurityUtils {
   }
 
   object Encryption {
-    fun chaCha20(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, doEncryption: Boolean, tempBufferSize: Int = 4096): ByteArray {
+    private enum class Mode {
+      Encryption,
+      Decryption
+    }
+
+    fun chaCha20Encrypt(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, tempBufferSize: Int = 4096): ByteArray {
+      return chaCha20(key, iv, inBuffer, Mode.Encryption, tempBufferSize)
+    }
+
+    fun chaCha20Decrypt(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, tempBufferSize: Int = 4096): ByteArray {
+      return chaCha20(key, iv, inBuffer, Mode.Decryption, tempBufferSize)
+    }
+
+    private fun chaCha20(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, mode: Mode, tempBufferSize: Int = 4096): ByteArray {
       require(key.size == 32)
       require(iv.size == 8)
 
       val cp = KeyParameter(key)
       val params = ParametersWithIV(cp, iv)
       val engine = ChaChaEngine()
+      val doEncryption = when (mode) {
+        SecurityUtils.Encryption.Mode.Encryption -> true
+        SecurityUtils.Encryption.Mode.Decryption -> false
+      }
+
       engine.init(doEncryption, params)
 
       val outBufferList = mutableListOf<ByteArray>()

@@ -1,6 +1,7 @@
 package core.security
 
-import core.security.SecurityUtils.Encryption.chaCha20
+import core.security.SecurityUtils.Encryption.chaCha20Decrypt
+import core.security.SecurityUtils.Encryption.chaCha20Encrypt
 import core.security.SecurityUtils.Exchange.calculateAgreement
 import core.security.SecurityUtils.Exchange.generateECKeyPair
 import core.security.SecurityUtils.Signing.generateSignature
@@ -83,8 +84,8 @@ class SecurityUtilsTest {
     val iv = "11223344".toByteArray()
     val testData = "This is a test string".toByteArray()
 
-    val encrypted = chaCha20(key, iv, testData, true)
-    val decrypted = chaCha20(key, iv, encrypted, false)
+    val encrypted = chaCha20Encrypt(key, iv, testData)
+    val decrypted = chaCha20Decrypt(key, iv, encrypted)
 
     Assert.assertArrayEquals(testData, decrypted)
   }
@@ -97,8 +98,8 @@ class SecurityUtilsTest {
       "11223344556677889900 11223344556677889900 11223344556677889900 11223344556677889900").toByteArray()
     val bufferSize = 32
 
-    val encrypted = chaCha20(key, iv, testData, true, bufferSize)
-    val decrypted = chaCha20(key, iv, encrypted, false, bufferSize)
+    val encrypted = chaCha20Encrypt(key, iv, testData, bufferSize)
+    val decrypted = chaCha20Decrypt(key, iv, encrypted, bufferSize)
 
     Assert.assertArrayEquals(testData, decrypted)
   }
