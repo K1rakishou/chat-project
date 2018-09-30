@@ -7,7 +7,7 @@ import kotlinx.coroutines.experimental.launch
 import model.PublicChatRoomItem
 import tornadofx.Controller
 import tornadofx.SortedFilteredList
-import ui.ChatApp
+import ChatApp
 
 class ChatRoomListController : Controller() {
   val networkManager = (app as ChatApp).networkManager

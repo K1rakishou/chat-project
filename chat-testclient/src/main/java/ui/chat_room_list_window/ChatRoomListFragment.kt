@@ -10,13 +10,13 @@ class ChatRoomListFragment : ListCellFragment<PublicChatRoomItem>() {
   val chatRoom = PublicChatRoomItemModel(itemProperty)
 
   override val root = hbox {
-    label(chatRoom.roomName) {
-      hgrow = Priority.ALWAYS
+    label(chatRoom.usersCount) {
     }
     pane {
       padding = Insets(0.0, 15.0, 0.0, 0.0)
     }
-    label(chatRoom.usersCount) {
+    label(chatRoom.roomName) {
+      hgrow = Priority.ALWAYS
     }
   }
 }

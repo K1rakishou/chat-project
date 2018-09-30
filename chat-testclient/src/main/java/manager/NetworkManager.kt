@@ -1,6 +1,6 @@
 package manager
 
-import autoRelease
+import extensions.autoRelease
 import core.extensions.toHexSeparated
 import core.packet.AbstractPacketPayload
 import core.packet.Packet

@@ -44,6 +44,21 @@ class Server {
         .tcp()
         .bind(InetSocketAddress("127.0.0.1", 2323))
 
+      //test zone
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true)
+      //test zone
+
       println("Started server at ${server.localAddress}")
 
       while (true) {
@@ -108,7 +123,7 @@ class Server {
         return@autoRelease PacketInfo(packetId, packetType, packetPayloadRaw)
       }
 
-      println(" >>> RECEIVING: ${packetInfo.packetPayloadRaw.toHexSeparated()}")
+      println(" <<< RECEIVING: ${packetInfo.packetPayloadRaw.toHexSeparated()}")
 
       when (packetInfo.packetType) {
         PacketType.SendECPublicKeyPacketType -> TODO() //SendECPublicKeyPacketType.fromByteArray()

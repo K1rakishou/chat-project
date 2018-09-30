@@ -45,7 +45,7 @@ class ConnectionManager {
     }
 
     val byteArray = response.responseToBytes(0L)
-    println(" <<< SENDING BACK: ${byteArray.toHexSeparated()}")
+    println(" >>> SENDING BACK: ${byteArray.toHexSeparated()}")
 
     connection.writeChannel.writeFully(byteArray)
     connection.writeChannel.flush()
@@ -58,7 +58,7 @@ class ConnectionManager {
     }
 
     val byteArray = response.responseToBytes(0L)
-    println(" <<< SENDING BACK: ${byteArray.toHexSeparated()}")
+    println(" >>> SENDING BACK: ${byteArray.toHexSeparated()}")
 
     for (connection in connections) {
       if (connection.writeChannel.isClosedForWrite) {
