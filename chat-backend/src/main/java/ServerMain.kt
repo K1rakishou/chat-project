@@ -70,11 +70,6 @@ class Server {
 
   private suspend fun listenClient(readChannel: ByteReadChannel, clientAddress: String) {
     while (!readChannel.isClosedForRead && !readChannel.isClosedForWrite) {
-      if (readChannel.availableForRead < Packet.PACKET_MAGIC_NUMBER_SIZE) {
-        yield()
-        continue
-      }
-
       val magicNumberFirstByte = readChannel.readByte()
       if (magicNumberFirstByte != Packet.MAGIC_NUMBER_BYTES[0]) {
         println("Bad magicNumber first byte $magicNumberFirstByte")

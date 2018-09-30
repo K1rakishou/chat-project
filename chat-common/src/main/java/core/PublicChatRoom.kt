@@ -3,8 +3,8 @@ package core
 import core.interfaces.CanMeasureSizeOfFields
 
 class PublicChatRoom(
-  private val roomName: String,
-  private val usersCount: Short
+  val roomName: String,
+  val usersCount: Short
 ) : CanMeasureSizeOfFields {
 
   override fun getSize(): Int {
