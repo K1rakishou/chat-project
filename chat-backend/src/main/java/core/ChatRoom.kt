@@ -43,6 +43,12 @@ data class ChatRoom(
     }
   }
 
+  suspend fun countUsers(): Int {
+    return mutex.withLock {
+      return@withLock userList.size
+    }
+  }
+
   override fun toString(): String {
     return "[roomName: $roomName, roomPasswordHash: $roomPasswordHash, isPublic: $isPublic, createdOn: $createdOn]"
   }

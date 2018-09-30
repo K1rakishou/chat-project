@@ -3,8 +3,9 @@ package core.response
 import java.lang.IllegalArgumentException
 
 enum class ResponseType(val value: Short) {
-  SendECPublicKeyResponse(0),
-  CreateRoomResponse(1);
+  SendECPublicKeyResponseType(0),
+  CreateRoomResponseType(1),
+  GetPageOfPublicRoomsResponseType(2);
 
   companion object {
     fun fromShort(type: Short): ResponseType {

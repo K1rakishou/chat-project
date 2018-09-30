@@ -1,9 +1,11 @@
 package core
 
+import core.interfaces.CanMeasureSizeOfFields
 import java.lang.RuntimeException
 
 inline fun <reified T> sizeof(obj: T? = null): Int {
   return when (T::class) {
+    Status::class -> 2
     Boolean::class -> 1
     Byte::class -> 1
     Short::class -> 2
@@ -35,4 +37,8 @@ inline fun <reified T> sizeof(obj: T? = null): Int {
     }
     else -> throw RuntimeException("Not Implemented for type ${T::class}!")
   }
+}
+
+inline fun <reified T : CanMeasureSizeOfFields> sizeofList(objList: List<T>): Int {
+  return objList.asSequence().map { it.getSize() }.reduce { acc, i -> acc + i }
 }

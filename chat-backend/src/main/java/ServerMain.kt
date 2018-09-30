@@ -5,6 +5,7 @@ import core.extensions.toHexSeparated
 import core.packet.Packet
 import core.packet.PacketType
 import handler.CreateRoomPacketHandler
+import handler.GetPageOfPublicRoomsHandler
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -35,6 +36,7 @@ class Server {
   private val chatRoomManager = ChatRoomManager()
 
   private val createRoomPacketHandler = CreateRoomPacketHandler(connectionManager, chatRoomManager)
+  private val getPageOfPublicChatRoomsHandler = GetPageOfPublicRoomsHandler(connectionManager, chatRoomManager)
 
   fun run() {
     runBlocking {
@@ -68,19 +70,38 @@ class Server {
 
   private suspend fun listenClient(readChannel: ByteReadChannel, clientAddress: String) {
     while (!readChannel.isClosedForRead && !readChannel.isClosedForWrite) {
-      if (readChannel.availableForRead < Packet.PACKET_HEADER_SIZE) {
+      if (readChannel.availableForRead < Packet.PACKET_MAGIC_NUMBER_SIZE) {
         yield()
         continue
       }
 
-      val magicNumber = readChannel.readInt()
-      if (magicNumber != Packet.MAGIC_NUMBER) {
-        println("Bad magic number: $magicNumber")
-        return
+      val magicNumberFirstByte = readChannel.readByte()
+      if (magicNumberFirstByte != Packet.MAGIC_NUMBER_BYTES[0]) {
+        println("Bad magicNumber first byte $magicNumberFirstByte")
+        continue
       }
 
+      val magicNumberSecondByte = readChannel.readByte()
+      if (magicNumberSecondByte != Packet.MAGIC_NUMBER_BYTES[1]) {
+        println("Bad magicNumber second byte $magicNumberSecondByte")
+        continue
+      }
+
+      val magicNumberThirdByte = readChannel.readByte()
+      if (magicNumberThirdByte != Packet.MAGIC_NUMBER_BYTES[2]) {
+        println("Bad magicNumber third byte $magicNumberThirdByte")
+        continue
+      }
+
+      val magicNumberFourthByte = readChannel.readByte()
+      if (magicNumberFourthByte != Packet.MAGIC_NUMBER_BYTES[3]) {
+        println("Bad magicNumber fourth byte $magicNumberFourthByte")
+        continue
+      }
+
+      val bodySize = readChannel.readInt()
+
       val packetInfo = IoBuffer.Pool.autoRelease { buffer ->
-        val bodySize = readChannel.readInt()
         readChannel.readFully(buffer, bodySize)
 
         val packetId = buffer.readLong()
@@ -95,9 +116,12 @@ class Server {
       println(" >>> RECEIVING: ${packetInfo.packetPayloadRaw.toHexSeparated()}")
 
       when (packetInfo.packetType) {
-        PacketType.SendECPublicKeyPacketPayload -> TODO() //SendECPublicKeyPacketPayload.fromByteArray()
-        PacketType.CreateRoomPacketPayload -> {
+        PacketType.SendECPublicKeyPacketType -> TODO() //SendECPublicKeyPacketType.fromByteArray()
+        PacketType.CreateRoomPacketType -> {
           createRoomPacketHandler.handle(packetInfo.packetId, packetInfo.packetPayloadRaw, clientAddress)
+        }
+        PacketType.GetPageOfPublicRoomsPacketType -> {
+          getPageOfPublicChatRoomsHandler.handle(packetInfo.packetId, packetInfo.packetPayloadRaw, clientAddress)
         }
       }
     }

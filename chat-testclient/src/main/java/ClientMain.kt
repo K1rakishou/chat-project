@@ -1,10 +1,11 @@
-import core.extensions.toHex
 import core.extensions.toHexSeparated
 import core.packet.AbstractPacketPayload
 import core.packet.CreateRoomPacketPayload
+import core.packet.GetPageOfPublicRoomsPacketPayload
 import core.packet.Packet
 import core.response.BaseResponse
 import core.response.CreateRoomResponsePayload
+import core.response.GetPageOfPublicRoomsResponsePayload
 import core.response.ResponseType
 import core.security.SecurityUtils
 import io.ktor.network.selector.ActorSelectorManager
@@ -13,6 +14,7 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.io.ByteReadChannel
+import kotlinx.coroutines.experimental.io.ByteWriteChannel
 import kotlinx.coroutines.experimental.io.writeAvailable
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.yield
@@ -29,48 +31,48 @@ fun main(args: Array<String>) {
   Security.addProvider(BouncyCastleProvider())
 
 
-  launch<MyApp>(args)
-//  Client().run()
+//  launch<MyApp>(args)
+  Client().run()
 }
 
 class Client {
   private val ecKeyPair = SecurityUtils.Exchange.generateECKeyPair()
   private val publicKeyEncoded = ecKeyPair.public.encoded
 
-  private fun packetToBytes(id: Long, packetPayload: AbstractPacketPayload): ByteArray {
-    val totalBodySize = (Packet.PACKET_BODY_SIZE + packetPayload.getPayloadSize())
-    if (totalBodySize > Int.MAX_VALUE) {
-      throw RuntimeException("bodySize exceeds Int.MAX_VALUE: $totalBodySize")
-    }
-
-    val packetBody = Packet.PacketBody(
-      id,
-      packetPayload.getPacketType().value,
-      packetPayload.toByteArray().getArray()
-    ).toByteBuffer().array()
-
-    return Packet(
-      Packet.MAGIC_NUMBER,
-      totalBodySize,
-      packetBody
-    ).toByteArray()
-  }
-
   private suspend fun readResponse(readChannel: ByteReadChannel): BaseResponse? {
     while (!readChannel.isClosedForRead) {
-      if (readChannel.availableForRead < Packet.PACKET_HEADER_SIZE) {
+      if (readChannel.availableForRead < 1) {
         yield()
+        continue
       }
 
-      val magicNumber = readChannel.readInt()
-
-      if (magicNumber != Packet.MAGIC_NUMBER) {
-        println("Bad magic number: $magicNumber")
-        return null
+      val magicNumberFirstByte = readChannel.readByte()
+      if (magicNumberFirstByte != Packet.MAGIC_NUMBER_BYTES[0]) {
+        println("Bad magicNumber first byte $magicNumberFirstByte")
+        continue
       }
+
+      val magicNumberSecondByte = readChannel.readByte()
+      if (magicNumberSecondByte != Packet.MAGIC_NUMBER_BYTES[1]) {
+        println("Bad magicNumber second byte $magicNumberSecondByte")
+        continue
+      }
+
+      val magicNumberThirdByte = readChannel.readByte()
+      if (magicNumberThirdByte != Packet.MAGIC_NUMBER_BYTES[2]) {
+        println("Bad magicNumber third byte $magicNumberThirdByte")
+        continue
+      }
+
+      val magicNumberFourthByte = readChannel.readByte()
+      if (magicNumberFourthByte != Packet.MAGIC_NUMBER_BYTES[3]) {
+        println("Bad magicNumber fourth byte $magicNumberFourthByte")
+        continue
+      }
+
+      val bodySize = readChannel.readInt()
 
       return IoBuffer.Pool.autoRelease { buffer ->
-        val bodySize = readChannel.readInt()
         readChannel.readFully(buffer, bodySize)
 
         val id = buffer.readLong()
@@ -79,10 +81,15 @@ class Client {
         val packetPayloadRaw = ByteArray(buffer.readRemaining)
         buffer.readFully(packetPayloadRaw)
 
+        println(" >>> RECEIVING: ${packetPayloadRaw.toHexSeparated()}")
+
         return@autoRelease when (responseType) {
-          ResponseType.SendECPublicKeyResponse -> TODO()
-          ResponseType.CreateRoomResponse -> {
+          ResponseType.SendECPublicKeyResponseType -> TODO()
+          ResponseType.CreateRoomResponseType -> {
             CreateRoomResponsePayload.fromByteArray(packetPayloadRaw)
+          }
+          ResponseType.GetPageOfPublicRoomsResponseType -> {
+            GetPageOfPublicRoomsResponsePayload.fromByteArray(packetPayloadRaw)
           }
         }
       }
@@ -91,18 +98,24 @@ class Client {
     return null
   }
 
+  private suspend fun sendPacket(sendChannel: ByteWriteChannel, packet: AbstractPacketPayload) {
+    val packetBytes = packet.packetToBytes(1L)
+    println(" <<< SENDING: ${packetBytes.toHexSeparated()}")
+
+    sendChannel.writeAvailable(packetBytes)
+    sendChannel.flush()
+  }
+
   fun run() {
     runBlocking {
-      val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher)).tcp().connect(InetSocketAddress("127.0.0.1", 2323))
+      val socket = aSocket(ActorSelectorManager(ioCoroutineDispatcher))
+        .tcp()
+        .connect(InetSocketAddress("127.0.0.1", 2323))
+
       val input = socket.openReadChannel()
       val output = socket.openWriteChannel(autoFlush = false)
 
-      val packetBytes = packetToBytes(1L, CreateRoomPacketPayload(true, "test_room", "test_password"))
-      println(" <<< SENDING: ${packetBytes.toHexSeparated()}")
-
-      output.writeAvailable(packetBytes)
-      output.flush()
-
+      sendPacket(output, CreateRoomPacketPayload(true, "test_room", "test_password"))
       val chatRoomCreatedResponse = readResponse(input) as? CreateRoomResponsePayload
       if (chatRoomCreatedResponse == null) {
         println("Error")
@@ -110,6 +123,15 @@ class Client {
       }
 
       println("chatRoomCreatedResponse status = ${chatRoomCreatedResponse.status}")
+
+      sendPacket(output, GetPageOfPublicRoomsPacketPayload(0, 20))
+      val getPageOfChatRoomsResponse = readResponse(input) as? GetPageOfPublicRoomsResponsePayload
+      if (getPageOfChatRoomsResponse == null) {
+        println("Error")
+        return@runBlocking
+      }
+
+      println("getPageOfChatRoomsResponse status = ${getPageOfChatRoomsResponse.status}")
     }
   }
 }

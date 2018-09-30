@@ -92,7 +92,7 @@ class ChatRoomManager {
         .filter { chatRoom -> chatRoom.isPublic }
         .map { chatRoom ->
           val copy = chatRoom.copy()
-          return@map PublicChatRoom(copy.roomName)
+          return@map PublicChatRoom(copy.roomName, copy.countUsers().toShort())
         }
     }
   }

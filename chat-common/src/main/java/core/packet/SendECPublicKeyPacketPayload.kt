@@ -10,15 +10,15 @@ class SendECPublicKeyPacketPayload(
   override val packetVersion: Short
     get() = CURRENT_PACKET_VERSION.value
 
-  override fun getPacketType(): PacketType = PacketType.SendECPublicKeyPacketPayload
+  override fun getPacketType(): PacketType = PacketType.SendECPublicKeyPacketType
 
   override fun getPayloadSize(): Int {
-    return sizeof(ecPublicKey)
+    return super.getPayloadSize() + sizeof(ecPublicKey)
   }
 
   override fun toByteArray(): PositionAwareByteArray {
     return PositionAwareByteArray.createWithInitialSize(getPayloadSize()).apply {
-      writeShort(CURRENT_PACKET_VERSION.value)
+      writeShort(packetVersion)
 
       when (CURRENT_PACKET_VERSION) {
         SendECPublicKeyPacketPayload.PacketVersion.V1 -> {

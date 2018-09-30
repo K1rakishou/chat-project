@@ -3,8 +3,9 @@ package core.packet
 import java.lang.IllegalArgumentException
 
 enum class PacketType(val value: Short) {
-  SendECPublicKeyPacketPayload(0),
-  CreateRoomPacketPayload(1);
+  SendECPublicKeyPacketType(0),
+  CreateRoomPacketType(1),
+  GetPageOfPublicRoomsPacketType(2);
 
   companion object {
     fun fromShort(type: Short): PacketType {

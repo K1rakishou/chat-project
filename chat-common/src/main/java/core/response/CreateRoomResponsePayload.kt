@@ -9,10 +9,11 @@ class CreateRoomResponsePayload(
   val chatRoomName: String?
 ) : BaseResponse(status) {
 
-  override fun getResponseType(): ResponseType = ResponseType.CreateRoomResponse
+  override val packetVersion: Short
+    get() = ResponseType.CreateRoomResponseType.value
 
-  override fun getSize(): Int {
-    return sizeof(status.value) + sizeof(chatRoomName)
+  override fun getPayloadSize(): Int {
+    return super.getPayloadSize() + sizeof(status) + sizeof(chatRoomName)
   }
 
   override fun toByteArray(byteArray: PositionAwareByteArray) {

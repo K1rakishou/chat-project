@@ -1,5 +1,6 @@
 package core.packet
 
+import core.sizeof
 import java.nio.ByteBuffer
 
 class Packet(
@@ -9,12 +10,12 @@ class Packet(
   val packetBody: ByteArray
 ) {
 
-  fun getPacketHeaderSize(): Int {
-    return PACKET_HEADER_SIZE
+  fun getPacketMagicNumberSize(): Int {
+    return sizeof(magicNumber)
   }
 
   fun getPacketFullSize(): Int {
-    return getPacketHeaderSize() + packetBody.size
+    return getPacketMagicNumberSize() + sizeof(bodySize) + packetBody.size
   }
 
   fun toByteArray(): ByteArray {
@@ -49,8 +50,10 @@ class Packet(
   }
 
   companion object {
+    val MAGIC_NUMBER_BYTES = arrayOf<Byte>(0x44, 0x45, 0x53, 0x55)
+
     const val MAGIC_NUMBER = 0x44455355
-    const val PACKET_HEADER_SIZE = 4 + 4
+    const val PACKET_MAGIC_NUMBER_SIZE = 4
     const val PACKET_BODY_SIZE = 8 + 2
   }
 }

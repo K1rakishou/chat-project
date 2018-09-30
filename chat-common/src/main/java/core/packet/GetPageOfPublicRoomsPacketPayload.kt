@@ -3,19 +3,18 @@ package core.packet
 import core.PositionAwareByteArray
 import core.sizeof
 
-class CreateRoomPacketPayload(
-  val isPublic: Boolean,
-  val chatRoomName: String?,
-  val chatRoomPasswordHash: String?
+class GetPageOfPublicRoomsPacketPayload(
+  val currentPage: Short,
+  val roomsPerPage: Byte
 ) : AbstractPacketPayload() {
 
   override val packetVersion: Short
     get() = CURRENT_PACKET_VERSION.value
 
-  override fun getPacketType(): PacketType = PacketType.CreateRoomPacketType
+  override fun getPacketType(): PacketType = PacketType.GetPageOfPublicRoomsPacketType
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash)
+    return super.getPayloadSize() + sizeof(currentPage) + sizeof(roomsPerPage)
   }
 
   override fun toByteArray(): PositionAwareByteArray {
@@ -23,10 +22,9 @@ class CreateRoomPacketPayload(
       writeShort(packetVersion)
 
       when (CURRENT_PACKET_VERSION) {
-        CreateRoomPacketPayload.PacketVersion.V1 -> {
-          writeBoolean(isPublic)
-          writeString(chatRoomName)
-          writeString(chatRoomPasswordHash)
+        GetPageOfPublicRoomsPacketPayload.PacketVersion.V1 -> {
+          writeShort(currentPage)
+          writeByte(roomsPerPage)
         }
       }
     }
@@ -45,17 +43,16 @@ class CreateRoomPacketPayload(
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
-    fun fromByteArray(array: ByteArray): CreateRoomPacketPayload {
+    fun fromByteArray(array: ByteArray): GetPageOfPublicRoomsPacketPayload {
       val byteArray = PositionAwareByteArray.fromArray(array)
       val packetVersion = PacketVersion.fromShort(byteArray.readShort())
 
       return when (packetVersion) {
-        CreateRoomPacketPayload.PacketVersion.V1 -> {
-          val isPublic = byteArray.readBoolean()
-          val chatRoomName = byteArray.readString()
-          val chatRoomPasswordHash = byteArray.readString()
+        GetPageOfPublicRoomsPacketPayload.PacketVersion.V1 -> {
+          val currentPage = byteArray.readShort()
+          val roomsPerPage = byteArray.readByte()
 
-          CreateRoomPacketPayload(isPublic, chatRoomName, chatRoomPasswordHash)
+          GetPageOfPublicRoomsPacketPayload(currentPage, roomsPerPage)
         }
       }
     }

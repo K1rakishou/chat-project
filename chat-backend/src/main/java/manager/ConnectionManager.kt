@@ -44,7 +44,7 @@ class ConnectionManager {
       return
     }
 
-    val byteArray = responseToBytes(0L, response)
+    val byteArray = response.responseToBytes(0L)
     println(" <<< SENDING BACK: ${byteArray.toHexSeparated()}")
 
     connection.writeChannel.writeFully(byteArray)
@@ -57,7 +57,7 @@ class ConnectionManager {
       return
     }
 
-    val byteArray = responseToBytes(0L, response)
+    val byteArray = response.responseToBytes(0L)
     println(" <<< SENDING BACK: ${byteArray.toHexSeparated()}")
 
     for (connection in connections) {
@@ -69,27 +69,5 @@ class ConnectionManager {
     }
 
     connections.forEach { it.writeChannel.flush() }
-  }
-
-  private fun responseToBytes(id: Long, response: BaseResponse): ByteArray {
-    val totalBodySize = (Packet.PACKET_BODY_SIZE + response.getSize())
-    if (totalBodySize > Int.MAX_VALUE) {
-      throw RuntimeException("bodySize exceeds Int.MAX_VALUE: $totalBodySize")
-    }
-
-    val byteArray = PositionAwareByteArray.createWithInitialSize(totalBodySize)
-    response.toByteArray(byteArray)
-
-    val packetBody = Packet.PacketBody(
-      id,
-      response.getResponseType().value,
-      byteArray.getArray()
-    ).toByteBuffer().array()
-
-    return Packet(
-      Packet.MAGIC_NUMBER,
-      totalBodySize,
-      packetBody
-    ).toByteArray()
   }
 }
