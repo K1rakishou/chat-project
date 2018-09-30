@@ -1,4 +1,5 @@
 import core.extensions.toHex
+import core.extensions.toHexSeparated
 import core.packet.AbstractPacketPayload
 import core.packet.CreateRoomPacketPayload
 import core.packet.Packet
@@ -97,7 +98,7 @@ class Client {
       val output = socket.openWriteChannel(autoFlush = false)
 
       val packetBytes = packetToBytes(1L, CreateRoomPacketPayload(true, "test_room", "test_password"))
-      println(" <<< SENDING: ${packetBytes.toHex()}")
+      println(" <<< SENDING: ${packetBytes.toHexSeparated()}")
 
       output.writeAvailable(packetBytes)
       output.flush()

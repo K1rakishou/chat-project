@@ -3,7 +3,7 @@ package manager
 import core.Connection
 import core.PositionAwareByteArray
 import core.extensions.getMany
-import core.extensions.toHex
+import core.extensions.toHexSeparated
 import core.packet.Packet
 import core.response.BaseResponse
 import kotlinx.coroutines.experimental.io.writeFully
@@ -45,7 +45,7 @@ class ConnectionManager {
     }
 
     val byteArray = responseToBytes(0L, response)
-    println(" <<< SENDING BACK: ${byteArray.toHex()}")
+    println(" <<< SENDING BACK: ${byteArray.toHexSeparated()}")
 
     connection.writeChannel.writeFully(byteArray)
     connection.writeChannel.flush()
@@ -58,7 +58,7 @@ class ConnectionManager {
     }
 
     val byteArray = responseToBytes(0L, response)
-    println(" <<< SENDING BACK: ${byteArray.toHex()}")
+    println(" <<< SENDING BACK: ${byteArray.toHexSeparated()}")
 
     for (connection in connections) {
       if (connection.writeChannel.isClosedForWrite) {

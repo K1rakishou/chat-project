@@ -1,5 +1,6 @@
 package core.security
 
+import core.extensions.toHex
 import core.security.SecurityUtils.Encryption.chaCha20Decrypt
 import core.security.SecurityUtils.Encryption.chaCha20Encrypt
 import core.security.SecurityUtils.Exchange.calculateAgreement
@@ -102,5 +103,13 @@ class SecurityUtilsTest {
     val decrypted = chaCha20Decrypt(key, iv, encrypted, bufferSize)
 
     Assert.assertArrayEquals(testData, decrypted)
+  }
+
+  @Test
+  fun testSha3_384() {
+    val expectedHash = "d31c6a449362712e691534004552c29ce9ce946be8b94fb2fa8dcef52d861d607fd09b804d0cbf9604e4b7c8db2fb73c".toUpperCase()
+    val hash = SecurityUtils.Hashing.sha3("test string".toByteArray()).toHex()
+
+    assertEquals(expectedHash, hash)
   }
 }

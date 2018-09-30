@@ -6,6 +6,7 @@ import org.bouncycastle.crypto.engines.ChaChaEngine
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
+import org.bouncycastle.jcajce.provider.digest.SHA3
 import org.bouncycastle.jce.spec.ECParameterSpec
 import java.math.BigInteger
 import java.security.*
@@ -131,6 +132,13 @@ object SecurityUtils {
       } catch (error: SignatureException) {
         false
       }
+    }
+  }
+
+  object Hashing {
+    fun sha3(data: ByteArray): ByteArray {
+      val sha3 = SHA3.DigestSHA3(384)
+      return sha3.digest(data)
     }
   }
 

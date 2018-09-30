@@ -1,7 +1,7 @@
 import core.Connection
 import core.PacketInfo
 import core.extensions.autoRelease
-import core.extensions.toHex
+import core.extensions.toHexSeparated
 import core.packet.Packet
 import core.packet.PacketType
 import handler.CreateRoomPacketHandler
@@ -92,7 +92,7 @@ class Server {
         return@autoRelease PacketInfo(packetId, packetType, packetPayloadRaw)
       }
 
-      println(" >>> RECEIVING: ${packetInfo.packetPayloadRaw.toHex()}")
+      println(" >>> RECEIVING: ${packetInfo.packetPayloadRaw.toHexSeparated()}")
 
       when (packetInfo.packetType) {
         PacketType.SendECPublicKeyPacketPayload -> TODO() //SendECPublicKeyPacketPayload.fromByteArray()
