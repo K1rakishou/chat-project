@@ -1,12 +1,12 @@
 package core.packet
 
-import core.PositionAwareByteArray
+import core.byte_sink.InMemoryByteSink
 import core.sizeof
 
 abstract class AbstractPacketPayload {
   abstract val packetVersion: Short
   abstract fun getPacketType(): PacketType
-  abstract fun toByteArray(): PositionAwareByteArray
+  abstract fun toByteSink(): InMemoryByteSink
 
   open fun getPayloadSize(): Int {
     return sizeof(packetVersion)
@@ -21,7 +21,7 @@ abstract class AbstractPacketPayload {
     val packetBody = Packet.PacketBody(
       id,
       getPacketType().value,
-      toByteArray().getArray()
+      toByteSink().getArray()
     ).toByteBuffer().array()
 
     return Packet(

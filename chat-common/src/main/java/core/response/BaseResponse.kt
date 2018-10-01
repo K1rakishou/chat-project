@@ -1,6 +1,6 @@
 package core.response
 
-import core.PositionAwareByteArray
+import core.byte_sink.InMemoryByteSink
 import core.Status
 import core.packet.Packet
 import core.sizeof
@@ -9,7 +9,7 @@ abstract class BaseResponse(
   val status: Status
 ) {
   abstract val packetVersion: Short
-  abstract fun toByteArray(byteArray: PositionAwareByteArray)
+  abstract fun toByteSink(byteSink: InMemoryByteSink)
 
   open fun getPayloadSize(): Int {
     return sizeof(packetVersion)
@@ -21,13 +21,13 @@ abstract class BaseResponse(
       throw RuntimeException("bodySize exceeds Int.MAX_VALUE: $totalBodySize")
     }
 
-    val byteArray = PositionAwareByteArray.createWithInitialSize(totalBodySize)
-    toByteArray(byteArray)
+    val byteSink = InMemoryByteSink.createWithInitialSize(totalBodySize)
+    toByteSink(byteSink)
 
     val packetBody = Packet.PacketBody(
       id,
       packetVersion,
-      byteArray.getArray()
+      byteSink.getArray()
     ).toByteBuffer().array()
 
     return Packet(

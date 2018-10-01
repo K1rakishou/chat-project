@@ -123,7 +123,7 @@ class Server {
       println(" <<< RECEIVING: ${packetInfo.packetPayloadRaw.toHexSeparated()}")
 
       when (packetInfo.packetType) {
-        PacketType.SendECPublicKeyPacketType -> TODO() //SendECPublicKeyPacketType.fromByteArray()
+        PacketType.SendECPublicKeyPacketType -> TODO() //SendECPublicKeyPacketType.fromByteSink()
         PacketType.CreateRoomPacketType -> {
           createRoomPacketHandler.handle(packetInfo.packetId, packetInfo.packetPayloadRaw, clientAddress)
         }

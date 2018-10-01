@@ -1,10 +1,8 @@
 package manager
 
 import core.Connection
-import core.PositionAwareByteArray
 import core.extensions.getMany
 import core.extensions.toHexSeparated
-import core.packet.Packet
 import core.response.BaseResponse
 import kotlinx.coroutines.experimental.io.writeFully
 import kotlinx.coroutines.experimental.sync.Mutex

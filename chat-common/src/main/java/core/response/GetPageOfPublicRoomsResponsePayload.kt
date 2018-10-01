@@ -1,6 +1,7 @@
 package core.response
 
 import core.*
+import core.byte_sink.InMemoryByteSink
 
 class GetPageOfPublicRoomsResponsePayload(
   status: Status,
@@ -14,15 +15,15 @@ class GetPageOfPublicRoomsResponsePayload(
     return super.getPayloadSize() + sizeof(status) + sizeofList(publicChatRoomList)
   }
 
-  override fun toByteArray(byteArray: PositionAwareByteArray) {
-    byteArray.writeShort(CURRENT_RESPONSE_VERSION.value)
+  override fun toByteSink(byteSink: InMemoryByteSink) {
+    byteSink.writeShort(CURRENT_RESPONSE_VERSION.value)
 
     when (CURRENT_RESPONSE_VERSION) {
       GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
-        byteArray.writeShort(status.value)
-        byteArray.writeShort(publicChatRoomList.size)
+        byteSink.writeShort(status.value)
+        byteSink.writeShort(publicChatRoomList.size)
 
-        publicChatRoomList.forEach { it.toByteArray(byteArray) }
+        publicChatRoomList.forEach { it.toByteSink(byteSink) }
       }
     }
   }
@@ -41,18 +42,18 @@ class GetPageOfPublicRoomsResponsePayload(
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
     fun fromByteArray(array: ByteArray): GetPageOfPublicRoomsResponsePayload {
-      val byteArray = PositionAwareByteArray.fromArray(array)
-      val responseVersion = ResponseVersion.fromShort(byteArray.readShort())
+      val byteSink = InMemoryByteSink.fromArray(array)
+      val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
 
       when (responseVersion) {
         GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
-          val status = Status.fromShort(byteArray.readShort())
-          val publicChatRoomsCount = byteArray.readShort().toInt()
+          val status = Status.fromShort(byteSink.readShort())
+          val publicChatRoomsCount = byteSink.readShort().toInt()
 
           val publicChatRoomList = ArrayList<PublicChatRoom>(publicChatRoomsCount)
 
           for (i in 0 until publicChatRoomsCount) {
-            publicChatRoomList += PublicChatRoom.fromByteArray(byteArray)
+            publicChatRoomList += PublicChatRoom.fromByteSink(byteSink)
           }
 
           return GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList)

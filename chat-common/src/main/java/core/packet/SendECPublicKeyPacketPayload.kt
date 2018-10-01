@@ -1,6 +1,6 @@
 package core.packet
 
-import core.PositionAwareByteArray
+import core.byte_sink.InMemoryByteSink
 import core.sizeof
 
 class SendECPublicKeyPacketPayload(
@@ -16,8 +16,8 @@ class SendECPublicKeyPacketPayload(
     return super.getPayloadSize() + sizeof(ecPublicKey)
   }
 
-  override fun toByteArray(): PositionAwareByteArray {
-    return PositionAwareByteArray.createWithInitialSize(getPayloadSize()).apply {
+  override fun toByteSink(): InMemoryByteSink {
+    return InMemoryByteSink.createWithInitialSize(getPayloadSize()).apply {
       writeShort(packetVersion)
 
       when (CURRENT_PACKET_VERSION) {
@@ -28,8 +28,8 @@ class SendECPublicKeyPacketPayload(
     }
   }
 
-  private fun serializePacketV1(byteArray: PositionAwareByteArray) {
-    byteArray.apply {
+  private fun serializePacketV1(byteSink: InMemoryByteSink) {
+    byteSink.apply {
       writeByteArray(ecPublicKey)
     }
   }
@@ -48,12 +48,12 @@ class SendECPublicKeyPacketPayload(
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
     fun fromByteArray(array: ByteArray): SendECPublicKeyPacketPayload {
-      val byteArray = PositionAwareByteArray.fromArray(array)
-      val packetVersion = PacketVersion.fromShort(byteArray.readShort())
+      val byteSink = InMemoryByteSink.fromArray(array)
+      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
 
       return when (packetVersion) {
         SendECPublicKeyPacketPayload.PacketVersion.V1 -> {
-          SendECPublicKeyPacketPayload(byteArray.readByteArray())
+          SendECPublicKeyPacketPayload(byteSink.readByteArray())
         }
       }
     }

@@ -53,7 +53,6 @@ class Packet(
     val MAGIC_NUMBER_BYTES = arrayOf<Byte>(0x44, 0x45, 0x53, 0x55)
 
     const val MAGIC_NUMBER = 0x44455355
-    const val PACKET_MAGIC_NUMBER_SIZE = 4
     const val PACKET_BODY_SIZE = 8 + 2
   }
 }

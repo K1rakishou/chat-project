@@ -1,6 +1,6 @@
 package core.response
 
-import core.PositionAwareByteArray
+import core.byte_sink.InMemoryByteSink
 import core.Status
 import core.sizeof
 
@@ -16,13 +16,13 @@ class CreateRoomResponsePayload(
     return super.getPayloadSize() + sizeof(status) + sizeof(chatRoomName)
   }
 
-  override fun toByteArray(byteArray: PositionAwareByteArray) {
-    byteArray.writeShort(CURRENT_RESPONSE_VERSION.value)
+  override fun toByteSink(byteSink: InMemoryByteSink) {
+    byteSink.writeShort(CURRENT_RESPONSE_VERSION.value)
 
     when (CURRENT_RESPONSE_VERSION) {
       CreateRoomResponsePayload.ResponseVersion.V1 -> {
-        byteArray.writeShort(status.value)
-        byteArray.writeString(chatRoomName)
+        byteSink.writeShort(status.value)
+        byteSink.writeString(chatRoomName)
       }
     }
   }
@@ -41,13 +41,13 @@ class CreateRoomResponsePayload(
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
     fun fromByteArray(array: ByteArray): CreateRoomResponsePayload {
-      val byteArray = PositionAwareByteArray.fromArray(array)
-      val responseVersion = ResponseVersion.fromShort(byteArray.readShort())
+      val byteSink = InMemoryByteSink.fromArray(array)
+      val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
 
       return when (responseVersion) {
         CreateRoomResponsePayload.ResponseVersion.V1 -> {
-          val status = Status.fromShort(byteArray.readShort())
-          val chatRoomName = byteArray.readString()
+          val status = Status.fromShort(byteSink.readShort())
+          val chatRoomName = byteSink.readString()
 
           CreateRoomResponsePayload(status, chatRoomName)
         }

@@ -1,6 +1,6 @@
 package core.packet
 
-import core.PositionAwareByteArray
+import core.byte_sink.InMemoryByteSink
 import core.sizeof
 
 class CreateRoomPacketPayload(
@@ -18,8 +18,8 @@ class CreateRoomPacketPayload(
     return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash)
   }
 
-  override fun toByteArray(): PositionAwareByteArray {
-    return PositionAwareByteArray.createWithInitialSize(getPayloadSize()).apply {
+  override fun toByteSink(): InMemoryByteSink {
+    return InMemoryByteSink.createWithInitialSize(getPayloadSize()).apply {
       writeShort(packetVersion)
 
       when (CURRENT_PACKET_VERSION) {
@@ -46,14 +46,14 @@ class CreateRoomPacketPayload(
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
     fun fromByteArray(array: ByteArray): CreateRoomPacketPayload {
-      val byteArray = PositionAwareByteArray.fromArray(array)
-      val packetVersion = PacketVersion.fromShort(byteArray.readShort())
+      val byteSink = InMemoryByteSink.fromArray(array)
+      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
 
       return when (packetVersion) {
         CreateRoomPacketPayload.PacketVersion.V1 -> {
-          val isPublic = byteArray.readBoolean()
-          val chatRoomName = byteArray.readString()
-          val chatRoomPasswordHash = byteArray.readString()
+          val isPublic = byteSink.readBoolean()
+          val chatRoomName = byteSink.readString()
+          val chatRoomPasswordHash = byteSink.readString()
 
           CreateRoomPacketPayload(isPublic, chatRoomName, chatRoomPasswordHash)
         }
