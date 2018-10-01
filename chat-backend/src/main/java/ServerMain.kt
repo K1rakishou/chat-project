@@ -1,5 +1,7 @@
 import core.Connection
 import core.PacketInfo
+import core.User
+import core.UserInRoom
 import core.extensions.autoRelease
 import core.extensions.toHexSeparated
 import core.packet.Packet
@@ -45,18 +47,13 @@ class Server {
         .bind(InetSocketAddress("127.0.0.1", 2323))
 
       //test zone
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
-      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true).apply {
+        addUser(UserInRoom(User("1", ByteArray(1))))
+        addUser(UserInRoom(User("2", ByteArray(1))))
+        addUser(UserInRoom(User("3", ByteArray(1))))
+        addUser(UserInRoom(User("4", ByteArray(1))))
+        addUser(UserInRoom(User("5", ByteArray(1))))
+      }
       //test zone
 
       println("Started server at ${server.localAddress}")

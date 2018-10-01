@@ -7,10 +7,10 @@ data class ChatRoom(
   val roomName: String,
   val roomPasswordHash: String?,
   val isPublic: Boolean,
-  val createdOn: Long
+  val createdOn: Long,
+  val userList: MutableList<UserInRoom> = mutableListOf()
 ) {
   private val mutex = Mutex()
-  private val userList = mutableListOf<UserInRoom>()
 
   suspend fun addUser(userInRoom: UserInRoom) {
     mutex.withLock { userList.add(userInRoom) }

@@ -88,7 +88,7 @@ class ChatRoomManager {
 
   suspend fun getAllPublicRooms(): List<PublicChatRoom> {
     return mutex.withLock {
-      chatRooms.values
+      return@withLock chatRooms.values
         .filter { chatRoom -> chatRoom.isPublic }
         .map { chatRoom ->
           val copy = chatRoom.copy()
