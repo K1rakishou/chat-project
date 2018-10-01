@@ -43,7 +43,10 @@ class ChatRoomManager {
         return@withLock false
       }
 
-      val chatRoom = chatRooms[chatRoomName]!!
+      val chatRoom = chatRooms[chatRoomName]
+      if (chatRoom == null) {
+        return@withLock false
+      }
 
       if (chatRoom.containsUser(user.userName)) {
         return@withLock false
@@ -65,7 +68,10 @@ class ChatRoomManager {
         return@withLock false
       }
 
-      val chatRoom = chatRooms[chatRoomName]!!
+      val chatRoom = chatRooms[chatRoomName]
+      if (chatRoom == null) {
+        return@withLock false
+      }
 
       if (!chatRoom.containsUser(user.userName)) {
         return@withLock false
