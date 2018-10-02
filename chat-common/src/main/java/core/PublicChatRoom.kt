@@ -1,6 +1,6 @@
 package core
 
-import core.byte_sink.InMemoryByteSink
+import core.byte_sink.ByteSink
 import core.interfaces.CanMeasureSizeOfFields
 
 class PublicChatRoom(
@@ -12,13 +12,13 @@ class PublicChatRoom(
     return sizeof(roomName) + sizeof(usersCount)
   }
 
-  fun toByteSink(byteSink: InMemoryByteSink) {
+  fun toByteSink(byteSink: ByteSink) {
     byteSink.writeString(roomName)
     byteSink.writeShort(usersCount)
   }
 
   companion object {
-    fun fromByteSink(byteSink: InMemoryByteSink): PublicChatRoom {
+    fun fromByteSink(byteSink: ByteSink): PublicChatRoom {
       return PublicChatRoom(byteSink.readString()!!, byteSink.readShort())
     }
   }

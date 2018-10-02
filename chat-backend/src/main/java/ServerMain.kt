@@ -97,19 +97,15 @@ class Server(
       val bodySize = readChannel.readInt()
       val packetInfo = readPacketInfo(bodySize, readChannel)
 
-      try {
+      packetInfo.byteSink.use { byteSink ->
         when (packetInfo.packetType) {
           PacketType.SendECPublicKeyPacketType -> TODO() //SendECPublicKeyPacketType.fromByteSink()
           PacketType.CreateRoomPacketType -> {
-            createRoomPacketHandler.handle(packetInfo.packetId, packetInfo.byteSink, clientAddress)
+            createRoomPacketHandler.handle(packetInfo.packetId, byteSink, clientAddress)
           }
           PacketType.GetPageOfPublicRoomsPacketType -> {
-            getPageOfPublicChatRoomsHandler.handle(packetInfo.packetId, packetInfo.byteSink, clientAddress)
+            getPageOfPublicChatRoomsHandler.handle(packetInfo.packetId, byteSink, clientAddress)
           }
-        }
-      } finally {
-        if (packetInfo.byteSink is OnDiskByteSink) {
-          packetInfo.byteSink.close()
         }
       }
     }

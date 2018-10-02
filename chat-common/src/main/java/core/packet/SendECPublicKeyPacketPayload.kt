@@ -1,5 +1,6 @@
 package core.packet
 
+import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 import core.sizeof
 
@@ -28,7 +29,7 @@ class SendECPublicKeyPacketPayload(
     }
   }
 
-  private fun serializePacketV1(byteSink: InMemoryByteSink) {
+  private fun serializePacketV1(byteSink: ByteSink) {
     byteSink.apply {
       writeByteArray(ecPublicKey)
     }
@@ -47,8 +48,7 @@ class SendECPublicKeyPacketPayload(
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
-    fun fromByteArray(array: ByteArray): SendECPublicKeyPacketPayload {
-      val byteSink = InMemoryByteSink.fromArray(array)
+    fun fromByteSink(byteSink: ByteSink): SendECPublicKeyPacketPayload {
       val packetVersion = PacketVersion.fromShort(byteSink.readShort())
 
       return when (packetVersion) {

@@ -2,6 +2,7 @@ package core.response
 
 import core.byte_sink.InMemoryByteSink
 import core.Status
+import core.byte_sink.ByteSink
 import core.packet.Packet
 import core.sizeof
 
@@ -9,7 +10,7 @@ abstract class BaseResponse(
   val status: Status
 ) {
   abstract val packetVersion: Short
-  abstract fun toByteSink(byteSink: InMemoryByteSink)
+  abstract fun toByteSink(byteSink: ByteSink)
 
   open fun getPayloadSize(): Int {
     return sizeof(packetVersion)

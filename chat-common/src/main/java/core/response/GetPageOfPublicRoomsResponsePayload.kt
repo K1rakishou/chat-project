@@ -1,6 +1,7 @@
 package core.response
 
 import core.*
+import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 
 class GetPageOfPublicRoomsResponsePayload(
@@ -15,7 +16,7 @@ class GetPageOfPublicRoomsResponsePayload(
     return super.getPayloadSize() + sizeof(status) + sizeofList(publicChatRoomList)
   }
 
-  override fun toByteSink(byteSink: InMemoryByteSink) {
+  override fun toByteSink(byteSink: ByteSink) {
     byteSink.writeShort(CURRENT_RESPONSE_VERSION.value)
 
     when (CURRENT_RESPONSE_VERSION) {

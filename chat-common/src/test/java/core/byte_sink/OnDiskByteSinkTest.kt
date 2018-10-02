@@ -12,7 +12,7 @@ class OnDiskByteSinkTest {
 
   @Before
   fun setUp() {
-    val file = File("D:\\file.tmp")
+    val file = File.createTempFile("temp", "file")
     file.createNewFile()
 
     byteSink = OnDiskByteSink.fromFile(file, 8)

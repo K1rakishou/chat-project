@@ -2,6 +2,7 @@ package core.response
 
 import core.byte_sink.InMemoryByteSink
 import core.Status
+import core.byte_sink.ByteSink
 import core.sizeof
 
 class CreateRoomResponsePayload(
@@ -16,7 +17,7 @@ class CreateRoomResponsePayload(
     return super.getPayloadSize() + sizeof(status) + sizeof(chatRoomName)
   }
 
-  override fun toByteSink(byteSink: InMemoryByteSink) {
+  override fun toByteSink(byteSink: ByteSink) {
     byteSink.writeShort(CURRENT_RESPONSE_VERSION.value)
 
     when (CURRENT_RESPONSE_VERSION) {
