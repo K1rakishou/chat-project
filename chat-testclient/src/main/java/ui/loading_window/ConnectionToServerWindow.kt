@@ -5,7 +5,7 @@ import javafx.geometry.Pos
 import javafx.scene.text.TextAlignment
 import tornadofx.*
 
-class ConnectionToServerWindow : View() {
+class ConnectionToServerWindow : View("Chat") {
   private val connectionToServerController: ConnectionToServerController by inject()
 
   override fun onDock() {
@@ -13,7 +13,8 @@ class ConnectionToServerWindow : View() {
   }
 
   override val root = vbox(alignment = Pos.CENTER) {
-    setPrefSize(360.0, 480.0)
+    prefHeight = 720.0
+    prefWidth = 1280.0
 
     progressindicator {
       vboxConstraints {

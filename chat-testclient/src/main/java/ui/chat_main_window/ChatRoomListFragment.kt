@@ -1,6 +1,5 @@
-package ui.chat_room_list_window
+package ui.chat_main_window
 
-import javafx.geometry.Insets
 import javafx.scene.layout.Priority
 import model.PublicChatRoomItem
 import model.PublicChatRoomItemModel
@@ -10,10 +9,12 @@ class ChatRoomListFragment : ListCellFragment<PublicChatRoomItem>() {
   val chatRoom = PublicChatRoomItemModel(itemProperty)
 
   override val root = hbox {
+    prefHeight = 96.0
+
     label(chatRoom.usersCount) {
     }
     pane {
-      padding = Insets(0.0, 15.0, 0.0, 0.0)
+      paddingRight = 15.0
     }
     label(chatRoom.roomName) {
       hgrow = Priority.ALWAYS

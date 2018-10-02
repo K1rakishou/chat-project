@@ -1,4 +1,4 @@
-package ui.chat_room_list_window
+package ui.chat_main_window
 
 import controller.ChatRoomListController
 import tornadofx.View

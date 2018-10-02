@@ -11,7 +11,7 @@ import javafx.beans.property.SimpleStringProperty
 import kotlinx.coroutines.experimental.delay
 import manager.NetworkManager
 import tornadofx.runLater
-import ui.chat_room_list_window.ChatRoomListWindow
+import ui.chat_main_window.ChatMainWindow
 import ui.loading_window.ConnectionToServerWindow
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -24,13 +24,15 @@ class ConnectionToServerController : Controller() {
   val connectionStatus = SimpleStringProperty("")
 
   init {
-    startConnectionToServer()
+    startConnectionToServer(true)
     launch { startListeningToPackets() }
   }
 
-  fun startConnectionToServer() {
+  fun startConnectionToServer(firstTime: Boolean = false) {
     launch {
-      delay(increaseDelayAndGet())
+      if (!firstTime) {
+        delay(increaseDelayAndGet())
+      }
 
       changeConnectionStatus("Connecting...")
       networkManager.connect()
@@ -65,7 +67,7 @@ class ConnectionToServerController : Controller() {
         if (response.status == Status.Ok) {
           runLater {
             store.setChatRoomList(response.publicChatRoomList)
-            find<ConnectionToServerWindow>().replaceWith<ChatRoomListWindow>()
+            find<ConnectionToServerWindow>().replaceWith<ChatMainWindow>()
           }
         }
       }
@@ -74,7 +76,7 @@ class ConnectionToServerController : Controller() {
 
   private fun increaseDelayAndGet(): Int {
     if (delayTime.get() < maxDelayTime) {
-      return delayTime.incrementAndGet()
+      return delayTime.addAndGet(2000)
     }
 
     return delayTime.get()
