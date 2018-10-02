@@ -2,7 +2,6 @@ package manager
 
 import core.Constants
 import core.byte_sink.InMemoryByteSink
-import extensions.autoRelease
 import core.extensions.toHexSeparated
 import core.packet.AbstractPacketPayload
 import core.packet.Packet
@@ -10,89 +9,134 @@ import core.response.BaseResponse
 import core.response.CreateRoomResponsePayload
 import core.response.GetPageOfPublicRoomsResponsePayload
 import core.response.ResponseType
-import core.security.SecurityUtils
+import extensions.autoRelease
 import io.ktor.network.selector.ActorSelectorManager
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
+import io.ktor.network.sockets.*
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.io.ByteReadChannel
 import kotlinx.coroutines.experimental.io.ByteWriteChannel
+import kotlinx.coroutines.experimental.io.close
 import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.experimental.sync.withLock
 import kotlinx.io.core.IoBuffer
 import kotlinx.io.core.readFully
 import java.net.InetSocketAddress
+import java.util.concurrent.atomic.AtomicBoolean
 
 class NetworkManager {
-  private val ecKeyPair = SecurityUtils.Exchange.generateECKeyPair()
-  private val publicKeyEncoded = ecKeyPair.public.encoded
-  private lateinit var output: ByteWriteChannel
+//  private val ecKeyPair = SecurityUtils.Exchange.generateECKeyPair()
+//  private val publicKeyEncoded = ecKeyPair.public.encoded
 
-  val responseQueue = BroadcastChannel<BaseResponse>(128)
+  private val isConnected = AtomicBoolean(false)
+  private val mutex = Mutex()
 
-  private suspend fun listenServer(readChannel: ByteReadChannel) {
-    while (!readChannel.isClosedForRead) {
-      val magicNumberFirstByte = readChannel.readByte()
-      if (magicNumberFirstByte != Packet.MAGIC_NUMBER_BYTES[0]) {
-        println("Bad magicNumber first byte $magicNumberFirstByte")
-        continue
-      }
+  private lateinit var socket: Socket
+  private lateinit var writeChannel: ByteWriteChannel
+  private lateinit var readChannel: ByteReadChannel
 
-      val magicNumberSecondByte = readChannel.readByte()
-      if (magicNumberSecondByte != Packet.MAGIC_NUMBER_BYTES[1]) {
-        println("Bad magicNumber second byte $magicNumberSecondByte")
-        continue
-      }
+  val socketEventsQueue = BroadcastChannel<SocketEvent>(128)
 
-      val magicNumberThirdByte = readChannel.readByte()
-      if (magicNumberThirdByte != Packet.MAGIC_NUMBER_BYTES[2]) {
-        println("Bad magicNumber third byte $magicNumberThirdByte")
-        continue
-      }
-
-      val magicNumberFourthByte = readChannel.readByte()
-      if (magicNumberFourthByte != Packet.MAGIC_NUMBER_BYTES[3]) {
-        println("Bad magicNumber fourth byte $magicNumberFourthByte")
-        continue
-      }
-
-      val bodySize = readChannel.readInt()
-
-      val packet = IoBuffer.Pool.autoRelease { buffer ->
-        readChannel.readFully(buffer, bodySize)
-
-        val id = buffer.readLong()
-        val responseType = ResponseType.fromShort(buffer.readShort())
-
-        val packetPayloadRaw = ByteArray(buffer.readRemaining)
-        buffer.readFully(packetPayloadRaw)
-
-        println(" >>> RECEIVING: ${packetPayloadRaw.toHexSeparated()}")
-
-        return@autoRelease when (responseType) {
-          ResponseType.SendECPublicKeyResponseType -> TODO()
-          ResponseType.CreateRoomResponseType -> {
-            CreateRoomResponsePayload.fromByteArray(packetPayloadRaw)
-          }
-          ResponseType.GetPageOfPublicRoomsResponseType -> {
-            GetPageOfPublicRoomsResponsePayload.fromByteArray(packetPayloadRaw)
-          }
+  suspend fun connect() {
+    try {
+      mutex.withLock {
+        if (isConnected.get()) {
+          return
         }
-      }
 
-      responseQueue.send(packet)
+        aSocket(ActorSelectorManager(ioCoroutineDispatcher))
+          .tcp()
+          .connect(InetSocketAddress("127.0.0.1", 2323))
+          .let { newSocket ->
+            socket = newSocket
+            readChannel = newSocket.openReadChannel()
+            writeChannel = newSocket.openWriteChannel(autoFlush = false)
+            launch { listenServer() }
+
+            isConnected.set(true)
+            socketEventsQueue.send(SocketEvent.ConnectedToServer())
+          }
+      }
+    } catch (error: Throwable) {
+      socketEventsQueue.send(SocketEvent.ErrorWhileConnecting(error))
     }
   }
 
-  private suspend fun writeToOutputChannel(output: ByteWriteChannel, packet: Packet) {
+  suspend fun disconnect() {
+    mutex.withLock {
+      if (!isConnected.get()) {
+        return
+      }
+
+      if (!writeChannel.isClosedForWrite) {
+        writeChannel.close()
+      }
+
+      if (!socket.isClosed) {
+        socket.close()
+      }
+
+      isConnected.set(false)
+      socketEventsQueue.send(SocketEvent.DisconnectedFromServer())
+    }
+  }
+
+  private suspend fun listenServer() {
+    try {
+      while (!readChannel.isClosedForRead) {
+        if (!readMagicNumber()) {
+          continue
+        }
+
+        val bodySize = readChannel.readInt()
+
+        val packet = IoBuffer.Pool.autoRelease { buffer ->
+          readChannel.readFully(buffer, bodySize)
+
+          val id = buffer.readLong()
+          val responseType = ResponseType.fromShort(buffer.readShort())
+
+          val packetPayloadRaw = ByteArray(buffer.readRemaining)
+          buffer.readFully(packetPayloadRaw)
+
+          println(" >>> RECEIVING: ${packetPayloadRaw.toHexSeparated()}")
+
+          return@autoRelease when (responseType) {
+            ResponseType.SendECPublicKeyResponseType -> TODO()
+            ResponseType.CreateRoomResponseType -> {
+              CreateRoomResponsePayload.fromByteArray(packetPayloadRaw)
+            }
+            ResponseType.GetPageOfPublicRoomsResponseType -> {
+              GetPageOfPublicRoomsResponsePayload.fromByteArray(packetPayloadRaw)
+            }
+          }
+        }
+
+        socketEventsQueue.send(SocketEvent.PacketReceived(packet))
+      }
+    } finally {
+      disconnect()
+    }
+  }
+
+  suspend fun sendPacket(packet: AbstractPacketPayload) {
+    if (!isConnected.get() || writeChannel.isClosedForWrite) {
+      disconnect()
+      return
+    }
+
+    writeToOutputChannel(packet.buildPacket(1L))
+    writeChannel.flush()
+  }
+
+  private suspend fun writeToOutputChannel(packet: Packet) {
     val sink = InMemoryByteSink.createWithInitialSize(1024)
 
-    output.writeInt(packet.magicNumber)
-    output.writeInt(packet.bodySize)
-    output.writeLong(packet.packetBody.id)
-    output.writeShort(packet.packetBody.type)
+    writeChannel.writeInt(packet.magicNumber)
+    writeChannel.writeInt(packet.bodySize)
+    writeChannel.writeLong(packet.packetBody.id)
+    writeChannel.writeShort(packet.packetBody.type)
 
     //for logging
     sink.writeInt(packet.magicNumber)
@@ -109,7 +153,7 @@ class NetworkManager {
         return@use
       }
 
-      output.writeFully(readBuffer, 0, bytesReadCount)
+      writeChannel.writeFully(readBuffer, 0, bytesReadCount)
 
       //for logging
       sink.writeByteArray(readBuffer.copyOfRange(0, bytesReadCount))
@@ -119,20 +163,38 @@ class NetworkManager {
     println(" <<< SENDING: ${sink.getArray().toHexSeparated()}")
   }
 
-  suspend fun sendPacket(packet: AbstractPacketPayload) {
-    writeToOutputChannel(output, packet.buildPacket(1L))
-    output.flush()
+  private suspend fun readMagicNumber(): Boolean {
+    val magicNumberFirstByte = readChannel.readByte()
+    if (magicNumberFirstByte != Packet.MAGIC_NUMBER_BYTES[0]) {
+      println("Bad magicNumber first byte $magicNumberFirstByte")
+      return false
+    }
+
+    val magicNumberSecondByte = readChannel.readByte()
+    if (magicNumberSecondByte != Packet.MAGIC_NUMBER_BYTES[1]) {
+      println("Bad magicNumber second byte $magicNumberSecondByte")
+      return false
+    }
+
+    val magicNumberThirdByte = readChannel.readByte()
+    if (magicNumberThirdByte != Packet.MAGIC_NUMBER_BYTES[2]) {
+      println("Bad magicNumber third byte $magicNumberThirdByte")
+      return false
+    }
+
+    val magicNumberFourthByte = readChannel.readByte()
+    if (magicNumberFourthByte != Packet.MAGIC_NUMBER_BYTES[3]) {
+      println("Bad magicNumber fourth byte $magicNumberFourthByte")
+      return false
+    }
+
+    return true
   }
 
-  fun run() {
-    runBlocking {
-      aSocket(ActorSelectorManager(ioCoroutineDispatcher))
-        .tcp()
-        .connect(InetSocketAddress("127.0.0.1", 2323))
-        .apply {
-          output = openWriteChannel(autoFlush = false)
-          launch { listenServer(openReadChannel()) }
-        }
-    }
+  sealed class SocketEvent {
+    class ConnectedToServer() : SocketEvent()
+    class ErrorWhileConnecting(val throwable: Throwable) : SocketEvent()
+    class DisconnectedFromServer() : SocketEvent()
+    class PacketReceived(val packet: BaseResponse) : SocketEvent()
   }
 }

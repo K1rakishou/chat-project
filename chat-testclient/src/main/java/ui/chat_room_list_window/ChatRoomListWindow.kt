@@ -3,18 +3,11 @@ package ui.chat_room_list_window
 import javafx.scene.layout.Border
 import tornadofx.View
 import tornadofx.borderpane
-import ui.loading_window.LoadingWindow
 
 class ChatRoomListWindow : View() {
-  val loadingView: LoadingWindow by inject()
-
-  override fun onDock() {
-    super.onDock()
-
-    loadingView.openModal()
-  }
 
   override val root = borderpane {
+    setPrefSize(384.0, 720.0)
     border = Border.EMPTY
 
     top(ChatRoomListHeader::class)

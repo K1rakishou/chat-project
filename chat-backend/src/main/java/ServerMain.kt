@@ -22,6 +22,7 @@ import manager.ChatRoomManager
 import manager.ConnectionManager
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.io.File
+import java.io.IOException
 import java.io.RandomAccessFile
 import java.net.InetSocketAddress
 import java.security.Security
@@ -78,13 +79,22 @@ class Server(
               connectionManager.addConnection(clientAddress, Connection(clientAddress, socket.openWriteChannel(autoFlush = false)))
               listenClient(readChannel, clientAddress)
             } catch (error: Throwable) {
-              error.printStackTrace()
+              printException(error, clientAddress)
             } finally {
               connectionManager.removeConnection(clientAddress)
             }
           }
         }
       }
+    }
+  }
+
+  private fun printException(error: Throwable, clientAddress: String) {
+    when (error) {
+      is IOException -> {
+        println("Client: ${clientAddress} forcibly closed the connection")
+      }
+      else -> error.printStackTrace()
     }
   }
 
