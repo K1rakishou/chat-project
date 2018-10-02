@@ -1,8 +1,9 @@
 package core.byte_sink
 
+import java.io.DataInputStream
 import java.util.concurrent.atomic.AtomicInteger
 
-abstract class ByteSink {
+abstract class ByteSink : AutoCloseable {
   protected val NO_VALUE = 0.toByte()
   protected val HAS_VALUE = 1.toByte()
 
@@ -14,8 +15,7 @@ abstract class ByteSink {
   abstract fun getReaderPosition(): Int
   abstract fun getWriterPosition(): Int
 
-  abstract fun getArray(): ByteArray
-  abstract fun getLength(): Int
+  abstract fun getStream(): DataInputStream
 
   abstract fun readBoolean(): Boolean
   abstract fun writeBoolean(boolean: Boolean)
@@ -35,6 +35,4 @@ abstract class ByteSink {
   abstract fun writeByteArray(inArray: ByteArray)
   abstract fun readString(): String?
   abstract fun writeString(string: String?)
-
-  abstract fun release()
 }

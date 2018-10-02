@@ -1,11 +1,10 @@
-import core.Connection
-import core.PacketInfo
-import core.User
-import core.UserInRoom
+import core.*
+import core.byte_sink.InMemoryByteSink
+import core.byte_sink.OnDiskByteSink
 import core.extensions.autoRelease
-import core.extensions.toHexSeparated
 import core.packet.Packet
 import core.packet.PacketType
+import core.utils.TimeUtils
 import handler.CreateRoomPacketHandler
 import handler.GetPageOfPublicRoomsHandler
 import io.ktor.network.selector.ActorSelectorManager
@@ -14,26 +13,35 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.io.ByteReadChannel
+import kotlinx.coroutines.experimental.io.readAvailable
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.coroutines.experimental.yield
 import kotlinx.io.core.IoBuffer
 import kotlinx.io.core.readFully
 import manager.ChatRoomManager
 import manager.ConnectionManager
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import java.io.File
+import java.io.RandomAccessFile
 import java.net.InetSocketAddress
 import java.security.Security
 
 
 fun main(args: Array<String>) {
+  if (args.size != 1) {
+    println("Please, provide path to byte-sink-cache directory!")
+    return
+  }
+
   Security.setProperty("crypto.policy", "unlimited")
   Security.addProvider(BouncyCastleProvider())
 
-  Server().run()
+  Server(args[0]).run()
 }
 
-class Server {
+class Server(
+  private val byteSinkFileCachePath: String
+) {
   private val connectionManager = ConnectionManager()
   private val chatRoomManager = ChatRoomManager()
 
@@ -82,33 +90,36 @@ class Server {
 
   private suspend fun listenClient(readChannel: ByteReadChannel, clientAddress: String) {
     while (!readChannel.isClosedForRead && !readChannel.isClosedForWrite) {
-      val magicNumberFirstByte = readChannel.readByte()
-      if (magicNumberFirstByte != Packet.MAGIC_NUMBER_BYTES[0]) {
-        println("Bad magicNumber first byte $magicNumberFirstByte")
-        continue
-      }
-
-      val magicNumberSecondByte = readChannel.readByte()
-      if (magicNumberSecondByte != Packet.MAGIC_NUMBER_BYTES[1]) {
-        println("Bad magicNumber second byte $magicNumberSecondByte")
-        continue
-      }
-
-      val magicNumberThirdByte = readChannel.readByte()
-      if (magicNumberThirdByte != Packet.MAGIC_NUMBER_BYTES[2]) {
-        println("Bad magicNumber third byte $magicNumberThirdByte")
-        continue
-      }
-
-      val magicNumberFourthByte = readChannel.readByte()
-      if (magicNumberFourthByte != Packet.MAGIC_NUMBER_BYTES[3]) {
-        println("Bad magicNumber fourth byte $magicNumberFourthByte")
+      if (!readMagicNumber(readChannel)) {
         continue
       }
 
       val bodySize = readChannel.readInt()
+      val packetInfo = readPacketInfo(bodySize, readChannel)
 
-      val packetInfo = IoBuffer.Pool.autoRelease { buffer ->
+      try {
+        when (packetInfo.packetType) {
+          PacketType.SendECPublicKeyPacketType -> TODO() //SendECPublicKeyPacketType.fromByteSink()
+          PacketType.CreateRoomPacketType -> {
+            createRoomPacketHandler.handle(packetInfo.packetId, packetInfo.byteSink, clientAddress)
+          }
+          PacketType.GetPageOfPublicRoomsPacketType -> {
+            getPageOfPublicChatRoomsHandler.handle(packetInfo.packetId, packetInfo.byteSink, clientAddress)
+          }
+        }
+      } finally {
+        if (packetInfo.byteSink is OnDiskByteSink) {
+          packetInfo.byteSink.close()
+        }
+      }
+    }
+  }
+
+  private suspend fun readPacketInfo(bodySize: Int, readChannel: ByteReadChannel): PacketInfo {
+    var packetInfo: PacketInfo? = null
+
+    if (bodySize <= Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
+      IoBuffer.Pool.autoRelease { buffer ->
         readChannel.readFully(buffer, bodySize)
 
         val packetId = buffer.readLong()
@@ -117,21 +128,63 @@ class Server {
         val packetPayloadRaw = ByteArray(buffer.readRemaining)
         buffer.readFully(packetPayloadRaw)
 
-        return@autoRelease PacketInfo(packetId, packetType, packetPayloadRaw)
+        packetInfo = PacketInfo(packetId, packetType, InMemoryByteSink.fromArray(packetPayloadRaw))
       }
+    } else {
+      val file = File("$byteSinkFileCachePath\\test_file-${TimeUtils.getCurrentTime()}.tmp")
+      val randomAccessFile = RandomAccessFile(file, "w")
 
-      println(" <<< RECEIVING: ${packetInfo.packetPayloadRaw.toHexSeparated()}")
+      randomAccessFile.use { raf ->
+        for (offset in 0 until bodySize step Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
+          val chunk = if (bodySize - offset > Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
+            Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
+          } else {
+            bodySize - offset
+          }
 
-      when (packetInfo.packetType) {
-        PacketType.SendECPublicKeyPacketType -> TODO() //SendECPublicKeyPacketType.fromByteSink()
-        PacketType.CreateRoomPacketType -> {
-          createRoomPacketHandler.handle(packetInfo.packetId, packetInfo.packetPayloadRaw, clientAddress)
-        }
-        PacketType.GetPageOfPublicRoomsPacketType -> {
-          getPageOfPublicChatRoomsHandler.handle(packetInfo.packetId, packetInfo.packetPayloadRaw, clientAddress)
+          val array = ByteArray(chunk)
+          readChannel.readAvailable(array)
+          raf.write(array)
+
+          val sink = OnDiskByteSink.fromFile(file)
+
+          val packetId = sink.readLong()
+          val packetType = PacketType.fromShort(sink.readShort())
+
+          packetInfo = PacketInfo(packetId, packetType, sink)
         }
       }
     }
+
+    return packetInfo!!
+  }
+
+  private suspend fun readMagicNumber(readChannel: ByteReadChannel): Boolean {
+    val magicNumberFirstByte = readChannel.readByte()
+    if (magicNumberFirstByte != Packet.MAGIC_NUMBER_BYTES[0]) {
+      println("Bad magicNumber first byte $magicNumberFirstByte")
+      return false
+    }
+
+    val magicNumberSecondByte = readChannel.readByte()
+    if (magicNumberSecondByte != Packet.MAGIC_NUMBER_BYTES[1]) {
+      println("Bad magicNumber second byte $magicNumberSecondByte")
+      return false
+    }
+
+    val magicNumberThirdByte = readChannel.readByte()
+    if (magicNumberThirdByte != Packet.MAGIC_NUMBER_BYTES[2]) {
+      println("Bad magicNumber third byte $magicNumberThirdByte")
+      return false
+    }
+
+    val magicNumberFourthByte = readChannel.readByte()
+    if (magicNumberFourthByte != Packet.MAGIC_NUMBER_BYTES[3]) {
+      println("Bad magicNumber fourth byte $magicNumberFourthByte")
+      return false
+    }
+
+    return true
   }
 
 }

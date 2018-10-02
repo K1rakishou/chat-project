@@ -1,6 +1,7 @@
 package handler
 
 import core.Status
+import core.byte_sink.ByteSink
 import core.packet.CreateRoomPacketPayload
 import core.response.BaseResponse
 import core.response.CreateRoomResponsePayload
@@ -12,8 +13,8 @@ class CreateRoomPacketHandler(
   private val chatRoomManager: ChatRoomManager
 ) : BasePacketHandler() {
 
-  override suspend fun handle(packetId: Long, packetPayloadRaw: ByteArray, clientAddress: String) {
-    val packet = CreateRoomPacketPayload.fromByteArray(packetPayloadRaw)
+  override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
+    val packet = CreateRoomPacketPayload.fromByteSink(byteSink)
     val packetVersion = CreateRoomPacketPayload.PacketVersion.fromShort(packet.packetVersion)
 
     val response = when (packetVersion) {

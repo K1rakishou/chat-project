@@ -1,10 +1,9 @@
 package core.byte_sink
 
+import core.Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
 import core.sizeof
-import java.io.File
-import java.io.RandomAccessFile
+import java.io.*
 import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
 
 class OnDiskByteSink private constructor(
   private val file: File,
@@ -17,16 +16,12 @@ class OnDiskByteSink private constructor(
       throw IllegalArgumentException("Input file ${file.absolutePath} can not be a directory!")
     }
 
-    if (!file.exists()) {
-      throw IllegalArgumentException("Input file ${file.absolutePath} should exist!")
-    }
-
-    if (file.length() > 0L) {
-      throw IllegalArgumentException("Input file ${file.absolutePath} should be empty!")
-    }
-
     raf = RandomAccessFile(file, "rw")
-    raf.setLength(defaultLen)
+
+    if (!file.exists()) {
+      raf.setLength(defaultLen)
+    }
+
   }
 
   override fun resizeIfNeeded(dataToWriteSize: Int) {
@@ -41,11 +36,9 @@ class OnDiskByteSink private constructor(
   override fun getReaderPosition() = readPosition.get()
   override fun getWriterPosition() = writePosition.get()
 
-  override fun getArray(): ByteArray {
-    throw IllegalStateException("This method should not be called since it can lead to a memory leak")
+  override fun getStream(): DataInputStream {
+    return DataInputStream(FileInputStream(file))
   }
-
-  override fun getLength(): Int = raf.length().toInt()
 
   override fun readBoolean(): Boolean {
     raf.seek(readPosition.getAndIncrement().toLong())
@@ -156,14 +149,19 @@ class OnDiskByteSink private constructor(
     }
   }
 
-  override fun release() {
+  override fun close() {
+    //rewrite file with junk bytes before deleting
+    val array = ByteArray(raf.length().toInt()) { 0xFF.toByte()}
+
+    raf.write(array)
     raf.close()
+
     file.delete()
   }
 
   companion object {
-    fun fromFile(filePath: File, initialSize: Long = 4096): OnDiskByteSink {
-      return OnDiskByteSink(filePath, initialSize)
+    fun fromFile(filePath: File, initialSize: Int = MAX_PACKET_SIZE_FOR_MEMORY_HANDLING): OnDiskByteSink {
+      return OnDiskByteSink(filePath, initialSize.toLong())
     }
   }
 }

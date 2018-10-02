@@ -1,5 +1,6 @@
 package core.packet
 
+import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 import core.sizeof
 
@@ -43,8 +44,7 @@ class GetPageOfPublicRoomsPacketPayload(
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
-    fun fromByteArray(array: ByteArray): GetPageOfPublicRoomsPacketPayload {
-      val byteSink = InMemoryByteSink.fromArray(array)
+    fun fromByteSink(byteSink: ByteSink): GetPageOfPublicRoomsPacketPayload {
       val packetVersion = PacketVersion.fromShort(byteSink.readShort())
 
       return when (packetVersion) {

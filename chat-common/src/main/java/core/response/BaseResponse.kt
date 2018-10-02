@@ -15,7 +15,7 @@ abstract class BaseResponse(
     return sizeof(packetVersion)
   }
 
-  fun responseToBytes(id: Long): ByteArray {
+  fun buildResponse(id: Long): Packet {
     val totalBodySize = (Packet.PACKET_BODY_SIZE + getPayloadSize())
     if (totalBodySize > Int.MAX_VALUE) {
       throw RuntimeException("bodySize exceeds Int.MAX_VALUE: $totalBodySize")
@@ -27,13 +27,13 @@ abstract class BaseResponse(
     val packetBody = Packet.PacketBody(
       id,
       packetVersion,
-      byteSink.getArray()
-    ).toByteBuffer().array()
+      byteSink
+    )
 
     return Packet(
       Packet.MAGIC_NUMBER,
       totalBodySize,
       packetBody
-    ).toByteArray()
+    )
   }
 }

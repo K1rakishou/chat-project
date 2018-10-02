@@ -1,13 +1,13 @@
 package core.packet
 
+import core.byte_sink.ByteSink
 import core.sizeof
-import java.nio.ByteBuffer
 
 class Packet(
   val magicNumber: Int,       //4
   val bodySize: Int,          //4
 
-  val packetBody: ByteArray
+  val packetBody: Packet.PacketBody
 ) {
 
   fun getPacketMagicNumberSize(): Int {
@@ -15,37 +15,17 @@ class Packet(
   }
 
   fun getPacketFullSize(): Int {
-    return getPacketMagicNumberSize() + sizeof(bodySize) + packetBody.size
-  }
-
-  fun toByteArray(): ByteArray {
-    val packetBuffer = ByteBuffer.allocate(getPacketFullSize())
-
-    packetBuffer.putInt(magicNumber)
-    packetBuffer.putInt(bodySize)
-    packetBuffer.put(packetBody)
-
-    return packetBuffer.array()
+    return getPacketMagicNumberSize() + sizeof(bodySize) + packetBody.getSize()
   }
 
   class PacketBody(
     val id: Long,             //8
     val type: Short,          //2
-    val data: ByteArray
+    val bodyByteSink: ByteSink
   ) {
 
     fun getSize(): Int {
-      return PACKET_BODY_SIZE + data.size
-    }
-
-    fun toByteBuffer(): ByteBuffer {
-      val buffer = ByteBuffer.allocate(getSize())
-
-      buffer.putLong(id)
-      buffer.putShort(type)
-      buffer.put(data)
-
-      return buffer
+      return PACKET_BODY_SIZE + bodyByteSink.getWriterPosition()
     }
   }
 

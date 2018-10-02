@@ -1,5 +1,7 @@
 package manager
 
+import core.Constants
+import core.byte_sink.InMemoryByteSink
 import extensions.autoRelease
 import core.extensions.toHexSeparated
 import core.packet.AbstractPacketPayload
@@ -17,7 +19,6 @@ import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.io.ByteReadChannel
 import kotlinx.coroutines.experimental.io.ByteWriteChannel
-import kotlinx.coroutines.experimental.io.writeAvailable
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.io.core.IoBuffer
@@ -85,11 +86,41 @@ class NetworkManager {
     }
   }
 
-  suspend fun sendPacket(packet: AbstractPacketPayload) {
-    val packetBytes = packet.packetToBytes(1L)
-    println(" <<< SENDING: ${packetBytes.toHexSeparated()}")
+  private suspend fun writeToOutputChannel(output: ByteWriteChannel, packet: Packet) {
+    val sink = InMemoryByteSink.createWithInitialSize(1024)
 
-    output.writeAvailable(packetBytes)
+    output.writeInt(packet.magicNumber)
+    output.writeInt(packet.bodySize)
+    output.writeLong(packet.packetBody.id)
+    output.writeShort(packet.packetBody.type)
+
+    //for logging
+    sink.writeInt(packet.magicNumber)
+    sink.writeInt(packet.bodySize)
+    sink.writeLong(packet.packetBody.id)
+    sink.writeShort(packet.packetBody.type)
+    //
+
+    val readBuffer = ByteArray(Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING)
+
+    packet.packetBody.bodyByteSink.getStream().use { bodyStream ->
+      val bytesReadCount = bodyStream.read(readBuffer, 0, Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING)
+      if (bytesReadCount == -1) {
+        return@use
+      }
+
+      output.writeFully(readBuffer, 0, bytesReadCount)
+
+      //for logging
+      sink.writeByteArray(readBuffer.copyOfRange(0, bytesReadCount))
+      //
+    }
+
+    println(" <<< SENDING: ${sink.getArray().toHexSeparated()}")
+  }
+
+  suspend fun sendPacket(packet: AbstractPacketPayload) {
+    writeToOutputChannel(output, packet.buildPacket(1L))
     output.flush()
   }
 
@@ -102,26 +133,6 @@ class NetworkManager {
           output = openWriteChannel(autoFlush = false)
           launch { listenServer(openReadChannel()) }
         }
-
-//      sendPacket(output, CreateRoomPacketPayload(true, "test_room", "test_password"))
-//      val chatRoomCreatedResponse = readResponse(input) as? CreateRoomResponsePayload
-//      if (chatRoomCreatedResponse == null) {
-//        println("Error")
-//        return@runBlocking
-//      }
-//
-//      println("chatRoomCreatedResponse status = ${chatRoomCreatedResponse.status}")
-
-
-
-//      sendPacket(output, GetPageOfPublicRoomsPacketPayload(0, 20))
-//      val getPageOfChatRoomsResponse = readResponse(input) as? GetPageOfPublicRoomsResponsePayload
-//      if (getPageOfChatRoomsResponse == null) {
-//        println("Error")
-//        return@runBlocking
-//      }
-//
-//      println("getPageOfChatRoomsResponse status = ${getPageOfChatRoomsResponse.status}")
     }
   }
 }

@@ -1,5 +1,6 @@
 package core.packet
 
+import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 import core.sizeof
 
@@ -45,8 +46,7 @@ class CreateRoomPacketPayload(
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
-    fun fromByteArray(array: ByteArray): CreateRoomPacketPayload {
-      val byteSink = InMemoryByteSink.fromArray(array)
+    fun fromByteSink(byteSink: ByteSink): CreateRoomPacketPayload {
       val packetVersion = PacketVersion.fromShort(byteSink.readShort())
 
       return when (packetVersion) {

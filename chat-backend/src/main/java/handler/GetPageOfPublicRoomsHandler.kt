@@ -1,6 +1,7 @@
 package handler
 
 import core.Status
+import core.byte_sink.ByteSink
 import core.packet.GetPageOfPublicRoomsPacketPayload
 import core.response.BaseResponse
 import core.response.GetPageOfPublicRoomsResponsePayload
@@ -15,8 +16,8 @@ class GetPageOfPublicRoomsHandler(
   private val minimumRoomsPerPage = 10
   private val maximumRoomsPerPage = 50
 
-  override suspend fun handle(packetId: Long, packetPayloadRaw: ByteArray, clientAddress: String) {
-    val packet = GetPageOfPublicRoomsPacketPayload.fromByteArray(packetPayloadRaw)
+  override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
+    val packet = GetPageOfPublicRoomsPacketPayload.fromByteSink(byteSink)
     val packetVersion = GetPageOfPublicRoomsPacketPayload.PacketVersion.fromShort(packet.packetVersion)
 
     val response = when (packetVersion) {

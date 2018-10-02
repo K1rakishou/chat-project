@@ -1,5 +1,8 @@
 package core.byte_sink
 
+import java.io.ByteArrayInputStream
+import java.io.DataInputStream
+
 class InMemoryByteSink private constructor(
   private var array: ByteArray
 ) : ByteSink() {
@@ -15,8 +18,14 @@ class InMemoryByteSink private constructor(
 
   override fun getReaderPosition() = readPosition.get()
   override fun getWriterPosition() = writePosition.get()
-  override fun getArray() = array.copyOf(writePosition.get())
-  override fun getLength() = array.size
+
+  override fun getStream(): DataInputStream {
+    return DataInputStream(ByteArrayInputStream(array))
+  }
+
+  fun getArray(): ByteArray {
+    return array.copyOfRange(0, writePosition.get())
+  }
 
   override fun readBoolean(): Boolean {
     return array[readPosition.getAndIncrement()] == 1.toByte()
@@ -149,8 +158,9 @@ class InMemoryByteSink private constructor(
     }
   }
 
-  override fun release() {
-    //does nothing
+  override fun close() {
+    //fill array with junk bytes before GCing
+    array.fill(0xFF.toByte())
   }
 
   companion object {

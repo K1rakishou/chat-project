@@ -20,7 +20,7 @@ class OnDiskByteSinkTest {
 
   @After
   fun tearDown() {
-    byteSink.release()
+    byteSink.close()
   }
 
   @Test
