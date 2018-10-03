@@ -1,5 +1,7 @@
 package core.packet
 
+import core.Packet
+import core.PacketType
 import core.byte_sink.ByteSink
 import core.sizeof
 

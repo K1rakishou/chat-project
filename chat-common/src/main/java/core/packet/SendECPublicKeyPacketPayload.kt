@@ -1,5 +1,6 @@
 package core.packet
 
+import core.PacketType
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 import core.sizeof

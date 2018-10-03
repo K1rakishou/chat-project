@@ -27,7 +27,7 @@ class CreateRoomPacketHandler(
   private suspend fun handleInternalV1(packet: CreateRoomPacketPayload): BaseResponse {
     if (chatRoomManager.exists(packet.chatRoomName)) {
       println("ChatRoom with name ${packet.chatRoomName} already exists")
-      return CreateRoomResponsePayload(Status.ChatRoomWithThisNameAlreadyExists, null)
+      return CreateRoomResponsePayload(Status.ChatRoomAlreadyExists, null)
     }
 
     val chatRoom = chatRoomManager.createChatRoom(

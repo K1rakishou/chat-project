@@ -1,5 +1,6 @@
 package core.byte_sink
 
+import core.interfaces.CanBeDrainedToSink
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 
@@ -155,6 +156,16 @@ class InMemoryByteSink private constructor(
     } else {
       writeByte(HAS_VALUE)
       writeByteArray(string.toByteArray())
+    }
+  }
+
+  override fun writeList(listOfObjects: List<CanBeDrainedToSink>?) {
+    if (listOfObjects == null) {
+      writeByte(NO_VALUE)
+    } else {
+      writeShort(listOfObjects.size.toShort())
+
+      listOfObjects.forEach { it.serialize(this) }
     }
   }
 

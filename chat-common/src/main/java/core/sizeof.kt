@@ -5,6 +5,7 @@ import java.lang.RuntimeException
 
 inline fun <reified T> sizeof(obj: T? = null): Int {
   return when (T::class) {
+    CanMeasureSizeOfFields::class -> (obj!! as CanMeasureSizeOfFields).getSize()
     Status::class -> 2
     Boolean::class -> 1
     Byte::class -> 1
@@ -39,6 +40,10 @@ inline fun <reified T> sizeof(obj: T? = null): Int {
   }
 }
 
-inline fun <reified T : CanMeasureSizeOfFields> sizeofList(objList: List<T>): Int {
-  return objList.asSequence().map { it.getSize() }.reduce { acc, i -> acc + i } + 2 //two bytes for list size
+inline fun <reified T : CanMeasureSizeOfFields> sizeofList(objList: List<T>?): Int {
+  if (objList == null) {
+    return 1  //NO_VALUE flag
+  } else {
+    return objList.asSequence().map { it.getSize() }.reduce { acc, i -> acc + i } + 2 + 1 //two bytes for list size + one byte HAS_VALUE flag
+  }
 }

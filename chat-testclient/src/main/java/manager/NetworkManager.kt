@@ -4,7 +4,7 @@ import core.Constants
 import core.byte_sink.InMemoryByteSink
 import core.extensions.toHexSeparated
 import core.packet.AbstractPacketPayload
-import core.packet.Packet
+import core.Packet
 import core.response.BaseResponse
 import core.response.CreateRoomResponsePayload
 import core.response.GetPageOfPublicRoomsResponsePayload
@@ -110,6 +110,8 @@ class NetworkManager {
             ResponseType.GetPageOfPublicRoomsResponseType -> {
               GetPageOfPublicRoomsResponsePayload.fromByteArray(packetPayloadRaw)
             }
+            ResponseType.JoinChatRoomResponseType -> TODO()
+            ResponseType.UserHasJoinedResponseType -> TODO()
           }
         }
 

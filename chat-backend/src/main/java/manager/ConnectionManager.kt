@@ -3,9 +3,8 @@ package manager
 import core.Connection
 import core.Constants
 import core.byte_sink.InMemoryByteSink
-import core.extensions.getMany
 import core.extensions.toHexSeparated
-import core.packet.Packet
+import core.Packet
 import core.response.BaseResponse
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
@@ -88,23 +87,8 @@ class ConnectionManager {
       return
     }
 
+    //TODO: probably should remove the connection from the connection map and also send to every group this user joined that user has disconnected
     writeToOutputChannel(connection, response.buildResponse(0L))
     connection.writeChannel.flush()
-  }
-
-  suspend fun broadcast(clientAddressList: List<String>, response: BaseResponse) {
-    val connections = mutex.withLock { connections.getMany(clientAddressList) }
-    if (connections.isEmpty()) {
-      return
-    }
-
-    for (connection in connections) {
-      if (connection.writeChannel.isClosedForWrite) {
-        continue
-      }
-
-      writeToOutputChannel(connection, response.buildResponse(0L))
-      connection.writeChannel.flush()
-    }
   }
 }

@@ -1,6 +1,7 @@
 package core.byte_sink
 
 import core.Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
+import core.interfaces.CanBeDrainedToSink
 import core.sizeof
 import java.io.*
 import java.lang.IllegalArgumentException
@@ -146,6 +147,16 @@ class OnDiskByteSink private constructor(
     } else {
       writeByte(HAS_VALUE)
       writeByteArray(string.toByteArray())
+    }
+  }
+
+  override fun writeList(listOfObjects: List<CanBeDrainedToSink>?) {
+    if (listOfObjects == null) {
+      writeByte(NO_VALUE)
+    } else {
+      writeShort(listOfObjects.size.toShort())
+
+      listOfObjects.forEach { it.serialize(this) }
     }
   }
 

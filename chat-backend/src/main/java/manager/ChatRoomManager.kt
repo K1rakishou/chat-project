@@ -53,8 +53,6 @@ class ChatRoomManager {
       }
 
       chatRoom.addUser(UserInRoom(user))
-
-      //TODO: broadcast to everyone that user has joined the room
       return@withLock true
     }
   }
@@ -100,6 +98,12 @@ class ChatRoomManager {
           val copy = chatRoom.copy()
           return@map PublicChatRoom(copy.roomName, copy.countUsers().toShort())
         }
+    }
+  }
+
+  suspend fun getChatRoom(roomName: String): ChatRoom? {
+    return mutex.withLock {
+      return@withLock chatRooms[roomName]
     }
   }
 }

@@ -2,6 +2,7 @@ package core
 
 class User(
   val userName: String,
+  val clientAddress: String,
   val ecPublicKey: ByteArray
 ) {
 

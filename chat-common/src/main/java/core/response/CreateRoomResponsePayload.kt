@@ -10,11 +10,11 @@ class CreateRoomResponsePayload(
   val chatRoomName: String?
 ) : BaseResponse(status) {
 
-  override val packetVersion: Short
+  override val packetType: Short
     get() = ResponseType.CreateRoomResponseType.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(status) + sizeof(chatRoomName)
+    return super.getPayloadSize() + sizeof(chatRoomName)
   }
 
   override fun toByteSink(byteSink: ByteSink) {

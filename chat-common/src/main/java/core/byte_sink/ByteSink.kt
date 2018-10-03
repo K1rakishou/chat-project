@@ -1,5 +1,6 @@
 package core.byte_sink
 
+import core.interfaces.CanBeDrainedToSink
 import java.io.DataInputStream
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -35,4 +36,6 @@ abstract class ByteSink : AutoCloseable {
   abstract fun writeByteArray(inArray: ByteArray)
   abstract fun readString(): String?
   abstract fun writeString(string: String?)
+
+  abstract fun writeList(listOfObjects: List<CanBeDrainedToSink>?)
 }

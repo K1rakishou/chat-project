@@ -3,17 +3,17 @@ package core.response
 import core.byte_sink.InMemoryByteSink
 import core.Status
 import core.byte_sink.ByteSink
-import core.packet.Packet
+import core.Packet
 import core.sizeof
 
 abstract class BaseResponse(
   val status: Status
 ) {
-  abstract val packetVersion: Short
+  abstract val packetType: Short
   abstract fun toByteSink(byteSink: ByteSink)
 
   open fun getPayloadSize(): Int {
-    return sizeof(packetVersion)
+    return sizeof(packetType) + sizeof(status)
   }
 
   fun buildResponse(id: Long): Packet {
@@ -27,7 +27,7 @@ abstract class BaseResponse(
 
     val packetBody = Packet.PacketBody(
       id,
-      packetVersion,
+      packetType,
       byteSink
     )
 

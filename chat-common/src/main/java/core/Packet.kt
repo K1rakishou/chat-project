@@ -1,13 +1,12 @@
-package core.packet
+package core
 
 import core.byte_sink.ByteSink
-import core.sizeof
 
 class Packet(
   val magicNumber: Int,       //4
   val bodySize: Int,          //4
 
-  val packetBody: Packet.PacketBody
+  val packetBody: PacketBody
 ) {
 
   fun getPacketMagicNumberSize(): Int {
