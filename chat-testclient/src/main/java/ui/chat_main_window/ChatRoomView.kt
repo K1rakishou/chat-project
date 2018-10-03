@@ -8,6 +8,7 @@ import tornadofx.*
 
 
 class ChatRoomView : View() {
+  private val textAreaId = "chatMessagesTextArea"
   private lateinit var textArea: TextArea
 
   private val model = object : ViewModel() {
@@ -16,6 +17,7 @@ class ChatRoomView : View() {
 
   override val root = vbox {
     textarea(model.chatMessages) {
+      id = textAreaId
       addClass(Styles.chatRoomTextArea)
       vboxConstraints { vGrow = Priority.ALWAYS }
 
@@ -35,6 +37,6 @@ class ChatRoomView : View() {
     //this is probably a fucking hack, but I have no idea
     //how to access textArea from textField otherwise ¯\_(ツ)_/¯
     textArea = getChildList()
-      ?.first { it is TextArea } as TextArea
+      ?.first { it.id == textAreaId } as TextArea
   }
 }
