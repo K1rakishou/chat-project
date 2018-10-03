@@ -8,7 +8,7 @@ import core.Packet
 import core.response.BaseResponse
 import core.response.CreateRoomResponsePayload
 import core.response.GetPageOfPublicRoomsResponsePayload
-import core.response.ResponseType
+import core.ResponseType
 import extensions.autoRelease
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
@@ -103,7 +103,6 @@ class NetworkManager {
           println(" >>> RECEIVING: ${packetPayloadRaw.toHexSeparated()}")
 
           return@autoRelease when (responseType) {
-            ResponseType.SendECPublicKeyResponseType -> TODO()
             ResponseType.CreateRoomResponseType -> {
               CreateRoomResponsePayload.fromByteArray(packetPayloadRaw)
             }

@@ -1,6 +1,7 @@
 package core.response
 
 import core.PublicUserInChat
+import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
 import core.sizeofList

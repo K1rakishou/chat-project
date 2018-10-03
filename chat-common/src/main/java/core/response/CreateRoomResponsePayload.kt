@@ -1,5 +1,6 @@
 package core.response
 
+import core.ResponseType
 import core.byte_sink.InMemoryByteSink
 import core.Status
 import core.byte_sink.ByteSink

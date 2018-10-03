@@ -105,7 +105,6 @@ class Server(
 
       packetInfo.byteSink.use { byteSink ->
         when (packetInfo.packetType) {
-          PacketType.SendECPublicKeyPacketType -> TODO() //SendECPublicKeyPacketType.fromByteSink()
           PacketType.CreateRoomPacketType -> {
             createRoomPacketHandler.handle(packetInfo.packetId, byteSink, clientAddress)
           }

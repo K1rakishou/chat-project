@@ -1,13 +1,12 @@
-package core.response
+package core
 
 import java.lang.IllegalArgumentException
 
 enum class ResponseType(val value: Short) {
-  SendECPublicKeyResponseType(0),
-  CreateRoomResponseType(1),
-  GetPageOfPublicRoomsResponseType(2),
-  JoinChatRoomResponseType(3),
-  UserHasJoinedResponseType(4);
+  CreateRoomResponseType(0),
+  GetPageOfPublicRoomsResponseType(1),
+  JoinChatRoomResponseType(2),
+  UserHasJoinedResponseType(3);
 
   companion object {
     fun fromShort(type: Short): ResponseType {
