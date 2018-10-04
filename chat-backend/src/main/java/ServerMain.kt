@@ -1,10 +1,8 @@
-import core.*
-import core.byte_sink.InMemoryByteSink
-import core.byte_sink.OnDiskByteSink
-import core.extensions.autoRelease
+import core.Connection
 import core.Packet
 import core.PacketType
-import core.utils.TimeUtils
+import core.extensions.readPacketInfo
+import core.extensions.toHexSeparated
 import handler.CreateRoomPacketHandler
 import handler.GetPageOfPublicRoomsHandler
 import handler.JoinChatRoomPacketHandler
@@ -14,17 +12,12 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.io.ByteReadChannel
-import kotlinx.coroutines.experimental.io.readAvailable
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
-import kotlinx.io.core.IoBuffer
-import kotlinx.io.core.readFully
 import manager.ChatRoomManager
 import manager.ConnectionManager
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import java.io.File
 import java.io.IOException
-import java.io.RandomAccessFile
 import java.net.InetSocketAddress
 import java.security.Security
 
@@ -35,7 +28,6 @@ fun main(args: Array<String>) {
     return
   }
 
-  Security.setProperty("crypto.policy", "unlimited")
   Security.addProvider(BouncyCastleProvider())
 
   Server(args[0]).run()
@@ -44,8 +36,8 @@ fun main(args: Array<String>) {
 class Server(
   private val byteSinkFileCachePath: String
 ) {
-  private val connectionManager = ConnectionManager()
   private val chatRoomManager = ChatRoomManager()
+  private val connectionManager = ConnectionManager(chatRoomManager)
 
   private val createRoomPacketHandler = CreateRoomPacketHandler(connectionManager, chatRoomManager)
   private val getPageOfPublicChatRoomsHandler = GetPageOfPublicRoomsHandler(connectionManager, chatRoomManager)
@@ -86,6 +78,7 @@ class Server(
   }
 
   private fun printException(error: Throwable, clientAddress: String) {
+    //TODO: probably should log it somewhere
     when (error) {
       is IOException -> {
         println("Client: ${clientAddress} forcibly closed the connection")
@@ -101,7 +94,10 @@ class Server(
       }
 
       val bodySize = readChannel.readInt()
-      val packetInfo = readPacketInfo(bodySize, readChannel)
+      val packetInfo = readChannel.readPacketInfo(byteSinkFileCachePath, bodySize)
+
+      //TODO: for debug only! may cause OOM when internal buffer is way too big!
+      println(" <<< RECEIVING: ${packetInfo.byteSink.getStream().readAllBytes().toHexSeparated()}")
 
       packetInfo.byteSink.use { byteSink ->
         when (packetInfo.packetType) {
@@ -117,50 +113,6 @@ class Server(
         }
       }
     }
-  }
-
-  private suspend fun readPacketInfo(bodySize: Int, readChannel: ByteReadChannel): PacketInfo {
-    var packetInfo: PacketInfo? = null
-
-    if (bodySize <= Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
-      IoBuffer.Pool.autoRelease { buffer ->
-        readChannel.readFully(buffer, bodySize)
-
-        val packetId = buffer.readLong()
-        val packetType = PacketType.fromShort(buffer.readShort())
-
-        val packetPayloadRaw = ByteArray(buffer.readRemaining)
-        buffer.readFully(packetPayloadRaw)
-
-        packetInfo = PacketInfo(packetId, packetType, InMemoryByteSink.fromArray(packetPayloadRaw))
-      }
-    } else {
-      val file = File("$byteSinkFileCachePath\\test_file-${TimeUtils.getCurrentTime()}.tmp")
-      val randomAccessFile = RandomAccessFile(file, "w")
-
-      randomAccessFile.use { raf ->
-        for (offset in 0 until bodySize step Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
-          val chunk = if (bodySize - offset > Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
-            Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
-          } else {
-            bodySize - offset
-          }
-
-          val array = ByteArray(chunk)
-          readChannel.readAvailable(array)
-          raf.write(array)
-
-          val sink = OnDiskByteSink.fromFile(file)
-
-          val packetId = sink.readLong()
-          val packetType = PacketType.fromShort(sink.readShort())
-
-          packetInfo = PacketInfo(packetId, packetType, sink)
-        }
-      }
-    }
-
-    return packetInfo!!
   }
 
   private suspend fun readMagicNumber(readChannel: ByteReadChannel): Boolean {

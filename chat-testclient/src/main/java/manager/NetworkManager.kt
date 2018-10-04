@@ -1,15 +1,12 @@
 package manager
 
 import core.Constants
+import core.Packet
+import core.ResponseInfo
 import core.byte_sink.InMemoryByteSink
 import core.extensions.toHexSeparated
 import core.packet.AbstractPacketPayload
-import core.Packet
-import core.response.BaseResponse
-import core.response.CreateRoomResponsePayload
-import core.response.GetPageOfPublicRoomsResponsePayload
-import core.ResponseType
-import extensions.autoRelease
+import extensions.readResponseInfo
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
 import io.ktor.network.util.ioCoroutineDispatcher
@@ -20,8 +17,7 @@ import kotlinx.coroutines.experimental.io.close
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
-import kotlinx.io.core.IoBuffer
-import kotlinx.io.core.readFully
+import java.io.File
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -36,7 +32,20 @@ class NetworkManager {
   private lateinit var writeChannel: ByteWriteChannel
   private lateinit var readChannel: ByteReadChannel
 
+  private lateinit var byteSinkFileCachePath: String
+
   val socketEventsQueue = BroadcastChannel<SocketEvent>(128)
+
+  init {
+    val byteSinkCachePathFile = File(System.getProperty("user.dir") + "\\byte-sink-cache")
+    if (!byteSinkCachePathFile.exists()) {
+      if (!byteSinkCachePathFile.mkdirs()) {
+        throw IllegalStateException("Could not create byteSink cache directory: ${byteSinkCachePathFile.absolutePath}")
+      }
+    }
+
+    byteSinkFileCachePath = byteSinkCachePathFile.absolutePath
+  }
 
   suspend fun connect() {
     try {
@@ -90,31 +99,12 @@ class NetworkManager {
         }
 
         val bodySize = readChannel.readInt()
+        val responseInfo = readChannel.readResponseInfo(byteSinkFileCachePath, bodySize)
 
-        val packet = IoBuffer.Pool.autoRelease { buffer ->
-          readChannel.readFully(buffer, bodySize)
+        //TODO: for debug only! may cause OOM when internal buffer is way too big!
+        println(" >>> RECEIVING: ${responseInfo.byteSink.getStream().readAllBytes().toHexSeparated()}")
 
-          val id = buffer.readLong()
-          val responseType = ResponseType.fromShort(buffer.readShort())
-
-          val packetPayloadRaw = ByteArray(buffer.readRemaining)
-          buffer.readFully(packetPayloadRaw)
-
-          println(" >>> RECEIVING: ${packetPayloadRaw.toHexSeparated()}")
-
-          return@autoRelease when (responseType) {
-            ResponseType.CreateRoomResponseType -> {
-              CreateRoomResponsePayload.fromByteArray(packetPayloadRaw)
-            }
-            ResponseType.GetPageOfPublicRoomsResponseType -> {
-              GetPageOfPublicRoomsResponsePayload.fromByteArray(packetPayloadRaw)
-            }
-            ResponseType.JoinChatRoomResponseType -> TODO()
-            ResponseType.UserHasJoinedResponseType -> TODO()
-          }
-        }
-
-        socketEventsQueue.send(SocketEvent.PacketReceived(packet))
+        socketEventsQueue.send(SocketEvent.ResponseReceived(responseInfo))
       }
     } finally {
       disconnect()
@@ -193,9 +183,9 @@ class NetworkManager {
   }
 
   sealed class SocketEvent {
-    class ConnectedToServer() : SocketEvent()
+    class ConnectedToServer : SocketEvent()
     class ErrorWhileConnecting(val throwable: Throwable) : SocketEvent()
-    class DisconnectedFromServer() : SocketEvent()
-    class PacketReceived(val packet: BaseResponse) : SocketEvent()
+    class DisconnectedFromServer : SocketEvent()
+    class ResponseReceived(val responseInfo: ResponseInfo) : SocketEvent()
   }
 }

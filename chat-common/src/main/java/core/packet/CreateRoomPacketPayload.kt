@@ -1,7 +1,6 @@
 package core.packet
 
 import core.PacketType
-import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 import core.sizeof
 
@@ -30,11 +29,13 @@ class CreateRoomPacketPayload(
           writeString(chatRoomName)
           writeString(chatRoomPasswordHash)
         }
+        CreateRoomPacketPayload.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
       }
     }
   }
 
   enum class PacketVersion(val value: Short) {
+    Unknown(-1),
     V1(1);
 
     companion object {
@@ -46,19 +47,5 @@ class CreateRoomPacketPayload(
 
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
-
-    fun fromByteSink(byteSink: ByteSink): CreateRoomPacketPayload {
-      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
-
-      return when (packetVersion) {
-        CreateRoomPacketPayload.PacketVersion.V1 -> {
-          val isPublic = byteSink.readBoolean()
-          val chatRoomName = byteSink.readString()
-          val chatRoomPasswordHash = byteSink.readString()
-
-          CreateRoomPacketPayload(isPublic, chatRoomName, chatRoomPasswordHash)
-        }
-      }
-    }
   }
 }

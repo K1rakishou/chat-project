@@ -1,7 +1,9 @@
 package core.byte_sink
 
 import core.Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
+import core.exception.ByteSinkReadException
 import core.interfaces.CanBeDrainedToSink
+import core.interfaces.CanMeasureSizeOfFields
 import core.sizeof
 import java.io.*
 import java.lang.IllegalArgumentException
@@ -42,6 +44,10 @@ class OnDiskByteSink private constructor(
   }
 
   override fun readBoolean(): Boolean {
+    if (getReaderPosition() + sizeof<Boolean>() > raf.length()) {
+      throw ByteSinkReadException()
+    }
+
     raf.seek(readPosition.getAndIncrement().toLong())
     return raf.readBoolean()
   }
@@ -52,6 +58,10 @@ class OnDiskByteSink private constructor(
   }
 
   override fun readByte(): Byte {
+    if (getReaderPosition() + sizeof<Byte>() > raf.length()) {
+      throw ByteSinkReadException()
+    }
+
     raf.seek(readPosition.getAndIncrement().toLong())
     return raf.readByte()
   }
@@ -62,6 +72,10 @@ class OnDiskByteSink private constructor(
   }
 
   override fun readByteAsInt(): Int {
+    if (getReaderPosition() + sizeof<Byte>() > raf.length()) {
+      throw ByteSinkReadException()
+    }
+
     raf.seek(readPosition.getAndIncrement().toLong())
     return raf.readByte().toInt()
   }
@@ -72,6 +86,10 @@ class OnDiskByteSink private constructor(
   }
 
   override fun readShort(): Short {
+    if (getReaderPosition() + sizeof<Short>() > raf.length()) {
+      throw ByteSinkReadException()
+    }
+
     raf.seek(readPosition.getAndAdd(sizeof<Short>()).toLong())
     return raf.readShort()
   }
@@ -82,6 +100,10 @@ class OnDiskByteSink private constructor(
   }
 
   override fun readShortAsInt(): Int {
+    if (getReaderPosition() + sizeof<Short>() > raf.length()) {
+      throw ByteSinkReadException()
+    }
+
     raf.seek(readPosition.getAndAdd(sizeof<Short>()).toLong())
     return raf.readShort().toInt()
   }
@@ -92,6 +114,10 @@ class OnDiskByteSink private constructor(
   }
 
   override fun readInt(): Int {
+    if (getReaderPosition() + sizeof<Int>() > raf.length()) {
+      throw ByteSinkReadException()
+    }
+
     raf.seek(readPosition.getAndAdd(sizeof<Int>()).toLong())
     return raf.readInt()
   }
@@ -102,6 +128,10 @@ class OnDiskByteSink private constructor(
   }
 
   override fun readLong(): Long {
+    if (getReaderPosition() + sizeof<Long>() > raf.length()) {
+      throw ByteSinkReadException()
+    }
+
     raf.seek(readPosition.getAndAdd(sizeof<Long>()).toLong())
     return raf.readLong()
   }
@@ -112,9 +142,12 @@ class OnDiskByteSink private constructor(
   }
 
   override fun readByteArray(): ByteArray {
-    raf.seek(readPosition.get().toLong())
-
     val arrayLen = readInt()
+
+    if (getReaderPosition() + arrayLen > raf.length()) {
+      throw ByteSinkReadException()
+    }
+
     val array = ByteArray(arrayLen)
     raf.read(array)
     readPosition.getAndAdd(arrayLen)
@@ -123,8 +156,6 @@ class OnDiskByteSink private constructor(
   }
 
   override fun writeByteArray(inArray: ByteArray) {
-    raf.seek(writePosition.get().toLong())
-
     writeInt(inArray.size)
     raf.write(inArray)
 
@@ -150,7 +181,9 @@ class OnDiskByteSink private constructor(
     }
   }
 
-  override fun writeList(listOfObjects: List<CanBeDrainedToSink>?) {
+  override fun <T> writeList(listOfObjects: List<T>?)
+    where T : CanBeDrainedToSink,
+          T : CanMeasureSizeOfFields {
     if (listOfObjects == null) {
       writeByte(NO_VALUE)
     } else {

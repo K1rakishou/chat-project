@@ -33,6 +33,7 @@ class GetPageOfPublicRoomsPacketPayload(
   }
 
   enum class PacketVersion(val value: Short) {
+    Unknown(-1),
     V1(1);
 
     companion object {
@@ -44,18 +45,5 @@ class GetPageOfPublicRoomsPacketPayload(
 
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
-
-    fun fromByteSink(byteSink: ByteSink): GetPageOfPublicRoomsPacketPayload {
-      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
-
-      return when (packetVersion) {
-        GetPageOfPublicRoomsPacketPayload.PacketVersion.V1 -> {
-          val currentPage = byteSink.readShort()
-          val roomsPerPage = byteSink.readByte()
-
-          GetPageOfPublicRoomsPacketPayload(currentPage, roomsPerPage)
-        }
-      }
-    }
   }
 }

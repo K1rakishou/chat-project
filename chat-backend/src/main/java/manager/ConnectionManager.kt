@@ -9,7 +9,9 @@ import core.response.BaseResponse
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 
-class ConnectionManager {
+class ConnectionManager(
+  private val chatRoomManager: ChatRoomManager
+) {
   private val connections = mutableMapOf<String, Connection>()
   private val mutex = Mutex()
   private val loggingSinkInitialSize = 1024
@@ -28,6 +30,8 @@ class ConnectionManager {
   }
 
   suspend fun removeConnection(clientAddress: String) {
+    //TODO: broadcast to everyone in every room this users had joined that he has disconnected
+
     mutex.withLock { connections.remove(clientAddress) }
     println("Removed connection for client $clientAddress")
   }
@@ -69,7 +73,6 @@ class ConnectionManager {
         sink.writeByteArray(readBuffer.copyOfRange(0, bytesReadCount))
         //
       }
-
     }
 
     println(" >>> SENDING BACK: ${sink.getArray().toHexSeparated()}")

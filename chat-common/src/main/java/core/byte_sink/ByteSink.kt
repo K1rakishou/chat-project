@@ -1,6 +1,7 @@
 package core.byte_sink
 
 import core.interfaces.CanBeDrainedToSink
+import core.interfaces.CanMeasureSizeOfFields
 import java.io.DataInputStream
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -37,5 +38,7 @@ abstract class ByteSink : AutoCloseable {
   abstract fun readString(): String?
   abstract fun writeString(string: String?)
 
-  abstract fun writeList(listOfObjects: List<CanBeDrainedToSink>?)
+  abstract fun <T> writeList(listOfObjects: List<T>?)
+    where T : CanBeDrainedToSink,
+          T : CanMeasureSizeOfFields
 }

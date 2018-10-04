@@ -1,15 +1,16 @@
 package controller
 
-import core.Status
-import core.response.GetPageOfPublicRoomsResponsePayload
-import kotlinx.coroutines.experimental.launch
-import tornadofx.Controller
 import ChatApp
+import core.ResponseInfo
+import core.ResponseType
+import core.Status
 import core.packet.GetPageOfPublicRoomsPacketPayload
-import core.response.BaseResponse
+import core.response.GetPageOfPublicRoomsResponsePayload
 import javafx.beans.property.SimpleStringProperty
 import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
+import tornadofx.Controller
 import tornadofx.runLater
 import ui.chat_main_window.ChatMainWindow
 import ui.loading_window.ConnectionToServerWindow
@@ -54,23 +55,27 @@ class ConnectionToServerController : Controller() {
           changeConnectionStatus("Reconnecting...")
           startConnectionToServer()
         }
-        is NetworkManager.SocketEvent.PacketReceived -> {
-          handleIncomingPackets(socketEvent.packet)
+        is NetworkManager.SocketEvent.ResponseReceived -> {
+          handleIncomingResponses(socketEvent.responseInfo)
         }
       }
     }
   }
 
-  private fun handleIncomingPackets(response: BaseResponse) {
-    when (response) {
-      is GetPageOfPublicRoomsResponsePayload -> {
+  private fun handleIncomingResponses(responseInfo: ResponseInfo) {
+    when (responseInfo.responseType) {
+      ResponseType.GetPageOfPublicRoomsResponseType -> {
+        val response = GetPageOfPublicRoomsResponsePayload.fromByteSink(responseInfo.byteSink)
         if (response.status == Status.Ok) {
           runLater {
             store.setChatRoomList(response.publicChatRoomList)
             find<ConnectionToServerWindow>().replaceWith<ChatMainWindow>()
           }
+        } else {
+          TODO("Error handling")
         }
       }
+      else -> throw IllegalStateException("Unexpected responseType: ${responseInfo.responseType}. Should not happen.")
     }
   }
 

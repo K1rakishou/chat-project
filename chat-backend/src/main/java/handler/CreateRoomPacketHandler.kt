@@ -2,6 +2,7 @@ package handler
 
 import core.Status
 import core.byte_sink.ByteSink
+import core.exception.UnknownPacketVersion
 import core.packet.CreateRoomPacketPayload
 import core.response.BaseResponse
 import core.response.CreateRoomResponsePayload
@@ -14,26 +15,30 @@ class CreateRoomPacketHandler(
 ) : BasePacketHandler() {
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packet = CreateRoomPacketPayload.fromByteSink(byteSink)
-    val packetVersion = CreateRoomPacketPayload.PacketVersion.fromShort(packet.packetVersion)
+    val packetVersion = CreateRoomPacketPayload.PacketVersion.fromShort(byteSink.readShort())
 
     val response = when (packetVersion) {
-      CreateRoomPacketPayload.PacketVersion.V1 -> handleInternalV1(packet)
+      CreateRoomPacketPayload.PacketVersion.V1 -> handleInternalV1(byteSink)
+      CreateRoomPacketPayload.PacketVersion.Unknown -> throw UnknownPacketVersion()
     }
 
     connectionManager.send(clientAddress, response)
   }
 
-  private suspend fun handleInternalV1(packet: CreateRoomPacketPayload): BaseResponse {
-    if (chatRoomManager.exists(packet.chatRoomName)) {
-      println("ChatRoom with name ${packet.chatRoomName} already exists")
+  private suspend fun handleInternalV1(byteSink: ByteSink): BaseResponse {
+    val isPublic = byteSink.readBoolean()
+    val chatRoomName = byteSink.readString()
+    val chatRoomPasswordHash = byteSink.readString()
+
+    if (chatRoomManager.exists(chatRoomName)) {
+      println("ChatRoom with name $chatRoomName already exists")
       return CreateRoomResponsePayload(Status.ChatRoomAlreadyExists, null)
     }
 
     val chatRoom = chatRoomManager.createChatRoom(
-      isPublic = packet.isPublic,
-      chatRoomName = packet.chatRoomName,
-      chatRoomPasswordHash = packet.chatRoomPasswordHash
+      isPublic = isPublic,
+      chatRoomName = chatRoomName,
+      chatRoomPasswordHash = chatRoomPasswordHash
     )
 
     println("ChatRoom ${chatRoom} has been successfully created!")

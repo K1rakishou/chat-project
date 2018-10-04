@@ -42,8 +42,7 @@ class GetPageOfPublicRoomsResponsePayload(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
-    fun fromByteArray(array: ByteArray): GetPageOfPublicRoomsResponsePayload {
-      val byteSink = InMemoryByteSink.fromArray(array)
+    fun fromByteSink(byteSink: ByteSink): GetPageOfPublicRoomsResponsePayload {
       val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
 
       when (responseVersion) {

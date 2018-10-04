@@ -1,6 +1,9 @@
 package core.byte_sink
 
+import core.exception.ByteSinkReadException
 import core.interfaces.CanBeDrainedToSink
+import core.interfaces.CanMeasureSizeOfFields
+import core.sizeof
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 
@@ -29,6 +32,10 @@ class InMemoryByteSink private constructor(
   }
 
   override fun readBoolean(): Boolean {
+    if (getReaderPosition() + sizeof<Boolean>() > array.size) {
+      throw ByteSinkReadException()
+    }
+
     return array[readPosition.getAndIncrement()] == 1.toByte()
   }
 
@@ -40,6 +47,10 @@ class InMemoryByteSink private constructor(
   }
 
   override fun readByte(): Byte {
+    if (getReaderPosition() + sizeof<Byte>() > array.size) {
+      throw ByteSinkReadException()
+    }
+
     return array[readPosition.getAndIncrement()]
   }
 
@@ -58,6 +69,10 @@ class InMemoryByteSink private constructor(
   }
 
   override fun readShort(): Short {
+    if (getReaderPosition() + sizeof<Short>() > array.size) {
+      throw ByteSinkReadException()
+    }
+
     var result: Int = 0
 
     for (i in 0..1) {
@@ -85,6 +100,10 @@ class InMemoryByteSink private constructor(
   }
 
   override fun readInt(): Int {
+    if (getReaderPosition() + sizeof<Int>() > array.size) {
+      throw ByteSinkReadException()
+    }
+
     var result: Int = 0
 
     for (i in 0..3) {
@@ -104,6 +123,10 @@ class InMemoryByteSink private constructor(
   }
 
   override fun readLong(): Long {
+    if (getReaderPosition() + sizeof<Long>() > array.size) {
+      throw ByteSinkReadException()
+    }
+
     var result: Long = 0
 
     for (i in 0..7) {
@@ -128,6 +151,10 @@ class InMemoryByteSink private constructor(
 
   override fun readByteArray(): ByteArray {
     val size = readInt()
+
+    if (getReaderPosition() + size > array.size) {
+      throw ByteSinkReadException()
+    }
 
     return array.copyOfRange(readPosition.get(), readPosition.get() + size)
       .also { readPosition.getAndAdd(size) }
@@ -159,12 +186,19 @@ class InMemoryByteSink private constructor(
     }
   }
 
-  override fun writeList(listOfObjects: List<CanBeDrainedToSink>?) {
+  override fun <T> writeList(listOfObjects: List<T>?)
+    where T : CanBeDrainedToSink,
+          T : CanMeasureSizeOfFields {
     if (listOfObjects == null) {
       writeByte(NO_VALUE)
     } else {
       writeShort(listOfObjects.size.toShort())
 
+      val totalSizeForAllObjects = listOfObjects.asSequence()
+        .map { it.getSize() }
+        .reduce { acc, size -> acc + size }
+
+      resizeIfNeeded(totalSizeForAllObjects)
       listOfObjects.forEach { it.serialize(this) }
     }
   }

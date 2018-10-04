@@ -4,6 +4,7 @@ import core.PacketType
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 import core.sizeof
+import java.lang.IllegalStateException
 
 class JoinChatRoomPacketPayload(
   val ecPublicKey: ByteArray,
@@ -32,36 +33,23 @@ class JoinChatRoomPacketPayload(
           writeString(roomName)
           writeString(roomPasswordHash)
         }
+        JoinChatRoomPacketPayload.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
       }
     }
   }
 
   enum class PacketVersion(val value: Short) {
+    Unknown(-1),
     V1(1);
 
     companion object {
       fun fromShort(value: Short): PacketVersion {
-        return PacketVersion.values().first { it.value == value }
+        return PacketVersion.values().firstOrNull { it.value == value } ?: Unknown
       }
     }
   }
 
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
-
-    fun fromByteSink(byteSink: ByteSink): JoinChatRoomPacketPayload {
-      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
-
-      return when (packetVersion) {
-        JoinChatRoomPacketPayload.PacketVersion.V1 -> {
-          val ecPublicKey = byteSink.readByteArray()
-          val userName = byteSink.readString()!!
-          val roomName = byteSink.readString()!!
-          val roomPasswordHash = byteSink.readString()
-
-          JoinChatRoomPacketPayload(ecPublicKey, userName, roomName, roomPasswordHash)
-        }
-      }
-    }
   }
 }
