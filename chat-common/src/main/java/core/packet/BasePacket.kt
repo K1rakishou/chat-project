@@ -5,7 +5,7 @@ import core.PacketType
 import core.byte_sink.ByteSink
 import core.sizeof
 
-abstract class AbstractPacketPayload {
+abstract class BasePacket {
   abstract val packetVersion: Short
   abstract fun getPacketType(): PacketType
   abstract fun toByteSink(): ByteSink

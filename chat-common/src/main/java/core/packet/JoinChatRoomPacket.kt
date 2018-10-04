@@ -6,12 +6,12 @@ import core.byte_sink.InMemoryByteSink
 import core.sizeof
 import java.lang.IllegalStateException
 
-class JoinChatRoomPacketPayload(
+class JoinChatRoomPacket(
   val ecPublicKey: ByteArray,
   val userName: String,
   val roomName: String,
   val roomPasswordHash: String?
-) : AbstractPacketPayload() {
+) : BasePacket() {
 
   override val packetVersion: Short
     get() = CURRENT_PACKET_VERSION.value
@@ -27,13 +27,13 @@ class JoinChatRoomPacketPayload(
       writeShort(packetVersion)
 
       when (CURRENT_PACKET_VERSION) {
-        JoinChatRoomPacketPayload.PacketVersion.V1 -> {
+        JoinChatRoomPacket.PacketVersion.V1 -> {
           writeByteArray(ecPublicKey)
           writeString(userName)
           writeString(roomName)
           writeString(roomPasswordHash)
         }
-        JoinChatRoomPacketPayload.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
+        JoinChatRoomPacket.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
       }
     }
   }

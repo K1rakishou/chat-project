@@ -3,7 +3,7 @@ package handler
 import core.Status
 import core.byte_sink.ByteSink
 import core.exception.UnknownPacketVersion
-import core.packet.GetPageOfPublicRoomsPacketPayload
+import core.packet.GetPageOfPublicRoomsPacket
 import core.response.BaseResponse
 import core.response.GetPageOfPublicRoomsResponsePayload
 import manager.ChatRoomManager
@@ -18,11 +18,11 @@ class GetPageOfPublicRoomsHandler(
   private val maximumRoomsPerPage = 50
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packetVersion = GetPageOfPublicRoomsPacketPayload.PacketVersion.fromShort(byteSink.readShort())
+    val packetVersion = GetPageOfPublicRoomsPacket.PacketVersion.fromShort(byteSink.readShort())
 
     val response = when (packetVersion) {
-      GetPageOfPublicRoomsPacketPayload.PacketVersion.V1 -> handleInternalV1(byteSink)
-      GetPageOfPublicRoomsPacketPayload.PacketVersion.Unknown -> throw UnknownPacketVersion()
+      GetPageOfPublicRoomsPacket.PacketVersion.V1 -> handleInternalV1(byteSink)
+      GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
     }
 
     connectionManager.send(clientAddress, response)

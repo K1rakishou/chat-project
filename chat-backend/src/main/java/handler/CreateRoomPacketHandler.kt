@@ -3,7 +3,7 @@ package handler
 import core.Status
 import core.byte_sink.ByteSink
 import core.exception.UnknownPacketVersion
-import core.packet.CreateRoomPacketPayload
+import core.packet.CreateRoomPacket
 import core.response.BaseResponse
 import core.response.CreateRoomResponsePayload
 import manager.ChatRoomManager
@@ -15,11 +15,11 @@ class CreateRoomPacketHandler(
 ) : BasePacketHandler() {
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packetVersion = CreateRoomPacketPayload.PacketVersion.fromShort(byteSink.readShort())
+    val packetVersion = CreateRoomPacket.PacketVersion.fromShort(byteSink.readShort())
 
     val response = when (packetVersion) {
-      CreateRoomPacketPayload.PacketVersion.V1 -> handleInternalV1(byteSink)
-      CreateRoomPacketPayload.PacketVersion.Unknown -> throw UnknownPacketVersion()
+      CreateRoomPacket.PacketVersion.V1 -> handleInternalV1(byteSink)
+      CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
     }
 
     connectionManager.send(clientAddress, response)

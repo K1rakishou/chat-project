@@ -5,7 +5,7 @@ import core.Packet
 import core.ResponseInfo
 import core.byte_sink.InMemoryByteSink
 import core.extensions.toHexSeparated
-import core.packet.AbstractPacketPayload
+import core.packet.BasePacket
 import extensions.readResponseInfo
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
@@ -111,7 +111,7 @@ class NetworkManager {
     }
   }
 
-  suspend fun sendPacket(packet: AbstractPacketPayload) {
+  suspend fun sendPacket(packet: BasePacket) {
     if (!isConnected.get() || writeChannel.isClosedForWrite) {
       disconnect()
       return

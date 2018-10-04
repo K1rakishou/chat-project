@@ -4,7 +4,7 @@ import ChatApp
 import core.ResponseInfo
 import core.ResponseType
 import core.Status
-import core.packet.GetPageOfPublicRoomsPacketPayload
+import core.packet.GetPageOfPublicRoomsPacket
 import core.response.GetPageOfPublicRoomsResponsePayload
 import javafx.beans.property.SimpleStringProperty
 import kotlinx.coroutines.experimental.delay
@@ -45,7 +45,7 @@ class ConnectionToServerController : Controller() {
       when (socketEvent) {
         is NetworkManager.SocketEvent.ConnectedToServer -> {
           changeConnectionStatus("Connected")
-          networkManager.sendPacket(GetPageOfPublicRoomsPacketPayload(0, 20))
+          networkManager.sendPacket(GetPageOfPublicRoomsPacket(0, 20))
         }
         is NetworkManager.SocketEvent.ErrorWhileConnecting -> {
           changeConnectionStatus("Error while trying to connect: ${socketEvent.throwable.message}")

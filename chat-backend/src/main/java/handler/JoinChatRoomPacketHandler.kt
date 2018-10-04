@@ -5,7 +5,7 @@ import core.Status
 import core.User
 import core.byte_sink.ByteSink
 import core.exception.UnknownPacketVersion
-import core.packet.JoinChatRoomPacketPayload
+import core.packet.JoinChatRoomPacket
 import core.response.JoinChatRoomResponsePayload
 import core.response.UserHasJoinedResponsePayload
 import manager.ChatRoomManager
@@ -17,19 +17,26 @@ class JoinChatRoomPacketHandler(
 ) : BasePacketHandler() {
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packetVersion = JoinChatRoomPacketPayload.PacketVersion.fromShort(byteSink.readShort())
+    val packetVersion = JoinChatRoomPacket.PacketVersion.fromShort(byteSink.readShort())
 
     when (packetVersion) {
-      JoinChatRoomPacketPayload.PacketVersion.V1 -> handleInternalV1(packetId, byteSink, clientAddress)
-      JoinChatRoomPacketPayload.PacketVersion.Unknown -> throw UnknownPacketVersion()
+      JoinChatRoomPacket.PacketVersion.V1 -> handleInternalV1(packetId, byteSink, clientAddress)
+      JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
     }
   }
 
   private suspend fun handleInternalV1(packetId: Long, byteSink: ByteSink, clientAddress: String) {
     val ecPublicKey = byteSink.readByteArray()
-    val userName = byteSink.readString()!!
-    val roomName = byteSink.readString()!!
+    val userName = byteSink.readString()
+    val roomName = byteSink.readString()
     val roomPasswordHash = byteSink.readString()
+
+    if ((ecPublicKey == null || ecPublicKey.isEmpty()) ||
+      (userName == null || userName.isEmpty()) ||
+      (roomName == null || roomName.isEmpty())) {
+      connectionManager.send(clientAddress, JoinChatRoomResponsePayload.fail(Status.BadParam))
+      return
+    }
 
     if (!chatRoomManager.exists(roomName)) {
       connectionManager.send(clientAddress, JoinChatRoomResponsePayload.fail(Status.ChatRoomDoesNotExist))

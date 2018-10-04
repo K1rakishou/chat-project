@@ -4,19 +4,18 @@ import core.PacketType
 import core.byte_sink.InMemoryByteSink
 import core.sizeof
 
-class CreateRoomPacketPayload(
-  val isPublic: Boolean,
-  val chatRoomName: String?,
-  val chatRoomPasswordHash: String?
-) : AbstractPacketPayload() {
+class GetPageOfPublicRoomsPacket(
+  val currentPage: Short,
+  val roomsPerPage: Byte
+) : BasePacket() {
 
   override val packetVersion: Short
     get() = CURRENT_PACKET_VERSION.value
 
-  override fun getPacketType(): PacketType = PacketType.CreateRoomPacketType
+  override fun getPacketType(): PacketType = PacketType.GetPageOfPublicRoomsPacketType
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash)
+    return super.getPayloadSize() + sizeof(currentPage) + sizeof(roomsPerPage)
   }
 
   override fun toByteSink(): InMemoryByteSink {
@@ -24,12 +23,10 @@ class CreateRoomPacketPayload(
       writeShort(packetVersion)
 
       when (CURRENT_PACKET_VERSION) {
-        CreateRoomPacketPayload.PacketVersion.V1 -> {
-          writeBoolean(isPublic)
-          writeString(chatRoomName)
-          writeString(chatRoomPasswordHash)
+        GetPageOfPublicRoomsPacket.PacketVersion.V1 -> {
+          writeShort(currentPage)
+          writeByte(roomsPerPage)
         }
-        CreateRoomPacketPayload.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
       }
     }
   }
@@ -40,7 +37,7 @@ class CreateRoomPacketPayload(
 
     companion object {
       fun fromShort(value: Short): PacketVersion {
-        return PacketVersion.values().first { it.value == value }
+        return PacketVersion.values().firstOrNull { it.value == value } ?: Unknown
       }
     }
   }
