@@ -151,41 +151,46 @@ class InMemoryByteSink private constructor(
     array[writePosition.getAndIncrement()] = (long and 0x000000FF).toByte()
   }
 
-  override fun readByteArray(): ByteArray {
-    val size = readInt()
-
-    if (getReaderPosition() + size > array.size) {
-      throw ByteSinkReadException()
-    }
-
-    return array.copyOfRange(readPosition.get(), readPosition.get() + size)
-      .also { readPosition.getAndAdd(size) }
-  }
-
-  override fun writeByteArray(inArray: ByteArray) {
-    writeInt(inArray.size)
-
-    resizeIfNeeded(inArray.size)
-    System.arraycopy(inArray, 0, array, writePosition.get(), inArray.size)
-
-    writePosition.getAndAdd(inArray.size)
-  }
-
-  override fun readString(): String? {
+  override fun readByteArray(): ByteArray? {
     return if (readByte() == NO_VALUE) {
       null
     } else {
-      String(readByteArray())
+      val size = readInt()
+
+      if (getReaderPosition() + size > array.size) {
+        throw ByteSinkReadException()
+      }
+
+      return array.copyOfRange(readPosition.get(), readPosition.get() + size)
+        .also { readPosition.getAndAdd(size) }
+    }
+  }
+
+  override fun writeByteArray(inArray: ByteArray?) {
+    if (inArray == null) {
+      writeByte(NO_VALUE)
+    } else {
+      writeByte(HAS_VALUE)
+      writeInt(inArray.size)
+
+      resizeIfNeeded(inArray.size)
+      System.arraycopy(inArray, 0, array, writePosition.get(), inArray.size)
+
+      writePosition.getAndAdd(inArray.size)
+    }
+  }
+
+  override fun readString(): String? {
+    val array = readByteArray()
+    if (array == null) {
+      return null
+    } else {
+      return String(array)
     }
   }
 
   override fun writeString(string: String?) {
-    if (string == null) {
-      writeByte(NO_VALUE)
-    } else {
-      writeByte(HAS_VALUE)
-      writeByteArray(string.toByteArray())
-    }
+    writeByteArray(string?.toByteArray())
   }
 
   override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>): List<T> {

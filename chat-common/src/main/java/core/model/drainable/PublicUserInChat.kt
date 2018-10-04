@@ -27,7 +27,12 @@ class PublicUserInChat(
         return null
       }
 
-      return PublicUserInChat(userName, byteSink.readByteArray()) as T
+      val ecPublicKey = byteSink.readByteArray()
+      if (ecPublicKey == null) {
+        return null
+      }
+
+      return PublicUserInChat(userName, ecPublicKey) as T
     }
   }
 }

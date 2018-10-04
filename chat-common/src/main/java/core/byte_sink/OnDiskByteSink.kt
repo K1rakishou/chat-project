@@ -143,44 +143,47 @@ class OnDiskByteSink private constructor(
     raf.writeLong(long)
   }
 
-  override fun readByteArray(): ByteArray {
-    val arrayLen = readInt()
-
-    if (getReaderPosition() + arrayLen > raf.length()) {
-      throw ByteSinkReadException()
-    }
-
-    val array = ByteArray(arrayLen)
-    raf.read(array)
-    readPosition.getAndAdd(arrayLen)
-
-    return array
-  }
-
-  override fun writeByteArray(inArray: ByteArray) {
-    writeInt(inArray.size)
-    raf.write(inArray)
-
-    writePosition.getAndAdd(inArray.size)
-  }
-
-  override fun readString(): String? {
-    raf.seek(readPosition.get().toLong())
-
+  override fun readByteArray(): ByteArray? {
     return if (readByte() == NO_VALUE) {
       null
     } else {
-      String(readByteArray())
+      val arrayLen = readInt()
+
+      if (getReaderPosition() + arrayLen > raf.length()) {
+        throw ByteSinkReadException()
+      }
+
+      val array = ByteArray(arrayLen)
+      raf.read(array)
+      readPosition.getAndAdd(arrayLen)
+
+      array
+    }
+  }
+
+  override fun writeByteArray(inArray: ByteArray?) {
+    if (inArray == null) {
+      writeByte(NO_VALUE)
+    } else {
+      writeByte(HAS_VALUE)
+      writeInt(inArray.size)
+      raf.write(inArray)
+
+      writePosition.getAndAdd(inArray.size)
+    }
+  }
+
+  override fun readString(): String? {
+    val array = readByteArray()
+    if (array == null) {
+      return null
+    } else {
+      return String(array)
     }
   }
 
   override fun writeString(string: String?) {
-    if (string == null) {
-      writeByte(NO_VALUE)
-    } else {
-      writeByte(HAS_VALUE)
-      writeByteArray(string.toByteArray())
-    }
+    writeByteArray(string?.toByteArray())
   }
 
   override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>): List<T> {

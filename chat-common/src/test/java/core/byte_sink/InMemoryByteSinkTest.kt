@@ -56,9 +56,9 @@ class InMemoryByteSinkTest {
 
     byteSink.writeByteArray(byteArray)
 
-    assertEquals(byteArray.size + 4, byteSink.getWriterPosition())
+    assertEquals(byteArray.size + 4 + 1, byteSink.getWriterPosition())
     Assert.assertArrayEquals(byteArray, byteSink.readByteArray())
-    assertEquals(byteArray.size + 4, byteSink.getReaderPosition())
+    assertEquals(byteArray.size + 4 + 1, byteSink.getReaderPosition())
   }
 
   @Test

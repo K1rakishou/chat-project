@@ -8,7 +8,7 @@ import core.sizeofList
 
 class JoinChatRoomResponsePayload private constructor(
   status: Status,
-  private val users: List<PublicUserInChat> = emptyList()
+  val users: List<PublicUserInChat> = emptyList()
 ) : BaseResponse(status) {
 
   override val packetType: Short
@@ -48,6 +48,19 @@ class JoinChatRoomResponsePayload private constructor(
 
     fun fail(status: Status): JoinChatRoomResponsePayload {
       return JoinChatRoomResponsePayload(status)
+    }
+
+    fun fromByteSink(byteSink: ByteSink): JoinChatRoomResponsePayload {
+      val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+
+      return when (responseVersion) {
+        JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
+          val status = Status.fromShort(byteSink.readShort())
+          val users = byteSink.readList<PublicUserInChat>(PublicUserInChat::class)
+
+          JoinChatRoomResponsePayload(status, users)
+        }
+      }
     }
   }
 }
