@@ -3,6 +3,8 @@ package core.packet
 import core.PacketType
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
+import core.exception.ByteSinkReadException
+import core.exception.UnknownPacketVersion
 import core.sizeof
 import java.lang.IllegalStateException
 
@@ -51,5 +53,21 @@ class JoinChatRoomPacket(
 
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
+
+    fun fromByteSink(byteSink: ByteSink): JoinChatRoomPacket {
+      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
+
+      when (packetVersion) {
+        JoinChatRoomPacket.PacketVersion.V1 -> {
+          val ecPublicKey = byteSink.readByteArray() ?: throw ByteSinkReadException()
+          val userName = byteSink.readString() ?: throw ByteSinkReadException()
+          val roomName = byteSink.readString() ?: throw ByteSinkReadException()
+          val roomPasswordHash = byteSink.readString()
+
+          return JoinChatRoomPacket(ecPublicKey, userName, roomName, roomPasswordHash)
+        }
+        JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
+      }
+    }
   }
 }
