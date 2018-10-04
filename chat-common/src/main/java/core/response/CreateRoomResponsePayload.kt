@@ -42,8 +42,7 @@ class CreateRoomResponsePayload(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
-    fun fromByteArray(array: ByteArray): CreateRoomResponsePayload {
-      val byteSink = InMemoryByteSink.fromArray(array)
+    fun fromByteSink(byteSink: ByteSink): CreateRoomResponsePayload {
       val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
 
       return when (responseVersion) {

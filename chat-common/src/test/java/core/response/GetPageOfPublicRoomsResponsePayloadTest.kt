@@ -28,7 +28,7 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
   }
 
   @Test
-  fun testResponseEmpty() {
+  fun testResponseRoomsListIsEmpty() {
     val status = Status.UnknownError
     val publicChatRoomList = listOf<PublicChatRoom>()
 
