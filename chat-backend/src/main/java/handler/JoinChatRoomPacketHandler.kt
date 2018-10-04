@@ -75,7 +75,7 @@ class JoinChatRoomPacketHandler(
     for (userInRoom in usersInRoom) {
       val publicUserInChat = PublicUserInChat(userInRoom.user.userName, userInRoom.user.ecPublicKey)
 
-      //send to every user in the chat room that a new use has joined
+      //send to every user in the chat room that a new user has joined
       val newPublicUser = PublicUserInChat(newUser.userName, newUser.ecPublicKey)
       connectionManager.send(userInRoom.user.clientAddress, UserHasJoinedResponsePayload.success(newPublicUser))
 
