@@ -4,6 +4,7 @@ import core.model.drainable.PublicUserInChat
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
+import core.exception.UnknownPacketVersion
 import core.sizeofList
 
 class JoinChatRoomResponsePayload private constructor(
@@ -26,10 +27,12 @@ class JoinChatRoomResponsePayload private constructor(
         byteSink.writeShort(status.value)
         byteSink.writeList(users)
       }
+      JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
     }
   }
 
   enum class ResponseVersion(val value: Short) {
+    Unknown(-1),
     V1(1);
 
     companion object {
@@ -60,6 +63,7 @@ class JoinChatRoomResponsePayload private constructor(
 
           JoinChatRoomResponsePayload(status, users)
         }
+        JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
       }
     }
   }

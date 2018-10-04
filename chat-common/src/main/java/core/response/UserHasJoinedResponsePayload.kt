@@ -4,6 +4,7 @@ import core.model.drainable.PublicUserInChat
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
+import core.exception.UnknownPacketVersion
 import core.sizeof
 
 class UserHasJoinedResponsePayload private constructor(
@@ -26,10 +27,12 @@ class UserHasJoinedResponsePayload private constructor(
         byteSink.writeShort(status.value)
         user.serialize(byteSink)
       }
+      UserHasJoinedResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
     }
   }
 
   enum class ResponseVersion(val value: Short) {
+    Unknown(-1),
     V1(1);
 
     companion object {

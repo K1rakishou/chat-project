@@ -49,6 +49,18 @@ data class ChatRoom(
     }
   }
 
+  suspend fun hasPassword(): Boolean {
+    return mutex.withLock {
+      return@withLock roomPasswordHash != null
+    }
+  }
+
+  suspend fun passwordsMatch(chatRoomPassword: String): Boolean {
+    return mutex.withLock {
+      return@withLock roomPasswordHash == chatRoomPassword
+    }
+  }
+
   override fun toString(): String {
     return "[roomName: $roomName, roomPasswordHash: $roomPasswordHash, isPublic: $isPublic, createdOn: $createdOn]"
   }

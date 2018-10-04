@@ -1,6 +1,7 @@
 package core
 
 enum class Status(val value: Short) {
+  WrongRoomPassword(-6),
   BadParam(-5),
   CouldNotJoinChatRoom(-4),
   ChatRoomDoesNotExist(-3),

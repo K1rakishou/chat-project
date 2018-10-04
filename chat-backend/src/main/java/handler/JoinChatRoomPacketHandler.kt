@@ -32,8 +32,8 @@ class JoinChatRoomPacketHandler(
     val roomPasswordHash = byteSink.readString()
 
     if ((ecPublicKey == null || ecPublicKey.isEmpty()) ||
-      (userName == null || userName.isEmpty()) ||
-      (roomName == null || roomName.isEmpty())) {
+        (userName == null || userName.isEmpty()) ||
+        (roomName == null || roomName.isEmpty())) {
       connectionManager.send(clientAddress, JoinChatRoomResponsePayload.fail(Status.BadParam))
       return
     }
@@ -43,10 +43,20 @@ class JoinChatRoomPacketHandler(
       return
     }
 
+    if (chatRoomManager.hasPassword(roomName)) {
+      if (roomPasswordHash == null) {
+        connectionManager.send(clientAddress, JoinChatRoomResponsePayload.fail(Status.BadParam))
+        return
+      }
+
+      if (!chatRoomManager.passwordsMatch(roomName, roomPasswordHash)) {
+        connectionManager.send(clientAddress, JoinChatRoomResponsePayload.fail(Status.WrongRoomPassword))
+        return
+      }
+    }
+
     val newUser = User(userName, clientAddress, ecPublicKey)
 
-
-    //TODO: handle rooms with password as well
     if (!chatRoomManager.joinRoom(roomName, newUser)) {
       connectionManager.send(clientAddress, JoinChatRoomResponsePayload.fail(Status.CouldNotJoinChatRoom))
       return

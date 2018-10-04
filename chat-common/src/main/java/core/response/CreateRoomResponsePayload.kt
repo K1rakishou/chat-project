@@ -1,9 +1,9 @@
 package core.response
 
 import core.ResponseType
-import core.byte_sink.InMemoryByteSink
 import core.Status
 import core.byte_sink.ByteSink
+import core.exception.UnknownPacketVersion
 import core.sizeof
 
 class CreateRoomResponsePayload(
@@ -26,10 +26,12 @@ class CreateRoomResponsePayload(
         byteSink.writeShort(status.value)
         byteSink.writeString(chatRoomName)
       }
+      CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
     }
   }
 
   enum class ResponseVersion(val value: Short) {
+    Unknown(-1),
     V1(1);
 
     companion object {
@@ -52,6 +54,7 @@ class CreateRoomResponsePayload(
 
           CreateRoomResponsePayload(status, chatRoomName)
         }
+        CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
       }
     }
   }

@@ -43,11 +43,7 @@ class ChatRoomManager {
         return@withLock false
       }
 
-      val chatRoom = chatRooms[chatRoomName]
-      if (chatRoom == null) {
-        return@withLock false
-      }
-
+      val chatRoom = chatRooms[chatRoomName]!!
       if (chatRoom.containsUser(user.userName)) {
         return@withLock false
       }
@@ -66,11 +62,7 @@ class ChatRoomManager {
         return@withLock false
       }
 
-      val chatRoom = chatRooms[chatRoomName]
-      if (chatRoom == null) {
-        return@withLock false
-      }
-
+      val chatRoom = chatRooms[chatRoomName]!!
       if (!chatRoom.containsUser(user.userName)) {
         return@withLock false
       }
@@ -83,11 +75,17 @@ class ChatRoomManager {
   }
 
   suspend fun exists(chatRoomName: String? = null): Boolean {
-    if (chatRoomName == null) {
-      return false
-    }
+    requireNotNull(chatRoomName)
 
     return mutex.withLock { chatRooms.containsKey(chatRoomName) }
+  }
+
+  suspend fun hasPassword(chatRoomName: String): Boolean {
+    return mutex.withLock {
+      require(chatRooms.containsKey(chatRoomName))
+
+      return@withLock chatRooms[chatRoomName]!!.hasPassword()
+    }
   }
 
   suspend fun getAllPublicRooms(): List<PublicChatRoom> {
@@ -98,6 +96,14 @@ class ChatRoomManager {
           val copy = chatRoom.copy()
           return@map PublicChatRoom(copy.roomName, copy.countUsers().toShort())
         }
+    }
+  }
+
+  suspend fun passwordsMatch(chatRoomName: String, chatRoomPassword: String): Boolean {
+    return mutex.withLock {
+      require(chatRooms.containsKey(chatRoomName))
+
+      return@withLock chatRooms[chatRoomName]!!.passwordsMatch(chatRoomPassword)
     }
   }
 

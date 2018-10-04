@@ -2,6 +2,7 @@ package core.response
 
 import core.*
 import core.byte_sink.ByteSink
+import core.exception.UnknownPacketVersion
 import core.model.drainable.PublicChatRoom
 
 class GetPageOfPublicRoomsResponsePayload(
@@ -24,10 +25,12 @@ class GetPageOfPublicRoomsResponsePayload(
         byteSink.writeShort(status.value)
         byteSink.writeList(publicChatRoomList)
       }
+      GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
     }
   }
 
   enum class ResponseVersion(val value: Short) {
+    Unknown(-1),
     V1(1);
 
     companion object {
@@ -50,6 +53,7 @@ class GetPageOfPublicRoomsResponsePayload(
 
           return GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList)
         }
+        GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
       }
     }
   }

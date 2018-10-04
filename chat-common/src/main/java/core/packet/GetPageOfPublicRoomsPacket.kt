@@ -3,6 +3,7 @@ package core.packet
 import core.PacketType
 import core.byte_sink.InMemoryByteSink
 import core.sizeof
+import java.lang.IllegalStateException
 
 class GetPageOfPublicRoomsPacket(
   val currentPage: Short,
@@ -27,6 +28,7 @@ class GetPageOfPublicRoomsPacket(
           writeShort(currentPage)
           writeByte(roomsPerPage)
         }
+        GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
       }
     }
   }
