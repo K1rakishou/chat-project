@@ -3,9 +3,11 @@ package core.byte_sink
 import core.exception.ByteSinkReadException
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
+import core.model.drainable.DrainableFactory
 import core.sizeof
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
+import kotlin.reflect.KClass
 
 class InMemoryByteSink private constructor(
   private var array: ByteArray
@@ -186,12 +188,27 @@ class InMemoryByteSink private constructor(
     }
   }
 
-  override fun <T> writeList(listOfObjects: List<T>?)
+  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>): List<T> {
+    if (readByte() == NO_VALUE) {
+      return emptyList()
+    } else {
+      val listSize = readShort()
+      val objList = mutableListOf<T>()
+
+      for (i in 0 until listSize) {
+        objList += DrainableFactory.fromByteSink<CanBeDrainedToSink>(clazz, this) as T
+      }
+      return objList
+    }
+  }
+
+  override fun <T> writeList(listOfObjects: List<T>)
     where T : CanBeDrainedToSink,
           T : CanMeasureSizeOfFields {
-    if (listOfObjects == null) {
+    if (listOfObjects.isEmpty()) {
       writeByte(NO_VALUE)
     } else {
+      writeByte(HAS_VALUE)
       writeShort(listOfObjects.size.toShort())
 
       val totalSizeForAllObjects = listOfObjects.asSequence()

@@ -1,7 +1,7 @@
 package manager
 
 import core.ChatRoom
-import core.PublicChatRoom
+import core.model.drainable.PublicChatRoom
 import core.User
 import core.UserInRoom
 import core.security.SecurityUtils

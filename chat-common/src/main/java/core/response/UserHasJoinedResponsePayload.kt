@@ -1,6 +1,6 @@
 package core.response
 
-import core.PublicUserInChat
+import core.model.drainable.PublicUserInChat
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink

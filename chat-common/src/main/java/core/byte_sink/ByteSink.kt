@@ -4,6 +4,7 @@ import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
 import java.io.DataInputStream
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.reflect.KClass
 
 abstract class ByteSink : AutoCloseable {
   protected val NO_VALUE = 0.toByte()
@@ -38,7 +39,10 @@ abstract class ByteSink : AutoCloseable {
   abstract fun readString(): String?
   abstract fun writeString(string: String?)
 
-  abstract fun <T> writeList(listOfObjects: List<T>?)
+  abstract fun <T> readList(clazz: KClass<*>): List<T>
+    where T : CanBeDrainedToSink
+
+  abstract fun <T> writeList(listOfObjects: List<T>)
     where T : CanBeDrainedToSink,
           T : CanMeasureSizeOfFields
 }

@@ -2,7 +2,7 @@ package core.response
 
 import core.*
 import core.byte_sink.ByteSink
-import core.byte_sink.InMemoryByteSink
+import core.model.drainable.PublicChatRoom
 
 class GetPageOfPublicRoomsResponsePayload(
   status: Status,
@@ -22,9 +22,7 @@ class GetPageOfPublicRoomsResponsePayload(
     when (CURRENT_RESPONSE_VERSION) {
       GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
-        byteSink.writeShort(publicChatRoomList.size)
-
-        publicChatRoomList.forEach { it.toByteSink(byteSink) }
+        byteSink.writeList(publicChatRoomList)
       }
     }
   }
@@ -48,13 +46,7 @@ class GetPageOfPublicRoomsResponsePayload(
       when (responseVersion) {
         GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
-          val publicChatRoomsCount = byteSink.readShort().toInt()
-
-          val publicChatRoomList = ArrayList<PublicChatRoom>(publicChatRoomsCount)
-
-          for (i in 0 until publicChatRoomsCount) {
-            publicChatRoomList += PublicChatRoom.fromByteSink(byteSink)
-          }
+          val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class)
 
           return GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList)
         }

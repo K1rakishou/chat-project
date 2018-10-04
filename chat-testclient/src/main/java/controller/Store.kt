@@ -1,6 +1,6 @@
 package controller
 
-import core.PublicChatRoom
+import core.model.drainable.PublicChatRoom
 import tornadofx.Controller
 
 class Store : Controller() {

@@ -4,9 +4,11 @@ import core.Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
 import core.exception.ByteSinkReadException
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
+import core.model.drainable.DrainableFactory
 import core.sizeof
 import java.io.*
 import java.lang.IllegalArgumentException
+import kotlin.reflect.KClass
 
 class OnDiskByteSink private constructor(
   private val file: File,
@@ -181,21 +183,34 @@ class OnDiskByteSink private constructor(
     }
   }
 
-  override fun <T> writeList(listOfObjects: List<T>?)
+  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>): List<T> {
+    if (readByte() == NO_VALUE) {
+      return emptyList()
+    } else {
+      val listSize = readShort()
+      val objList = mutableListOf<T>()
+
+      for (i in 0 until listSize) {
+        objList += DrainableFactory.fromByteSink<CanBeDrainedToSink>(clazz, this) as T
+      }
+      return objList
+    }
+  }
+
+  override fun <T> writeList(listOfObjects: List<T>)
     where T : CanBeDrainedToSink,
           T : CanMeasureSizeOfFields {
-    if (listOfObjects == null) {
+    if (listOfObjects.isEmpty()) {
       writeByte(NO_VALUE)
     } else {
       writeShort(listOfObjects.size.toShort())
-
       listOfObjects.forEach { it.serialize(this) }
     }
   }
 
   override fun close() {
     //rewrite file with junk bytes before deleting
-    val array = ByteArray(raf.length().toInt()) { 0xFF.toByte()}
+    val array = ByteArray(raf.length().toInt()) { 0xFF.toByte() }
 
     raf.write(array)
     raf.close()

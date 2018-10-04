@@ -1,8 +1,10 @@
-package core
+package core.model.drainable
 
 import core.byte_sink.ByteSink
 import core.interfaces.CanBeDrainedToSink
+import core.interfaces.CanBeRestoredFromSink
 import core.interfaces.CanMeasureSizeOfFields
+import core.sizeof
 
 class PublicUserInChat(
   val userName: String,
@@ -18,10 +20,14 @@ class PublicUserInChat(
     sink.writeByteArray(ecPublicKey)
   }
 
-  override fun <T> deserialize(sink: ByteSink): T {
-    val userName = sink.readString()!!
-    val ecPublicKey = sink.readByteArray()
+  companion object : CanBeRestoredFromSink {
+    override fun <T> createFromByteSink(byteSink: ByteSink): T? {
+      val userName = byteSink.readString()
+      if (userName == null) {
+        return null
+      }
 
-    return PublicUserInChat(userName, ecPublicKey) as T
+      return PublicUserInChat(userName, byteSink.readByteArray()) as T
+    }
   }
 }

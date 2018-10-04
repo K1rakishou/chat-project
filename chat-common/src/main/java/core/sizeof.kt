@@ -41,9 +41,9 @@ inline fun <reified T> sizeof(obj: T? = null): Int {
 }
 
 inline fun <reified T : CanMeasureSizeOfFields> sizeofList(objList: List<T>?): Int {
-  if (objList == null) {
+  if (objList == null || objList.isEmpty()) {
     return 1  //NO_VALUE flag
   } else {
-    return objList.asSequence().map { it.getSize() }.reduce { acc, i -> acc + i } + 2 + 1 //two bytes for list size + one byte HAS_VALUE flag
+    return objList.asSequence().map { it.getSize() }.reduce { acc, i -> acc + i } + 2 + 1//two bytes for list size + one byte HAS_VALUE flag
   }
 }

@@ -1,6 +1,6 @@
 package core.response
 
-import core.PublicUserInChat
+import core.model.drainable.PublicUserInChat
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
@@ -8,7 +8,7 @@ import core.sizeofList
 
 class JoinChatRoomResponsePayload private constructor(
   status: Status,
-  private val users: List<PublicUserInChat>? = null
+  private val users: List<PublicUserInChat> = emptyList()
 ) : BaseResponse(status) {
 
   override val packetType: Short

@@ -1,6 +1,6 @@
 package handler
 
-import core.PublicUserInChat
+import core.model.drainable.PublicUserInChat
 import core.Status
 import core.User
 import core.byte_sink.ByteSink
