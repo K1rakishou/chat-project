@@ -1,7 +1,9 @@
 package core.packet
 
 import core.PacketType
+import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
+import core.exception.UnknownPacketVersion
 import core.sizeof
 import java.lang.IllegalStateException
 
@@ -46,5 +48,19 @@ class GetPageOfPublicRoomsPacket(
 
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
+
+    fun fromByteSink(byteSink: ByteSink): GetPageOfPublicRoomsPacket {
+      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
+
+      when (packetVersion) {
+        GetPageOfPublicRoomsPacket.PacketVersion.V1 -> {
+          val currentPage = byteSink.readShort()
+          val roomsPerPage = byteSink.readByte()
+
+          return GetPageOfPublicRoomsPacket(currentPage, roomsPerPage)
+        }
+        GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
+      }
+    }
   }
 }
