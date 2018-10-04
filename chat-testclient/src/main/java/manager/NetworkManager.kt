@@ -18,13 +18,11 @@ import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 import java.io.File
+import java.io.IOException
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicBoolean
 
 class NetworkManager {
-//  private val ecKeyPair = SecurityUtils.Exchange.generateECKeyPair()
-//  private val publicKeyEncoded = ecKeyPair.public.encoded
-
   private val isConnected = AtomicBoolean(false)
   private val mutex = Mutex()
 
@@ -45,6 +43,10 @@ class NetworkManager {
     }
 
     byteSinkFileCachePath = byteSinkCachePathFile.absolutePath
+  }
+
+  fun isConnected(): Boolean {
+    return isConnected.get()
   }
 
   suspend fun connect() {
@@ -106,7 +108,9 @@ class NetworkManager {
 
         socketEventsQueue.send(SocketEvent.ResponseReceived(responseInfo))
       }
-    } finally {
+    } catch (error: IOException) {
+      socketEventsQueue.send(SocketEvent.DisconnectedFromServer())
+    }finally {
       disconnect()
     }
   }

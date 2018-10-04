@@ -38,7 +38,7 @@ data class ChatRoom(
     return mutex.withLock {
       return@withLock mutableListOf<UserInRoom>()
         .apply {
-          addAll(userList.filter { it.user.userName == userName })
+          addAll(userList.filter { it.user.userName != userName })
         }
     }
   }

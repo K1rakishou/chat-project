@@ -16,7 +16,7 @@ class UserHasJoinedResponsePayload private constructor(
     get() = ResponseType.UserHasJoinedResponseType.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(status) + sizeof(user)
+    return super.getPayloadSize() + sizeof(status) + user.getSize()
   }
 
   override fun toByteSink(byteSink: ByteSink) {

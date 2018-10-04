@@ -21,6 +21,7 @@ class ConnectionToServerController : Controller() {
   private var delayTime = AtomicInteger(3000)
   private val maxDelayTime: Int = 15000
 
+  val keyStore: KeyStore by inject()
   val store: Store by inject()
   val connectionStatus = SimpleStringProperty("")
 
@@ -31,6 +32,10 @@ class ConnectionToServerController : Controller() {
 
   fun startConnectionToServer(firstTime: Boolean = false) {
     launch {
+      if (!keyStore.areKeysGenerated()) {
+        keyStore.generateKeys()
+      }
+
       if (!firstTime) {
         delay(increaseDelayAndGet())
       }
@@ -75,7 +80,9 @@ class ConnectionToServerController : Controller() {
           TODO("Error handling")
         }
       }
-      else -> throw IllegalStateException("Unexpected responseType: ${responseInfo.responseType}. Should not happen.")
+      else -> {
+        //Do nothing
+      }
     }
   }
 

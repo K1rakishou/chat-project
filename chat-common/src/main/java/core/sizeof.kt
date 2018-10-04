@@ -1,11 +1,9 @@
 package core
 
 import core.interfaces.CanMeasureSizeOfFields
-import java.lang.RuntimeException
 
 inline fun <reified T> sizeof(obj: T? = null): Int {
   return when (T::class) {
-    CanMeasureSizeOfFields::class -> (obj!! as CanMeasureSizeOfFields).getSize()
     Status::class -> 2
     Boolean::class -> 1
     Byte::class -> 1

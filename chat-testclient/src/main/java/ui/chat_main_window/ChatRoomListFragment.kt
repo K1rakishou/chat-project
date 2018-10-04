@@ -9,6 +9,7 @@ class ChatRoomListFragment : ListCellFragment<PublicChatRoomItem>() {
   val chatRoom = PublicChatRoomItemModel(itemProperty)
 
   override val root = hbox {
+    id = componentId
     prefHeight = 96.0
 
     label(chatRoom.usersCount) {
@@ -19,5 +20,9 @@ class ChatRoomListFragment : ListCellFragment<PublicChatRoomItem>() {
     label(chatRoom.roomName) {
       hgrow = Priority.ALWAYS
     }
+  }
+
+  companion object {
+    const val componentId = "PublicChatRoomItemCellFragment"
   }
 }

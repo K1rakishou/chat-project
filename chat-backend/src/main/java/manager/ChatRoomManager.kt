@@ -39,7 +39,7 @@ class ChatRoomManager {
     user: User
   ): Boolean {
     return mutex.withLock {
-      if (chatRooms.containsKey(chatRoomName)) {
+      if (!chatRooms.containsKey(chatRoomName)) {
         return@withLock false
       }
 
@@ -58,7 +58,7 @@ class ChatRoomManager {
     user: User
   ): Boolean {
     return mutex.withLock {
-      if (chatRooms.containsKey(chatRoomName)) {
+      if (!chatRooms.containsKey(chatRoomName)) {
         return@withLock false
       }
 

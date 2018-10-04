@@ -1,10 +1,10 @@
 package handler
 
-import core.model.drainable.PublicUserInChat
 import core.Status
 import core.User
 import core.byte_sink.ByteSink
 import core.exception.UnknownPacketVersion
+import core.model.drainable.PublicUserInChat
 import core.packet.JoinChatRoomPacket
 import core.response.JoinChatRoomResponsePayload
 import core.response.UserHasJoinedResponsePayload
