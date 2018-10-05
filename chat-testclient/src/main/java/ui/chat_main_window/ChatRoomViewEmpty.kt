@@ -3,7 +3,7 @@ package ui.chat_main_window
 import javafx.geometry.Pos
 import tornadofx.*
 
-class ChatRoomViewEmpty : Fragment() {
+class ChatRoomViewEmpty : View() {
 
   override val root = vbox {
     alignment = Pos.CENTER

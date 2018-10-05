@@ -45,4 +45,11 @@ abstract class ByteSink : AutoCloseable {
   abstract fun <T> writeList(listOfObjects: List<T>)
     where T : CanBeDrainedToSink,
           T : CanMeasureSizeOfFields
+
+  abstract fun <T> readDrainable(clazz: KClass<*>): T?
+    where T : CanBeDrainedToSink
+
+  abstract fun <T> writeDrainable(obj: T?)
+    where T : CanBeDrainedToSink,
+          T : CanMeasureSizeOfFields
 }

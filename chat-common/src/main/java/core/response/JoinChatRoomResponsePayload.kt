@@ -5,10 +5,12 @@ import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
 import core.exception.UnknownPacketVersion
+import core.sizeof
 import core.sizeofList
 
 class JoinChatRoomResponsePayload private constructor(
   status: Status,
+  val roomName: String? = null,
   val users: List<PublicUserInChat> = emptyList()
 ) : BaseResponse(status) {
 
@@ -16,7 +18,7 @@ class JoinChatRoomResponsePayload private constructor(
     get() = ResponseType.JoinChatRoomResponseType.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeofList(users)
+    return super.getPayloadSize() + sizeofList(users) + sizeof(roomName)
   }
 
   override fun toByteSink(byteSink: ByteSink) {
@@ -25,6 +27,7 @@ class JoinChatRoomResponsePayload private constructor(
     when (CURRENT_RESPONSE_VERSION) {
       JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
+        byteSink.writeString(roomName)
         byteSink.writeList(users)
       }
       JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
@@ -45,8 +48,8 @@ class JoinChatRoomResponsePayload private constructor(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
-    fun success(users: List<PublicUserInChat>): JoinChatRoomResponsePayload {
-      return JoinChatRoomResponsePayload(Status.Ok, users)
+    fun success(roomName: String, users: List<PublicUserInChat>): JoinChatRoomResponsePayload {
+      return JoinChatRoomResponsePayload(Status.Ok, roomName, users)
     }
 
     fun fail(status: Status): JoinChatRoomResponsePayload {
@@ -59,9 +62,11 @@ class JoinChatRoomResponsePayload private constructor(
       return when (responseVersion) {
         JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
-          val users = byteSink.readList<PublicUserInChat>(PublicUserInChat::class)
 
-          JoinChatRoomResponsePayload(status, users)
+          //TODO: check status code before trying to deserialize the rest of the body
+          val roomName = byteSink.readString()
+          val users = byteSink.readList<PublicUserInChat>(PublicUserInChat::class)
+          JoinChatRoomResponsePayload(status, roomName, users)
         }
         JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
       }

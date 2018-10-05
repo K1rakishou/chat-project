@@ -225,6 +225,27 @@ class InMemoryByteSink private constructor(
     }
   }
 
+  override fun <T : CanBeDrainedToSink> readDrainable(clazz: KClass<*>): T? {
+    if (readByte() == NO_VALUE) {
+      return null
+    } else {
+      return DrainableFactory.fromByteSink<CanBeDrainedToSink>(clazz, this) as T
+    }
+  }
+
+  override fun <T> writeDrainable(obj: T?)
+    where T : CanBeDrainedToSink,
+          T : CanMeasureSizeOfFields {
+    if (obj == null) {
+      writeByte(NO_VALUE)
+    } else {
+      writeByte(HAS_VALUE)
+
+      resizeIfNeeded(obj.getSize())
+      obj.serialize(this)
+    }
+  }
+
   override fun close() {
     //fill array with junk bytes before GCing
     array.fill(0xFF.toByte())

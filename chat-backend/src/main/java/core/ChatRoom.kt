@@ -64,4 +64,8 @@ data class ChatRoom(
   override fun toString(): String {
     return "[roomName: $roomName, roomPasswordHash: $roomPasswordHash, isPublic: $isPublic, createdOn: $createdOn]"
   }
+
+  fun copy(): ChatRoom {
+    return ChatRoom(roomName, roomPasswordHash, isPublic, createdOn, userList.toMutableList())
+  }
 }

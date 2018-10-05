@@ -74,6 +74,14 @@ class ChatRoomManager {
     }
   }
 
+  suspend fun alreadyJoined(chatRoomName: String, userName: String): Boolean {
+    return mutex.withLock {
+      require(chatRooms.containsKey(chatRoomName))
+
+      return@withLock chatRooms[chatRoomName]!!.containsUser(userName)
+    }
+  }
+
   suspend fun exists(chatRoomName: String? = null): Boolean {
     requireNotNull(chatRoomName)
 
@@ -109,7 +117,7 @@ class ChatRoomManager {
 
   suspend fun getChatRoom(roomName: String): ChatRoom? {
     return mutex.withLock {
-      return@withLock chatRooms[roomName]
+      return@withLock chatRooms[roomName]?.copy()
     }
   }
 }

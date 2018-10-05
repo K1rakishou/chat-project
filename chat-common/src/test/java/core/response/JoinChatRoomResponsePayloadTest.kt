@@ -9,14 +9,16 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
   @Test
   fun testResponseSuccess() {
+    val roomName = "121314"
     val usersInChatRoom = listOf(
       PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() })
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
+      assertEquals(roomName, restoredResponse.roomName)
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
@@ -38,12 +40,14 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
   @Test
   fun testResponseEmpty() {
+    val roomName = "test"
     val usersInChatRoom = emptyList<PublicUserInChat>()
 
-    testPayload(JoinChatRoomResponsePayload.success(usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
+      assertEquals(roomName, restoredResponse.roomName)
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)

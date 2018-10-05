@@ -57,6 +57,24 @@ class JoinChatRoomPacketHandler(
       return
     }
 
+    if (chatRoomManager.alreadyJoined(roomName, userName)) {
+      //we have already joined this room, no need to add the user in the room second time and notify everyone in the room about it
+      val chatRoom = chatRoomManager.getChatRoom(roomName)
+      if (chatRoom == null) {
+        println("Room with name (${roomName}) does not exist")
+        connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.fail(Status.ChatRoomDoesNotExist))
+        return
+      }
+
+      //just collect users's info and send it back
+      val usersInRoom = chatRoom.getEveryoneExcept(userName)
+      val publicUserInChatList = usersInRoom
+        .map { userInRoom -> PublicUserInChat(userInRoom.user.userName, userInRoom.user.ecPublicKey) }
+
+      connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.success(chatRoom.roomName, publicUserInChatList))
+      return
+    }
+
     if (chatRoomManager.hasPassword(roomName)) {
       if (roomPasswordHash == null || roomPasswordHash.isEmpty()) {
         println("Room with name ${roomName} is password protected and user has not provided password (${roomPasswordHash})")
@@ -97,6 +115,6 @@ class JoinChatRoomPacketHandler(
     }
 
     //send back list of users in the chat room
-    connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.success(publicUserInChatList))
+    connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.success(chatRoom.roomName, publicUserInChatList))
   }
 }
