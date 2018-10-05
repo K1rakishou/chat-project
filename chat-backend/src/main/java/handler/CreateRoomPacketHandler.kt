@@ -22,7 +22,7 @@ class CreateRoomPacketHandler(
       CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
     }
 
-    connectionManager.send(clientAddress, response)
+    connectionManager.sendResponse(clientAddress, response)
   }
 
   private suspend fun handleInternalV1(byteSink: ByteSink): BaseResponse {

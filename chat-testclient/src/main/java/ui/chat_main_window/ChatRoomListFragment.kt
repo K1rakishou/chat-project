@@ -1,28 +1,25 @@
 package ui.chat_main_window
 
-import javafx.scene.layout.Priority
-import model.PublicChatRoomItem
-import model.PublicChatRoomItemModel
-import tornadofx.*
+import controller.ChatRoomListController
+import javafx.scene.Parent
+import javafx.scene.input.MouseEvent
+import tornadofx.Fragment
+import tornadofx.listview
+import tornadofx.selectedItem
 
-class ChatRoomListFragment : ListCellFragment<PublicChatRoomItem>() {
-  val chatRoom = PublicChatRoomItemModel(itemProperty)
+class ChatRoomListFragment : Fragment() {
+  val chatRoomListController: ChatRoomListController by inject()
 
-  override val root = hbox {
-    id = componentId
-    prefHeight = 96.0
+  override val root = listview(chatRoomListController.chatRooms) {
+    cellFragment(ChatRoomListCellFragment::class)
 
-    label(chatRoom.usersCount) {
+    addEventFilter(MouseEvent.MOUSE_CLICKED) { event ->
+      //I have no idea how to do it without this hack
+      if (event.clickCount == 1 && selectedItem != null && (event.target as Parent).id == ChatRoomListCellFragment.componentId) {
+        selectedItem?.let { item ->
+          chatRoomListController.joinChatRoom(item)
+        }
+      }
     }
-    pane {
-      paddingRight = 15.0
-    }
-    label(chatRoom.roomName) {
-      hgrow = Priority.ALWAYS
-    }
-  }
-
-  companion object {
-    const val componentId = "PublicChatRoomItemCellFragment"
   }
 }

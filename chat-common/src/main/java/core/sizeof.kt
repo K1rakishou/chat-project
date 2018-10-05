@@ -1,9 +1,13 @@
 package core
 
 import core.interfaces.CanMeasureSizeOfFields
+import core.model.drainable.PublicChatRoom
+import core.model.drainable.PublicUserInChat
 
 inline fun <reified T> sizeof(obj: T? = null): Int {
   return when (T::class) {
+    PublicUserInChat::class -> (obj as? PublicUserInChat)?.getSize() ?: 1
+    PublicChatRoom::class -> (obj as? PublicChatRoom)?.getSize() ?: 1
     Status::class -> 2
     Boolean::class -> 1
     Byte::class -> 1

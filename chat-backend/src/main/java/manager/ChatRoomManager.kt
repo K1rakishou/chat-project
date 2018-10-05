@@ -37,19 +37,19 @@ class ChatRoomManager {
   suspend fun joinRoom(
     chatRoomName: String,
     user: User
-  ): Boolean {
+  ): ChatRoom? {
     return mutex.withLock {
       if (!chatRooms.containsKey(chatRoomName)) {
-        return@withLock false
+        return@withLock null
       }
 
       val chatRoom = chatRooms[chatRoomName]!!
       if (chatRoom.containsUser(user.userName)) {
-        return@withLock false
+        return@withLock null
       }
 
       chatRoom.addUser(UserInRoom(user))
-      return@withLock true
+      return@withLock chatRoom
     }
   }
 
@@ -71,6 +71,14 @@ class ChatRoomManager {
 
       //TODO: broadcast to everyone that user has left the room
       return@withLock true
+    }
+  }
+
+  suspend fun alreadyJoined(chatRoomName: String, userName: String): Boolean {
+    return mutex.withLock {
+      require(chatRooms.containsKey(chatRoomName))
+
+      return@withLock chatRooms[chatRoomName]!!.containsUser(userName)
     }
   }
 
@@ -109,7 +117,7 @@ class ChatRoomManager {
 
   suspend fun getChatRoom(roomName: String): ChatRoom? {
     return mutex.withLock {
-      return@withLock chatRooms[roomName]
+      return@withLock chatRooms[roomName]?.copy()
     }
   }
 }

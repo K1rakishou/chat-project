@@ -22,3 +22,7 @@ fun ByteArray.toHex(separator: Char? = null): String {
 fun ByteArray.toHexSeparated(separator: Char? = ' '): String {
   return toHex(separator)
 }
+
+fun ByteArray?.isNullOrEmpty(): Boolean {
+  return this == null || this.isEmpty()
+}

@@ -49,8 +49,9 @@ class GetPageOfPublicRoomsResponsePayload(
       when (responseVersion) {
         GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
-          val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class)
 
+          //TODO: check status code before trying to deserialize the rest of the body
+          val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class)
           return GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList)
         }
         GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()

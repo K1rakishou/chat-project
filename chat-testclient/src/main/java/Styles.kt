@@ -18,6 +18,9 @@ class Styles : Stylesheet() {
     chatRoomTextField {
       fontSize = 18.px
     }
+    chatRoomViewEmptyLabel {
+      fontSize = 24.px
+    }
   }
 
   companion object {
@@ -25,5 +28,6 @@ class Styles : Stylesheet() {
 //    val header by cssclass()
     val chatRoomTextArea by cssclass()
     val chatRoomTextField by cssclass()
+    val chatRoomViewEmptyLabel by cssclass()
   }
 }

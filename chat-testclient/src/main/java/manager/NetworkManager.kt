@@ -11,6 +11,8 @@ import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
 import io.ktor.network.util.ioCoroutineDispatcher
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
+import kotlinx.coroutines.experimental.channels.SendChannel
+import kotlinx.coroutines.experimental.channels.actor
 import kotlinx.coroutines.experimental.io.ByteReadChannel
 import kotlinx.coroutines.experimental.io.ByteWriteChannel
 import kotlinx.coroutines.experimental.io.close
@@ -25,14 +27,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 class NetworkManager {
   private val isConnected = AtomicBoolean(false)
   private val mutex = Mutex()
+  private val sendActorChannelCapacity = 128
+  private val sendPacketsActor: SendChannel<BasePacket>
+
+  val socketEventsQueue = BroadcastChannel<SocketEvent>(128)
 
   private lateinit var socket: Socket
   private lateinit var writeChannel: ByteWriteChannel
   private lateinit var readChannel: ByteReadChannel
 
   private lateinit var byteSinkFileCachePath: String
-
-  val socketEventsQueue = BroadcastChannel<SocketEvent>(128)
 
   init {
     val byteSinkCachePathFile = File(System.getProperty("user.dir") + "\\byte-sink-cache")
@@ -43,6 +47,22 @@ class NetworkManager {
     }
 
     byteSinkFileCachePath = byteSinkCachePathFile.absolutePath
+
+    sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
+      for (data in channel) {
+        writeToOutputChannel(data.buildPacket(1L))
+        writeChannel.flush()
+      }
+    }
+  }
+
+  suspend fun sendPacket(packet: BasePacket) {
+    if (!isConnected.get() || writeChannel.isClosedForWrite) {
+      disconnect()
+      return
+    }
+
+    sendPacketsActor.send(packet)
   }
 
   fun isConnected(): Boolean {
@@ -110,19 +130,9 @@ class NetworkManager {
       }
     } catch (error: IOException) {
       socketEventsQueue.send(SocketEvent.DisconnectedFromServer())
-    }finally {
+    } finally {
       disconnect()
     }
-  }
-
-  suspend fun sendPacket(packet: BasePacket) {
-    if (!isConnected.get() || writeChannel.isClosedForWrite) {
-      disconnect()
-      return
-    }
-
-    writeToOutputChannel(packet.buildPacket(1L))
-    writeChannel.flush()
   }
 
   private suspend fun writeToOutputChannel(packet: Packet) {

@@ -50,8 +50,9 @@ class CreateRoomResponsePayload(
       return when (responseVersion) {
         CreateRoomResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
-          val chatRoomName = byteSink.readString()
 
+          //TODO: check status code before trying to deserialize the rest of the body
+          val chatRoomName = byteSink.readString()
           CreateRoomResponsePayload(status, chatRoomName)
         }
         CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()

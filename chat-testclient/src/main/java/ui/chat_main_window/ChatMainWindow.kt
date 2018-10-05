@@ -8,7 +8,6 @@ import tornadofx.*
 class ChatMainWindow : View("Chat") {
 
   override val root = vbox {
-
     splitpane {
       orientation = Orientation.HORIZONTAL
       setDividerPositions(0.3)
@@ -16,12 +15,12 @@ class ChatMainWindow : View("Chat") {
 
       borderpane {
         border = Border.EMPTY
-        center(ChatRoomListView::class)
+        center(ChatRoomListFragment::class)
       }
 
       borderpane {
         border = Border.EMPTY
-        center(ChatRoomView::class)
+        center(ChatRoomViewEmpty::class)
       }
     }
   }
