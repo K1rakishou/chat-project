@@ -4,6 +4,7 @@ import ChatApp
 import core.ResponseInfo
 import core.ResponseType
 import core.packet.JoinChatRoomPacket
+import core.response.JoinChatRoomResponsePayload
 import javafx.collections.FXCollections
 import javafx.scene.control.Alert
 import kotlinx.coroutines.experimental.launch
@@ -59,6 +60,10 @@ class ChatRoomListController : Controller() {
     when (responseInfo.responseType) {
       ResponseType.JoinChatRoomResponseType -> {
         println("JoinChatRoomResponseType response received")
+
+        val response = JoinChatRoomResponsePayload.fromByteSink(responseInfo.byteSink)
+
+        println()
       }
       ResponseType.UserHasJoinedResponseType -> {
         println("UserHasJoinedResponseType response received")

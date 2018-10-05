@@ -1,6 +1,4 @@
-import core.Connection
-import core.Packet
-import core.PacketType
+import core.*
 import core.extensions.readPacketInfo
 import core.extensions.toHexSeparated
 import handler.CreateRoomPacketHandler
@@ -50,7 +48,11 @@ class Server(
         .bind(InetSocketAddress("127.0.0.1", 2323))
 
       //test zone
-      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true).apply {
+        addUser(UserInRoom(User("test_user1", "test_address1", ByteArray(128) { 0xAA.toByte()} )))
+        addUser(UserInRoom(User("test_use2", "test_address2", ByteArray(128) { 0xAB.toByte()} )))
+        addUser(UserInRoom(User("test_use3", "test_address3", ByteArray(128) { 0xAC.toByte()} )))
+      }
       //test zone
 
       println("Started server at ${server.localAddress}")

@@ -7,7 +7,7 @@ import javafx.scene.layout.Priority
 import tornadofx.*
 
 
-class ChatRoomView : View() {
+class ChatRoomFragment : Fragment() {
   private val textAreaId = "chatMessagesTextArea"
   private lateinit var textArea: TextArea
 
@@ -16,8 +16,9 @@ class ChatRoomView : View() {
   }
 
   override val root = vbox {
-    textarea(model.chatMessages) {
+    textArea = textarea(model.chatMessages) {
       id = textAreaId
+
       addClass(Styles.chatRoomTextArea)
       vboxConstraints { vGrow = Priority.ALWAYS }
 
@@ -33,10 +34,5 @@ class ChatRoomView : View() {
         clear()
       }
     }
-
-    //this is probably a fucking hack, but I have no idea
-    //how to access textArea from textField otherwise ¯\_(ツ)_/¯
-    textArea = getChildList()
-      ?.first { it.id == textAreaId } as TextArea
   }
 }

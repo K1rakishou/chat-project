@@ -37,19 +37,19 @@ class ChatRoomManager {
   suspend fun joinRoom(
     chatRoomName: String,
     user: User
-  ): Boolean {
+  ): ChatRoom? {
     return mutex.withLock {
       if (!chatRooms.containsKey(chatRoomName)) {
-        return@withLock false
+        return@withLock null
       }
 
       val chatRoom = chatRooms[chatRoomName]!!
       if (chatRoom.containsUser(user.userName)) {
-        return@withLock false
+        return@withLock null
       }
 
       chatRoom.addUser(UserInRoom(user))
-      return@withLock true
+      return@withLock chatRoom
     }
   }
 
