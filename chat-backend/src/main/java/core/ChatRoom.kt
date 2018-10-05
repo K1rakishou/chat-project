@@ -1,5 +1,7 @@
 package core
 
+import core.collections.RingBuffer
+import core.model.drainable.chat_message.BaseChatMessage
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 
@@ -11,6 +13,12 @@ data class ChatRoom(
   val userList: MutableList<UserInRoom> = mutableListOf()
 ) {
   private val mutex = Mutex()
+  private val messagesHistoryMaxSize = 100
+  private val messageHistory: RingBuffer<BaseChatMessage>
+
+  init {
+    messageHistory = RingBuffer(messagesHistoryMaxSize)
+  }
 
   suspend fun addUser(userInRoom: UserInRoom) {
     mutex.withLock { userList.add(userInRoom) }
@@ -18,6 +26,10 @@ data class ChatRoom(
 
   suspend fun removeUser(userName: String) {
     mutex.withLock { userList.removeIf { it.user.userName == userName } }
+  }
+
+  suspend fun addMessage(chatMessage: BaseChatMessage) {
+    mutex.withLock { messageHistory.add(chatMessage) }
   }
 
   suspend fun containsUser(userName: String): Boolean {
@@ -58,6 +70,12 @@ data class ChatRoom(
   suspend fun passwordsMatch(chatRoomPassword: String): Boolean {
     return mutex.withLock {
       return@withLock roomPasswordHash == chatRoomPassword
+    }
+  }
+
+  suspend fun getMessageHistory(): List<BaseChatMessage> {
+    return mutex.withLock {
+      return@withLock messageHistory.getAll()
     }
   }
 

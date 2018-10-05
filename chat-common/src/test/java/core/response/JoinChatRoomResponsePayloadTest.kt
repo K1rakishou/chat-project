@@ -2,6 +2,8 @@ package core.response
 
 import core.Status
 import core.model.drainable.PublicUserInChat
+import core.model.drainable.chat_message.BaseChatMessage
+import core.model.drainable.chat_message.TextChatMessage
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -10,15 +12,30 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test
   fun testResponseSuccess() {
     val roomName = "121314"
+    val messageHistory = listOf<BaseChatMessage>(
+      TextChatMessage(0L, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(1L, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(2L, "6ase46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(3L, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
+    )
     val usersInChatRoom = listOf(
       PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() })
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+
+      for (i in 0 until messageHistory.size) {
+        val expectedMessage = messageHistory[i] as TextChatMessage
+        val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
+
+        assertEquals(expectedMessage.id, actualMessage.id)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
+        assertEquals(expectedMessage.message, actualMessage.message)
+      }
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
@@ -41,13 +58,23 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test
   fun testResponseEmpty() {
     val roomName = "test"
+    val messageHistory = emptyList<BaseChatMessage>()
     val usersInChatRoom = emptyList<PublicUserInChat>()
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+
+      for (i in 0 until messageHistory.size) {
+        val expectedMessage = messageHistory[i] as TextChatMessage
+        val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
+
+        assertEquals(expectedMessage.id, actualMessage.id)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
+        assertEquals(expectedMessage.message, actualMessage.message)
+      }
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
