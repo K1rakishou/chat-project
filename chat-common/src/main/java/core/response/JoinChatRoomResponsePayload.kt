@@ -4,6 +4,7 @@ import core.model.drainable.PublicUserInChat
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
+import core.exception.ResponseDeserializationException
 import core.exception.UnknownPacketVersion
 import core.model.drainable.chat_message.BaseChatMessage
 import core.sizeof
@@ -69,11 +70,15 @@ class JoinChatRoomResponsePayload private constructor(
       return when (responseVersion) {
         JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
+          if (status != Status.Ok) {
+            return JoinChatRoomResponsePayload.fail(status)
+          }
 
-          //TODO: check status code before trying to deserialize the rest of the body
           val roomName = byteSink.readString()
+            ?: throw ResponseDeserializationException("Could not read roomName")
           val messageHistory = byteSink.readList<BaseChatMessage>(BaseChatMessage::class)
           val users = byteSink.readList<PublicUserInChat>(PublicUserInChat::class)
+
           JoinChatRoomResponsePayload(status, roomName, messageHistory, users)
         }
         JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()

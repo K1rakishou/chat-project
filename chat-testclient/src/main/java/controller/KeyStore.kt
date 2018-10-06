@@ -24,6 +24,10 @@ class KeyStore : Controller() {
     return myKeys != null
   }
 
+//  fun storeKeyPair() {
+//    val keystore = KeyStore.getInstance("BKS", "BC")
+//  }
+
   class MyKeys(
     val ecKeyPair: KeyPair,
     val publicKeyEncoded: ByteArray
