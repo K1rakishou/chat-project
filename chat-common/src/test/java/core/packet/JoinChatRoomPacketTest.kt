@@ -1,6 +1,8 @@
 package core.packet
 
+import core.Constants
 import core.exception.ByteSinkReadException
+import core.security.SecurityUtils
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -43,7 +45,7 @@ class JoinChatRoomPacketTest : BasePacketPayloadTest() {
   @Test(expected = ByteSinkReadException::class)
   fun testPacketExceedUserName() {
     val ecPublicKey = ByteArray(555) { 0x66.toByte() }
-    val userName = "test_user_nametest_user_nametest_user_nametest_user_nametest_user_name"
+    val userName = SecurityUtils.Generation.generateRandomString(Constants.maxUserNameLen + 10)
     val roomName = "test_room_name"
     val roomPasswordHash = "12345678"
 
@@ -61,9 +63,7 @@ class JoinChatRoomPacketTest : BasePacketPayloadTest() {
   fun testPacketExceedRoomName() {
     val ecPublicKey = ByteArray(555) { 0x66.toByte() }
     val userName = "test_user_name"
-    val roomName = "test_room_nametest_room_nametest_room_nametest_room_nametest_room_nametest_room_nametest_room_namete" +
-      "st_room_nametest_room_nametest_room_nametest_room_nametest_room_nametest_room_nametest_room_nametest_room_nametest" +
-      "_room_nametest_room_nametest_room_nametest_room_nametest_room_name"
+    val roomName = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomNameLength + 10)
     val roomPasswordHash = "12345678"
 
     testPayload(JoinChatRoomPacket(ecPublicKey, userName, roomName, roomPasswordHash), { byteSink ->
@@ -81,10 +81,7 @@ class JoinChatRoomPacketTest : BasePacketPayloadTest() {
     val ecPublicKey = ByteArray(555) { 0x66.toByte() }
     val userName = "test_user_name"
     val roomName = "test_room_name"
-    val roomPasswordHash = "12345678123456781234567812345678123456781234567812345678123456781234567812345678123456781234" +
-      "56781234567812345678123456781234567812345678123456781234567812345678123456781234567812345678123456781234567812345" +
-      "67812345678123456781234567812345678123456781234567812345678123456781234567812345678123456781234567812345678123456" +
-      "7812345678123456781234567812345678123456781234567812345678123456781234567812345678"
+    val roomPasswordHash = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomPasswordHash + 10)
 
     testPayload(JoinChatRoomPacket(ecPublicKey, userName, roomName, roomPasswordHash), { byteSink ->
       JoinChatRoomPacket.fromByteSink(byteSink)

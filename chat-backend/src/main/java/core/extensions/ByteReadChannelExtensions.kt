@@ -16,7 +16,7 @@ import java.io.RandomAccessFile
 suspend fun ByteReadChannel.readPacketInfo(byteSinkFileCachePath: String, bodySize: Int): PacketInfo {
   var packetInfo: PacketInfo? = null
 
-  if (bodySize <= Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
+  if (bodySize <= Constants.maxInMemoryByteSinkSize) {
     IoBuffer.Pool.autoRelease { buffer ->
       this.readFully(buffer, bodySize)
 
@@ -35,9 +35,9 @@ suspend fun ByteReadChannel.readPacketInfo(byteSinkFileCachePath: String, bodySi
     randomAccessFile.use { raf ->
       val sink = OnDiskByteSink.fromFile(file)
 
-      for (offset in 0 until bodySize step Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
-        val chunk = if (bodySize - offset > Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
-          Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
+      for (offset in 0 until bodySize step Constants.maxInMemoryByteSinkSize) {
+        val chunk = if (bodySize - offset > Constants.maxInMemoryByteSinkSize) {
+          Constants.maxInMemoryByteSinkSize
         } else {
           bodySize - offset
         }

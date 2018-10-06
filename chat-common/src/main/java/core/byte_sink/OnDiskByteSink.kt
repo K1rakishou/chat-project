@@ -1,6 +1,6 @@
 package core.byte_sink
 
-import core.Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
+import core.Constants.maxInMemoryByteSinkSize
 import core.exception.ByteSinkReadException
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
@@ -252,7 +252,7 @@ class OnDiskByteSink private constructor(
   }
 
   companion object {
-    fun fromFile(filePath: File, initialSize: Int = MAX_PACKET_SIZE_FOR_MEMORY_HANDLING): OnDiskByteSink {
+    fun fromFile(filePath: File, initialSize: Int = maxInMemoryByteSinkSize): OnDiskByteSink {
       return OnDiskByteSink(filePath, initialSize.toLong())
     }
   }

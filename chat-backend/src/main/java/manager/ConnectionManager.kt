@@ -80,13 +80,13 @@ class ConnectionManager(
     loggingSink.writeShort(packet.packetBody.type)
     //
 
-    val readBuffer = ByteArray(Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING)
+    val readBuffer = ByteArray(Constants.maxInMemoryByteSinkSize)
     val streamSize = packet.packetBody.bodyByteSink.getWriterPosition()
 
     packet.packetBody.bodyByteSink.getStream().use { bodyStream ->
-      for (offset in 0 until streamSize step Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
-        val chunk = if (streamSize - offset > Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING) {
-          Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
+      for (offset in 0 until streamSize step Constants.maxInMemoryByteSinkSize) {
+        val chunk = if (streamSize - offset > Constants.maxInMemoryByteSinkSize) {
+          Constants.maxInMemoryByteSinkSize
         } else {
           streamSize - offset
         }

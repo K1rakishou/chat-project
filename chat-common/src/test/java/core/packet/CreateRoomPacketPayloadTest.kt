@@ -1,6 +1,8 @@
 package core.packet
 
+import core.Constants
 import core.exception.ByteSinkReadException
+import core.security.SecurityUtils
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -39,8 +41,7 @@ class CreateRoomPacketPayloadTest : BasePacketPayloadTest() {
   @Test(expected = ByteSinkReadException::class)
   fun testPacketExceedMaxRoomName() {
     val isPublic = true
-    val roomName = "dgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdg" +
-      "fdsgddfgfgdgfdsgdfgdgfdsgdfgdg"
+    val roomName = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomNameLength + 10)
     val roomPassword = "fgfdhd"
 
     testPayload(CreateRoomPacket(isPublic, roomName, roomPassword), { byteSink ->
@@ -56,9 +57,7 @@ class CreateRoomPacketPayloadTest : BasePacketPayloadTest() {
   fun testPacketExceedMaxRoomPassword() {
     val isPublic = true
     val roomName = "fgfdhd"
-    val roomPassword = "gfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsg" +
-      "ddfgfgdgfdsgdfgdgfdsgdfgdggfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsgdfgdgfdsg" +
-      "dfgdgfdsgddfgfgdgfdsgdfgdgfdsgdfgdg"
+    val roomPassword = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomPasswordHash + 10)
 
     testPayload(CreateRoomPacket(isPublic, roomName, roomPassword), { byteSink ->
       CreateRoomPacket.fromByteSink(byteSink)
