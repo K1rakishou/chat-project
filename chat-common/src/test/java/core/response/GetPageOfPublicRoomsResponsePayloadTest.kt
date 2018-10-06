@@ -9,7 +9,7 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
 
   @Test
   fun testResponse() {
-    val status = Status.UnknownError
+    val status = Status.Ok
     val publicChatRoomList = listOf(
       PublicChatRoom("testRoom1", 0),
       PublicChatRoom("testRoom154364r6dr76rt7", 44),
@@ -18,9 +18,11 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
       PublicChatRoom("5", 1)
     )
 
-    testPayload(GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList), { byteSink ->
+    testPayload(GetPageOfPublicRoomsResponsePayload.success(publicChatRoomList), { byteSink ->
       GetPageOfPublicRoomsResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
+      assertEquals(status, restoredResponse.status)
+
       for (i in 0 until publicChatRoomList.size) {
         assertEquals(restoredResponse.publicChatRoomList[i].roomName, restoredResponse.publicChatRoomList[i].roomName)
       }
@@ -29,12 +31,30 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
 
   @Test
   fun testResponseRoomsListIsEmpty() {
+    val status = Status.Ok
+    val publicChatRoomList = listOf<PublicChatRoom>()
+
+    testPayload(GetPageOfPublicRoomsResponsePayload.success(publicChatRoomList), { byteSink ->
+      GetPageOfPublicRoomsResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(status, restoredResponse.status)
+
+      for (i in 0 until publicChatRoomList.size) {
+        assertEquals(restoredResponse.publicChatRoomList[i].roomName, restoredResponse.publicChatRoomList[i].roomName)
+      }
+    })
+  }
+
+  @Test
+  fun testResponseFail() {
     val status = Status.UnknownError
     val publicChatRoomList = listOf<PublicChatRoom>()
 
-    testPayload(GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList), { byteSink ->
+    testPayload(GetPageOfPublicRoomsResponsePayload.fail(status), { byteSink ->
       GetPageOfPublicRoomsResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
+      assertEquals(status, restoredResponse.status)
+
       for (i in 0 until publicChatRoomList.size) {
         assertEquals(restoredResponse.publicChatRoomList[i].roomName, restoredResponse.publicChatRoomList[i].roomName)
       }

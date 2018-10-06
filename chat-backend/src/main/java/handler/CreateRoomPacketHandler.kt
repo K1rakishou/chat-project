@@ -32,7 +32,7 @@ class CreateRoomPacketHandler(
 
     if (chatRoomManager.exists(chatRoomName)) {
       println("ChatRoom with name $chatRoomName already exists")
-      return CreateRoomResponsePayload(Status.ChatRoomAlreadyExists, null)
+      return CreateRoomResponsePayload.fail(Status.ChatRoomAlreadyExists)
     }
 
     val chatRoom = chatRoomManager.createChatRoom(
@@ -42,7 +42,7 @@ class CreateRoomPacketHandler(
     )
 
     println("ChatRoom ${chatRoom} has been successfully created!")
-    return CreateRoomResponsePayload(Status.Ok, chatRoom.roomName)
+    return CreateRoomResponsePayload.success(chatRoom.roomName)
   }
 
 }

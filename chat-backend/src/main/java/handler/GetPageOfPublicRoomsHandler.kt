@@ -45,7 +45,7 @@ class GetPageOfPublicRoomsHandler(
       .take(count)
       .toList()
 
-    return GetPageOfPublicRoomsResponsePayload(Status.Ok, roomsPage)
+    return GetPageOfPublicRoomsResponsePayload.success(roomsPage)
   }
 
 }

@@ -112,13 +112,13 @@ class JoinChatRoomPacketHandler(
 
       //send to every user in the chat room that a new user has joined
       val newPublicUser = PublicUserInChat(newUser.userName, newUser.ecPublicKey)
-      connectionManager.sendResponse(userInRoom.user.clientAddress, UserHasJoinedResponsePayload.success(newPublicUser))
+      val response = UserHasJoinedResponsePayload.success(chatRoom.roomName, newPublicUser)
+      connectionManager.sendResponse(userInRoom.user.clientAddress, response)
 
       publicUserInChatList += publicUserInChat
     }
 
     //send back list of users in the chat room
-
     val messageHistory = chatRoom.getMessageHistory()
     val response = JoinChatRoomResponsePayload.success(chatRoom.roomName, messageHistory, publicUserInChatList)
     connectionManager.sendResponse(clientAddress, response)
