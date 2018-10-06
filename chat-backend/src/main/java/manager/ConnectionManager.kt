@@ -104,6 +104,6 @@ class ConnectionManager(
       }
     }
 
-    println(" >>> SENDING BACK: ${loggingSink.getArray().toHexSeparated()}")
+    println(" >>> SENDING BACK (${loggingSink.getWriterPosition()} bytes): ${loggingSink.getArray().toHexSeparated()}")
   }
 }

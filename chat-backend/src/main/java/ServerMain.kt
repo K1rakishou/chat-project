@@ -107,7 +107,7 @@ class Server(
       val packetInfo = readChannel.readPacketInfo(byteSinkFileCachePath, bodySize)
 
       //TODO: for debug only! may cause OOM when internal buffer is way too big!
-      println(" <<< RECEIVING: ${packetInfo.byteSink.getStream().readAllBytes().toHexSeparated()}")
+      println(" <<< RECEIVING ($bodySize bytes): ${packetInfo.byteSink.getStream().readAllBytes().toHexSeparated()}")
 
       packetInfo.byteSink.use { byteSink ->
         when (packetInfo.packetType) {

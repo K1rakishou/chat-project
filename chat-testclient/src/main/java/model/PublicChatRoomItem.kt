@@ -9,7 +9,7 @@ import java.util.*
 class PublicChatRoomItem(
   roomName: String,
   usersCount: Short,
-  roomMessages: String
+  messageHistory: String
 ) {
   val id = UUID.randomUUID()
 
@@ -25,11 +25,11 @@ class PublicChatRoomItem(
     get() = usersCountProperty.get()
     set(value) = usersCountProperty.set(value)
 
-  private val roomMessagesProperty by lazy { SimpleStringProperty(roomMessages) }
-  fun roomMessagesProperty() = roomMessagesProperty
-  var roomMessages: String
-    get() = roomMessagesProperty.get()
-    set(value) = roomMessagesProperty.set(value)
+//  private val roomMessagesProperty by lazy { SimpleStringProperty(roomMessages) }
+//  fun roomMessagesProperty() = roomMessagesProperty
+//  var roomMessages: String
+//    get() = roomMessagesProperty.get()
+//    set(value) = roomMessagesProperty.set(value)
 
   override fun equals(other: Any?): Boolean {
     if (other == null) {
@@ -57,5 +57,5 @@ class PublicChatRoomItemModel(
 ) : ItemViewModel<PublicChatRoomItem>(itemProperty = property) {
   val roomName = bind(autocommit = true) { item?.roomNameProperty() }
   val usersCount = bind(autocommit = true) { item?.usersCountProperty() }
-  val roomMessages = bind(autocommit = true) {item?.roomMessagesProperty() }
+//  val roomMessages = bind(autocommit = true) {item?.roomMessagesProperty() }
 }
