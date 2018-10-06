@@ -89,12 +89,12 @@ class ChatRoomListController : Controller() {
         }
 
         runLater {
-          store.addChatRoomMessage(response.roomName!!, TextChatMessageItem("Server", "Joined chat room ${response.roomName!!}"))
-
           store.setChatRoomUserList(response.roomName!!, response.users)
           store.setChatRoomMessageList(response.roomName!!, response.messageHistory)
 
           find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
+
+          store.addChatRoomMessage(response.roomName!!, TextChatMessageItem("Server", "You've joined the chat room"))
         }
       }
       ResponseType.UserHasJoinedResponseType -> {
@@ -107,7 +107,7 @@ class ChatRoomListController : Controller() {
         }
 
         runLater {
-          store.addChatRoomMessage(response.roomName!!, TextChatMessageItem("Server", "User ${response.roomName!!} has joined to chat room"))
+          store.addChatRoomMessage(response.roomName!!, TextChatMessageItem("Server", "User \"${response.roomName!!}\" has joined to chat room"))
         }
       }
       else -> {

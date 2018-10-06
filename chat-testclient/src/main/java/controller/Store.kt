@@ -71,11 +71,11 @@ class Store : Controller() {
 
   fun addChatRoomMessage(roomName: String, message: BaseChatMessageItem) {
     val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
-    chatRoom.roomMessages.add(message)
+    chatRoom.roomMessagesProperty().get().add(message)
   }
 
   fun getChatRoomMessageHistory(roomName: String): ObservableList<BaseChatMessageItem> {
     val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
-    return chatRoom.roomMessages
+    return chatRoom.roomMessagesProperty()
   }
 }
