@@ -124,7 +124,7 @@ class NetworkManager {
         val responseInfo = readChannel.readResponseInfo(byteSinkFileCachePath, bodySize)
 
         //TODO: for debug only! may cause OOM when internal buffer is way too big!
-        println(" >>> RECEIVING: ${responseInfo.byteSink.getStream().readAllBytes().toHexSeparated()}")
+        println(" >>> RECEIVING (${bodySize} bytes): ${responseInfo.byteSink.getStream().readAllBytes().toHexSeparated()}")
 
         socketEventsQueue.send(SocketEvent.ResponseReceived(responseInfo))
       }
@@ -150,10 +150,10 @@ class NetworkManager {
     sink.writeShort(packet.packetBody.type)
     //
 
-    val readBuffer = ByteArray(Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING)
+    val readBuffer = ByteArray(Constants.maxInMemoryByteSinkSize)
 
     packet.packetBody.bodyByteSink.getStream().use { bodyStream ->
-      val bytesReadCount = bodyStream.read(readBuffer, 0, Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING)
+      val bytesReadCount = bodyStream.read(readBuffer, 0, Constants.maxInMemoryByteSinkSize)
       if (bytesReadCount == -1) {
         return@use
       }
@@ -165,7 +165,7 @@ class NetworkManager {
       //
     }
 
-    println(" <<< SENDING: ${sink.getArray().toHexSeparated()}")
+    println(" <<< SENDING (${sink.getWriterPosition()} bytes): ${sink.getArray().toHexSeparated()}")
   }
 
   private suspend fun readMagicNumber(): Boolean {

@@ -151,11 +151,14 @@ class InMemoryByteSink private constructor(
     array[writePosition.getAndIncrement()] = (long and 0x000000FF).toByte()
   }
 
-  override fun readByteArray(): ByteArray? {
+  override fun readByteArray(maxSize: Int): ByteArray? {
     return if (readByte() == NO_VALUE) {
       null
     } else {
       val size = readInt()
+      if (size > maxSize) {
+        throw ByteSinkReadException()
+      }
 
       if (getReaderPosition() + size > array.size) {
         throw ByteSinkReadException()
@@ -180,8 +183,8 @@ class InMemoryByteSink private constructor(
     }
   }
 
-  override fun readString(): String? {
-    val array = readByteArray()
+  override fun readString(maxSize: Int): String? {
+    val array = readByteArray(maxSize)
     if (array == null) {
       return null
     } else {
@@ -193,11 +196,15 @@ class InMemoryByteSink private constructor(
     writeByteArray(string?.toByteArray())
   }
 
-  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>): List<T> {
+  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>, maxCount: Int): List<T> {
     if (readByte() == NO_VALUE) {
       return emptyList()
     } else {
       val listSize = readShort()
+      if (listSize > maxCount) {
+        throw ByteSinkReadException()
+      }
+
       val objList = mutableListOf<T>()
 
       for (i in 0 until listSize) {

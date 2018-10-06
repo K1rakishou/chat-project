@@ -1,6 +1,8 @@
 package core.model.drainable.chat_message
 
+import core.Constants
 import core.byte_sink.ByteSink
+import core.exception.ResponseDeserializationException
 import core.exception.UnknownChatMessageType
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanBeRestoredFromSink
@@ -8,30 +10,32 @@ import core.interfaces.CanMeasureSizeOfFields
 import core.sizeof
 
 abstract class BaseChatMessage(
-  val id: Long,
+  val messageId: Int,
   val messageType: ChatMessageType
 ) : CanBeDrainedToSink, CanMeasureSizeOfFields {
 
   override fun getSize(): Int {
-    return sizeof(id) + sizeof(messageType.value)
+    return sizeof(messageId) + sizeof(messageType.value)
   }
 
   override fun serialize(sink: ByteSink) {
-    sink.writeLong(id)
+    sink.writeInt(messageId)
     sink.writeByte(messageType.value)
   }
 
   companion object : CanBeRestoredFromSink {
     override fun <T> createFromByteSink(byteSink: ByteSink): T? {
-      val id = byteSink.readLong()
+      val messageId = byteSink.readInt()
       val messageType = ChatMessageType.fromByte(byteSink.readByte())
 
       when (messageType) {
         ChatMessageType.Text -> {
-          val senderName = byteSink.readString()
-          val message = byteSink.readString()
+          val senderName = byteSink.readString(Constants.maxUserNameLen)
+            ?: throw ResponseDeserializationException("Could not read BaseChatMessage.senderName")
+          val message = byteSink.readString(Constants.maxTextMessageLen)
+            ?: throw ResponseDeserializationException("Could not read BaseChatMessage.message")
 
-          return TextChatMessage(id, senderName!!, message!!) as T
+          return TextChatMessage(messageId, senderName, message) as T
         }
         ChatMessageType.Unknown -> throw UnknownChatMessageType()
       }

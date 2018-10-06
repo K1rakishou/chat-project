@@ -5,9 +5,9 @@ import core.byte_sink.ByteSink
 import core.exception.UnknownPacketVersion
 import core.model.drainable.PublicChatRoom
 
-class GetPageOfPublicRoomsResponsePayload(
+class GetPageOfPublicRoomsResponsePayload private constructor(
   status: Status,
-  val publicChatRoomList: List<PublicChatRoom>
+  val publicChatRoomList: List<PublicChatRoom> = emptyList()
 ) : BaseResponse(status) {
 
   override val packetType: Short
@@ -23,6 +23,8 @@ class GetPageOfPublicRoomsResponsePayload(
     when (CURRENT_RESPONSE_VERSION) {
       GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
+
+        //TODO: check status before writing anything to byte buffer
         byteSink.writeList(publicChatRoomList)
       }
       GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
@@ -43,15 +45,25 @@ class GetPageOfPublicRoomsResponsePayload(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
+    fun success(publicChatRoomList: List<PublicChatRoom>): GetPageOfPublicRoomsResponsePayload {
+      return GetPageOfPublicRoomsResponsePayload(Status.Ok, publicChatRoomList)
+    }
+
+    fun fail(status: Status): GetPageOfPublicRoomsResponsePayload {
+      return GetPageOfPublicRoomsResponsePayload(status)
+    }
+
     fun fromByteSink(byteSink: ByteSink): GetPageOfPublicRoomsResponsePayload {
       val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
 
       when (responseVersion) {
         GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
+          if (status != Status.Ok) {
+            return GetPageOfPublicRoomsResponsePayload.fail(status)
+          }
 
-          //TODO: check status code before trying to deserialize the rest of the body
-          val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class)
+          val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, Constants.maxChatRoomsCount)
           return GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList)
         }
         GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()

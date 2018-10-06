@@ -6,7 +6,9 @@ enum class ResponseType(val value: Short) {
   CreateRoomResponseType(0),
   GetPageOfPublicRoomsResponseType(1),
   JoinChatRoomResponseType(2),
-  UserHasJoinedResponseType(3);
+  UserHasJoinedResponseType(3),
+  SendChatMessageResponseType(4),
+  NewChatMessageResponseType(5);
 
   companion object {
     fun fromShort(type: Short): ResponseType {

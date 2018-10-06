@@ -34,12 +34,12 @@ abstract class ByteSink : AutoCloseable {
   abstract fun writeInt(int: Int)
   abstract fun readLong(): Long
   abstract fun writeLong(long: Long)
-  abstract fun readByteArray(): ByteArray?
+  abstract fun readByteArray(maxSize: Int): ByteArray?
   abstract fun writeByteArray(inArray: ByteArray?)
-  abstract fun readString(): String?
+  abstract fun readString(maxSize: Int): String?
   abstract fun writeString(string: String?)
 
-  abstract fun <T> readList(clazz: KClass<*>): List<T>
+  abstract fun <T> readList(clazz: KClass<*>, maxCount: Int): List<T>
     where T : CanBeDrainedToSink
 
   abstract fun <T> writeList(listOfObjects: List<T>)

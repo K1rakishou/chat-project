@@ -1,5 +1,6 @@
 package core.model.drainable
 
+import core.Constants
 import core.byte_sink.ByteSink
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanBeRestoredFromSink
@@ -22,12 +23,12 @@ class PublicUserInChat(
 
   companion object : CanBeRestoredFromSink {
     override fun <T> createFromByteSink(byteSink: ByteSink): T? {
-      val userName = byteSink.readString()
+      val userName = byteSink.readString(Constants.maxUserNameLen)
       if (userName == null) {
         return null
       }
 
-      val ecPublicKey = byteSink.readByteArray()
+      val ecPublicKey = byteSink.readByteArray(Constants.maxEcPublicKeySize)
       if (ecPublicKey == null) {
         return null
       }

@@ -1,13 +1,15 @@
 package core.byte_sink
 
-import core.Constants.MAX_PACKET_SIZE_FOR_MEMORY_HANDLING
+import core.Constants.maxInMemoryByteSinkSize
 import core.exception.ByteSinkReadException
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
 import core.model.drainable.DrainableFactory
 import core.sizeof
-import java.io.*
-import java.lang.IllegalArgumentException
+import java.io.DataInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.RandomAccessFile
 import kotlin.reflect.KClass
 
 class OnDiskByteSink private constructor(
@@ -143,11 +145,14 @@ class OnDiskByteSink private constructor(
     raf.writeLong(long)
   }
 
-  override fun readByteArray(): ByteArray? {
+  override fun readByteArray(maxSize: Int): ByteArray? {
     return if (readByte() == NO_VALUE) {
       null
     } else {
       val arrayLen = readInt()
+      if (arrayLen > maxSize) {
+        throw ByteSinkReadException()
+      }
 
       if (getReaderPosition() + arrayLen > raf.length()) {
         throw ByteSinkReadException()
@@ -173,8 +178,8 @@ class OnDiskByteSink private constructor(
     }
   }
 
-  override fun readString(): String? {
-    val array = readByteArray()
+  override fun readString(maxSize: Int): String? {
+    val array = readByteArray(maxSize)
     if (array == null) {
       return null
     } else {
@@ -186,11 +191,15 @@ class OnDiskByteSink private constructor(
     writeByteArray(string?.toByteArray())
   }
 
-  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>): List<T> {
+  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>, maxCount: Int): List<T> {
     if (readByte() == NO_VALUE) {
       return emptyList()
     } else {
       val listSize = readShort()
+      if (listSize > maxCount) {
+        throw ByteSinkReadException()
+      }
+
       val objList = mutableListOf<T>()
 
       for (i in 0 until listSize) {
@@ -243,7 +252,7 @@ class OnDiskByteSink private constructor(
   }
 
   companion object {
-    fun fromFile(filePath: File, initialSize: Int = MAX_PACKET_SIZE_FOR_MEMORY_HANDLING): OnDiskByteSink {
+    fun fromFile(filePath: File, initialSize: Int = maxInMemoryByteSinkSize): OnDiskByteSink {
       return OnDiskByteSink(filePath, initialSize.toLong())
     }
   }

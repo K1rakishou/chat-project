@@ -66,7 +66,7 @@ class OnDiskByteSinkTest {
     byteSink.writeByteArray(byteArray)
 
     assertEquals(byteArray.size + 4 + 1, byteSink.getWriterPosition())
-    Assert.assertArrayEquals(byteArray, byteSink.readByteArray())
+    Assert.assertArrayEquals(byteArray, byteSink.readByteArray(byteArray.size))
     assertEquals(byteArray.size + 4 + 1, byteSink.getReaderPosition())
   }
 
@@ -77,7 +77,7 @@ class OnDiskByteSinkTest {
     byteSink.writeString(string)
 
     assertEquals(string.length + 4 + 1, byteSink.getWriterPosition())
-    assertEquals(string, byteSink.readString())
+    assertEquals(string, byteSink.readString(string.length))
     assertEquals(string.length + 4 + 1, byteSink.getReaderPosition())
   }
 
@@ -86,7 +86,7 @@ class OnDiskByteSinkTest {
     byteSink.writeString(null)
 
     assertEquals(1, byteSink.getWriterPosition())
-    assertEquals(null, byteSink.readString())
+    assertEquals(null, byteSink.readString(1))
     assertEquals(1, byteSink.getReaderPosition())
   }
 
@@ -98,10 +98,10 @@ class OnDiskByteSinkTest {
     byteSink.writeString(string)
     byteSink.writeString(string)
 
-    assertEquals(string, byteSink.readString())
-    assertEquals(string, byteSink.readString())
-    assertEquals(string, byteSink.readString())
-    assertEquals(string, byteSink.readString())
+    assertEquals(string, byteSink.readString(string.length))
+    assertEquals(string, byteSink.readString(string.length))
+    assertEquals(string, byteSink.readString(string.length))
+    assertEquals(string, byteSink.readString(string.length))
   }
 
   @Test
@@ -124,7 +124,7 @@ class OnDiskByteSinkTest {
     assertEquals(short, byteSink.readShort())
     assertEquals(int, byteSink.readInt())
     assertEquals(long, byteSink.readLong())
-    Assert.assertArrayEquals(byteArray, byteSink.readByteArray())
-    assertEquals(string, byteSink.readString())
+    Assert.assertArrayEquals(byteArray, byteSink.readByteArray(byteArray.size))
+    assertEquals(string, byteSink.readString(string.length))
   }
 }

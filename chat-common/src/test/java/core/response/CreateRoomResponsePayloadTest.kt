@@ -8,37 +8,40 @@ class CreateRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
   @Test
   fun testResponse() {
-    val status = Status.UnknownError
+    val status = Status.Ok
     val chatRoomName = "34235235"
 
-    testPayload(CreateRoomResponsePayload(status, chatRoomName), { byteSink ->
+    testPayload(CreateRoomResponsePayload.success(chatRoomName), { byteSink ->
       CreateRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
+      assertEquals(status, restoredResponse.status)
       assertEquals(chatRoomName, restoredResponse.chatRoomName)
     })
   }
 
   @Test
   fun testResponseEmptyRoomName() {
-    val status = Status.UnknownError
+    val status = Status.Ok
     val chatRoomName = ""
 
-    testPayload(CreateRoomResponsePayload(status, chatRoomName), { byteSink ->
+    testPayload(CreateRoomResponsePayload.success(chatRoomName), { byteSink ->
       CreateRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
+      assertEquals(status, restoredResponse.status)
       assertEquals(chatRoomName, restoredResponse.chatRoomName)
     })
   }
 
   @Test
-  fun testResponseEmptyRoomNameIsNull() {
+  fun testResponseFail() {
     val status = Status.UnknownError
-    val chatRoomName = null
 
-    testPayload(CreateRoomResponsePayload(status, chatRoomName), { byteSink ->
+    testPayload(CreateRoomResponsePayload.fail(status), { byteSink ->
       CreateRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
-      assertEquals(chatRoomName, restoredResponse.chatRoomName)
+      assertEquals(status, restoredResponse.status)
+      assertEquals(null, restoredResponse.chatRoomName)
     })
   }
+
 }

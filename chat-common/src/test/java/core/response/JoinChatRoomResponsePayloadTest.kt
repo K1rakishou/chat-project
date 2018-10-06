@@ -13,10 +13,10 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   fun testResponseSuccess() {
     val roomName = "121314"
     val messageHistory = listOf<BaseChatMessage>(
-      TextChatMessage(0L, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
-      TextChatMessage(1L, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
-      TextChatMessage(2L, "6ase46", "wwwwwwwwwwwwwwwwwwwwww"),
-      TextChatMessage(3L, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
+      TextChatMessage(0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(1, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(2, "6ase46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(3, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
     )
     val usersInChatRoom = listOf(
       PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() })
@@ -32,7 +32,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
         val expectedMessage = messageHistory[i] as TextChatMessage
         val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
 
-        assertEquals(expectedMessage.id, actualMessage.id)
+        assertEquals(expectedMessage.messageId, actualMessage.messageId)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
       }
@@ -71,7 +71,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
         val expectedMessage = messageHistory[i] as TextChatMessage
         val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
 
-        assertEquals(expectedMessage.id, actualMessage.id)
+        assertEquals(expectedMessage.messageId, actualMessage.messageId)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
       }

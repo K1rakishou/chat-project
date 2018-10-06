@@ -1,65 +1,81 @@
 package controller
 
+import core.exception.UnknownChatMessageType
 import core.model.drainable.PublicChatRoom
 import core.model.drainable.PublicUserInChat
+import core.model.drainable.chat_message.BaseChatMessage
+import core.model.drainable.chat_message.ChatMessageType
+import core.model.drainable.chat_message.TextChatMessage
+import core.security.SecurityUtils
+import javafx.beans.property.SimpleObjectProperty
+import javafx.collections.FXCollections
+import javafx.collections.ObservableList
+import model.CurrentUser
+import model.PublicChatRoomItem
+import model.PublicUserInChatItem
+import model.chat_message.BaseChatMessageItem
+import model.chat_message.TextChatMessageItem
 import tornadofx.Controller
 
 class Store : Controller() {
-  private val publicChatRoomList = mutableListOf<ChatRoom>()
-  private val usersInChatRoom = mutableListOf<UserInChat>()
-  private val joinedRooms = mutableSetOf<String>()
+  private val currentUser: SimpleObjectProperty<CurrentUser> = SimpleObjectProperty(CurrentUser("test user ${SecurityUtils.Generation.generateRandomString(6)}"))
+  private val publicChatRoomList: ObservableList<PublicChatRoomItem> = FXCollections.observableArrayList()
+  private val joinedRooms: ObservableList<String> = FXCollections.observableArrayList()
 
-  @Synchronized
-  fun setChatRoomList(chatRoomList: List<PublicChatRoom>) {
+  fun getCurrentUserName(): String {
+    return currentUser.get().userName
+  }
+
+  fun getPublicChatRoomList(): ObservableList<PublicChatRoomItem> {
+    return publicChatRoomList
+  }
+
+  fun setPublicChatRoomList(list: List<PublicChatRoom>) {
     publicChatRoomList.clear()
-    publicChatRoomList.addAll(chatRoomList.map { chatRoom -> ChatRoom(chatRoom.roomName, chatRoom.usersCount) })
+    publicChatRoomList.addAll(list.map { chatRoom ->
+      PublicChatRoomItem(chatRoom.chatRoomName, chatRoom.usersCount, FXCollections.observableArrayList(), FXCollections.observableArrayList())
+    })
   }
 
-  @Synchronized
-  fun getChatRoomList(): List<ChatRoom> = publicChatRoomList
-
-  @Synchronized
-  fun addJoinedRoom(roomName: String) {
-    joinedRooms += roomName
+  fun clearPublicChatRoomList() {
+    publicChatRoomList.clear()
   }
 
-  @Synchronized
-  fun removeJoindRoom(roomName: String) {
-    joinedRooms -= roomName
-  }
-
-  @Synchronized
   fun isAlreadyJoined(roomName: String): Boolean {
-    return joinedRooms.contains(roomName)
+    return joinedRooms.any { it == roomName }
   }
 
-  @Synchronized
-  fun addUserInChatRoom(user: PublicUserInChat) {
-    usersInChatRoom.add(UserInChat(user.userName, user.ecPublicKey))
+  fun setChatRoomUserList(roomName: String, userList: List<PublicUserInChat>) {
+    val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
+    val convertedUserList = userList.map { user -> PublicUserInChatItem(user.userName, user.ecPublicKey) }
+
+    chatRoom.userListProperty().get().clear()
+    chatRoom.userListProperty().get().addAll(convertedUserList)
   }
 
-  @Synchronized
-  fun addUserInChatRoomList(userList: List<PublicUserInChat>) {
-    usersInChatRoom.addAll(userList.map { user -> UserInChat(user.userName, user.ecPublicKey) })
-  }
-
-  data class ChatRoom(
-    val roomName: String,
-    val usersCount: Short,
-    val messageHistory: List<String> = mutableListOf()
-  ) {
-    fun getRoomMessagesAsString(): String {
-      return buildString {
-        for (message in messageHistory) {
-          append(message)
-          append('\n')
+  fun setChatRoomMessageList(roomName: String, messageHistory: List<BaseChatMessage>) {
+    val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
+    val convertedMessageList = messageHistory.map { message ->
+      when (message.messageType) {
+        ChatMessageType.Unknown -> throw UnknownChatMessageType()
+        ChatMessageType.Text -> {
+          message as TextChatMessage
+          TextChatMessageItem(message.senderName, message.message)
         }
       }
     }
+
+    chatRoom.roomMessagesProperty().get().clear()
+    chatRoom.roomMessagesProperty().get().addAll(convertedMessageList)
   }
 
-  data class UserInChat(
-    val userName: String,
-    val ecPublicKey: ByteArray
-  )
+  fun addChatRoomMessage(roomName: String, message: BaseChatMessageItem) {
+    val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
+    chatRoom.roomMessagesProperty().get().add(message)
+  }
+
+  fun getChatRoomMessageHistory(roomName: String): ObservableList<BaseChatMessageItem> {
+    val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
+    return chatRoom.roomMessagesProperty()
+  }
 }

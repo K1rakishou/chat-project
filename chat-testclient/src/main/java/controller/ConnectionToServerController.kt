@@ -73,7 +73,7 @@ class ConnectionToServerController : Controller() {
         val response = GetPageOfPublicRoomsResponsePayload.fromByteSink(responseInfo.byteSink)
         if (response.status == Status.Ok) {
           runLater {
-            store.setChatRoomList(response.publicChatRoomList)
+            store.setPublicChatRoomList(response.publicChatRoomList)
             find<ConnectionToServerWindow>().replaceWith<ChatMainWindow>()
           }
         } else {

@@ -27,29 +27,30 @@ class JoinChatRoomPacketHandler(
   }
 
   private suspend fun handleInternalV1(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val ecPublicKey = byteSink.readByteArray()
-    val userName = byteSink.readString()
-    val roomName = byteSink.readString()
-    val roomPasswordHash = byteSink.readString()
+    val packet = JoinChatRoomPacket.fromByteSink(byteSink)
+    val ecPublicKey = packet.ecPublicKey
+    val userName = packet.userName
+    val roomName = packet.roomName
+    val roomPasswordHash = packet.roomPasswordHash
 
-    if ((ecPublicKey == null || ecPublicKey.isEmpty()) ||
-        (userName == null || userName.isEmpty()) ||
-        (roomName == null || roomName.isEmpty())) {
+    if (ecPublicKey.isEmpty() || userName.isEmpty() || roomName.isEmpty()) {
       if (ecPublicKey.isNullOrEmpty()) {
-        println("ecPublicKey is NULL or empty (${ecPublicKey})")
+        println("ecPublicKey is empty (${ecPublicKey})")
       }
 
-      if (userName.isNullOrEmpty()) {
-        println("userName is NULL or empty (${userName})")
+      if (userName.isEmpty()) {
+        println("userName is empty (${userName})")
       }
 
-      if (roomName.isNullOrEmpty()) {
-        println("roomName is NULL or empty (${roomName})")
+      if (roomName.isEmpty()) {
+        println("chatRoomName is empty (${roomName})")
       }
 
       connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.fail(Status.BadParam))
       return
     }
+
+    println("User (${userName}) trying to join room (${roomName})")
 
     if (!chatRoomManager.exists(roomName)) {
       println("Room with name (${roomName}) does not exist")
@@ -59,6 +60,8 @@ class JoinChatRoomPacketHandler(
 
     if (chatRoomManager.alreadyJoined(roomName, userName)) {
       //we have already joined this room, no need to add the user in the room second time and notify everyone in the room about it
+      println("User (${userName}) has already joined room (${roomName})")
+
       val chatRoom = chatRoomManager.getChatRoom(roomName)
       if (chatRoom == null) {
         println("Room with name (${roomName}) does not exist")
@@ -72,7 +75,7 @@ class JoinChatRoomPacketHandler(
         .map { userInRoom -> PublicUserInChat(userInRoom.user.userName, userInRoom.user.ecPublicKey) }
 
       val messageHistory = chatRoom.getMessageHistory()
-      val response = JoinChatRoomResponsePayload.success(chatRoom.roomName, messageHistory, publicUserInChatList)
+      val response = JoinChatRoomResponsePayload.success(chatRoom.chatRoomName, messageHistory, publicUserInChatList)
 
       connectionManager.sendResponse(clientAddress, response)
       return
@@ -80,7 +83,7 @@ class JoinChatRoomPacketHandler(
 
     if (chatRoomManager.hasPassword(roomName)) {
       if (roomPasswordHash == null || roomPasswordHash.isEmpty()) {
-        println("Room with name ${roomName} is password protected and user has not provided password (${roomPasswordHash})")
+        println("Room with name (${roomName}) is password protected and user has not provided password (${roomPasswordHash})")
         connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.fail(Status.BadParam))
         return
       }
@@ -101,26 +104,28 @@ class JoinChatRoomPacketHandler(
       return
     }
 
-    val usersInRoom = chatRoom.getEveryoneExcept(userName)
+    val roomParticipants = chatRoom.getEveryoneExcept(userName)
     val publicUserInChatList = mutableListOf<PublicUserInChat>()
 
-    println("There are ${usersInRoom.size} users in room")
+    println("There are ${roomParticipants.size} users in room")
 
     //get all info from all users in the chat room
-    for (userInRoom in usersInRoom) {
+    for (userInRoom in roomParticipants) {
       val publicUserInChat = PublicUserInChat(userInRoom.user.userName, userInRoom.user.ecPublicKey)
 
       //send to every user in the chat room that a new user has joined
       val newPublicUser = PublicUserInChat(newUser.userName, newUser.ecPublicKey)
-      connectionManager.sendResponse(userInRoom.user.clientAddress, UserHasJoinedResponsePayload.success(newPublicUser))
+      val response = UserHasJoinedResponsePayload.success(chatRoom.chatRoomName, newPublicUser)
+      connectionManager.sendResponse(userInRoom.user.clientAddress, response)
 
       publicUserInChatList += publicUserInChat
     }
 
     //send back list of users in the chat room
-
     val messageHistory = chatRoom.getMessageHistory()
-    val response = JoinChatRoomResponsePayload.success(chatRoom.roomName, messageHistory, publicUserInChatList)
+    val response = JoinChatRoomResponsePayload.success(chatRoom.chatRoomName, messageHistory, publicUserInChatList)
     connectionManager.sendResponse(clientAddress, response)
+
+    println("User (${userName}) has successfully joined room (${roomName})")
   }
 }

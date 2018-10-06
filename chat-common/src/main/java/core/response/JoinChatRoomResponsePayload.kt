@@ -1,13 +1,11 @@
 package core.response
 
+import core.*
 import core.model.drainable.PublicUserInChat
-import core.ResponseType
-import core.Status
 import core.byte_sink.ByteSink
+import core.exception.ResponseDeserializationException
 import core.exception.UnknownPacketVersion
 import core.model.drainable.chat_message.BaseChatMessage
-import core.sizeof
-import core.sizeofList
 
 class JoinChatRoomResponsePayload private constructor(
   status: Status,
@@ -29,6 +27,8 @@ class JoinChatRoomResponsePayload private constructor(
     when (CURRENT_RESPONSE_VERSION) {
       JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
+
+        //TODO: check status before writing anything to byte buffer
         byteSink.writeString(roomName)
         byteSink.writeList(messageHistory)
         byteSink.writeList(users)
@@ -69,12 +69,16 @@ class JoinChatRoomResponsePayload private constructor(
       return when (responseVersion) {
         JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
+          if (status != Status.Ok) {
+            return JoinChatRoomResponsePayload.fail(status)
+          }
 
-          //TODO: check status code before trying to deserialize the rest of the body
-          val roomName = byteSink.readString()
-          val messageHistory = byteSink.readList<BaseChatMessage>(BaseChatMessage::class)
-          val users = byteSink.readList<PublicUserInChat>(PublicUserInChat::class)
-          JoinChatRoomResponsePayload(status, roomName, messageHistory, users)
+          val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            ?: throw ResponseDeserializationException("Could not read chatRoomName")
+          val messageHistory = byteSink.readList<BaseChatMessage>(BaseChatMessage::class, Constants.maxRoomHistoryMessagesCount)
+          val users = byteSink.readList<PublicUserInChat>(PublicUserInChat::class, Constants.maxUsersInRoomCount)
+
+          JoinChatRoomResponsePayload(status, chatRoomName, messageHistory, users)
         }
         JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
       }

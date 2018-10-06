@@ -1,12 +1,12 @@
 package core.packet
 
+import core.Constants
 import core.PacketType
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
-import core.exception.ByteSinkReadException
+import core.exception.PacketDeserializationException
 import core.exception.UnknownPacketVersion
 import core.sizeof
-import java.lang.IllegalStateException
 
 class JoinChatRoomPacket(
   val ecPublicKey: ByteArray,
@@ -59,10 +59,13 @@ class JoinChatRoomPacket(
 
       when (packetVersion) {
         JoinChatRoomPacket.PacketVersion.V1 -> {
-          val ecPublicKey = byteSink.readByteArray() ?: throw ByteSinkReadException()
-          val userName = byteSink.readString() ?: throw ByteSinkReadException()
-          val roomName = byteSink.readString() ?: throw ByteSinkReadException()
-          val roomPasswordHash = byteSink.readString()
+          val ecPublicKey = byteSink.readByteArray(Constants.maxEcPublicKeySize)
+            ?: throw PacketDeserializationException("Could not read ecPublicKey")
+          val userName = byteSink.readString(Constants.maxUserNameLen)
+            ?: throw PacketDeserializationException("Could not read userName")
+          val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            ?: throw PacketDeserializationException("Could not read chatRoomName")
+          val roomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHash)
 
           return JoinChatRoomPacket(ecPublicKey, userName, roomName, roomPasswordHash)
         }

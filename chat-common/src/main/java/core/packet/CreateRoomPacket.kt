@@ -1,5 +1,6 @@
 package core.packet
 
+import core.Constants
 import core.PacketType
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
@@ -55,8 +56,8 @@ class CreateRoomPacket(
       when (packetVersion) {
         CreateRoomPacket.PacketVersion.V1 -> {
           val isPublic = byteSink.readBoolean()
-          val chatRoomName = byteSink.readString()
-          val chatRoomPasswordHash = byteSink.readString()
+          val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+          val chatRoomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHash)
 
           return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash)
         }

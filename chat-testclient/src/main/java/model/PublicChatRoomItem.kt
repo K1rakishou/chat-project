@@ -2,14 +2,18 @@ package model
 
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleIntegerProperty
+import javafx.beans.property.SimpleListProperty
 import javafx.beans.property.SimpleStringProperty
+import javafx.collections.ObservableList
+import model.chat_message.BaseChatMessageItem
 import tornadofx.ItemViewModel
 import java.util.*
 
 class PublicChatRoomItem(
   roomName: String,
   usersCount: Short,
-  roomMessages: String
+  userList: ObservableList<PublicUserInChatItem>,
+  roomMessages: ObservableList<BaseChatMessageItem>
 ) {
   val id = UUID.randomUUID()
 
@@ -25,9 +29,15 @@ class PublicChatRoomItem(
     get() = usersCountProperty.get()
     set(value) = usersCountProperty.set(value)
 
-  private val roomMessagesProperty by lazy { SimpleStringProperty(roomMessages) }
+  private val userListProperty by lazy { SimpleListProperty<PublicUserInChatItem>(userList) }
+  fun userListProperty() = userListProperty
+  var userList: ObservableList<PublicUserInChatItem>
+    get() = userListProperty.get()
+    set(value) = userListProperty.set(value)
+
+  private val roomMessagesProperty by lazy { SimpleListProperty<BaseChatMessageItem>(roomMessages) }
   fun roomMessagesProperty() = roomMessagesProperty
-  var roomMessages: String
+  var roomMessages: ObservableList<BaseChatMessageItem>
     get() = roomMessagesProperty.get()
     set(value) = roomMessagesProperty.set(value)
 
@@ -57,5 +67,6 @@ class PublicChatRoomItemModel(
 ) : ItemViewModel<PublicChatRoomItem>(itemProperty = property) {
   val roomName = bind(autocommit = true) { item?.roomNameProperty() }
   val usersCount = bind(autocommit = true) { item?.usersCountProperty() }
-  val roomMessages = bind(autocommit = true) {item?.roomMessagesProperty() }
+  val userList = bind(autocommit = true) { item?.userListProperty() }
+  val roomMessages = bind(autocommit = true) { item?.roomMessagesProperty() }
 }
