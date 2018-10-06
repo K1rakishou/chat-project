@@ -26,23 +26,21 @@ class CreateRoomPacketHandler(
   }
 
   private suspend fun handleInternalV1(byteSink: ByteSink): BaseResponse {
-    val isPublic = byteSink.readBoolean()
-    val chatRoomName = byteSink.readString()
-    val chatRoomPasswordHash = byteSink.readString()
+    val packet = CreateRoomPacket.fromByteSink(byteSink)
 
-    if (chatRoomManager.exists(chatRoomName)) {
-      println("ChatRoom with name $chatRoomName already exists")
+    if (chatRoomManager.exists(packet.chatRoomName)) {
+      println("ChatRoom with name ${packet.chatRoomName} already exists")
       return CreateRoomResponsePayload.fail(Status.ChatRoomAlreadyExists)
     }
 
     val chatRoom = chatRoomManager.createChatRoom(
-      isPublic = isPublic,
-      chatRoomName = chatRoomName,
-      chatRoomPasswordHash = chatRoomPasswordHash
+      isPublic = packet.isPublic,
+      chatRoomName = packet.chatRoomName,
+      chatRoomPasswordHash = packet.chatRoomPasswordHash
     )
 
     println("ChatRoom ${chatRoom} has been successfully created!")
-    return CreateRoomResponsePayload.success(chatRoom.roomName)
+    return CreateRoomResponsePayload.success(chatRoom.chatRoomName)
   }
 
 }

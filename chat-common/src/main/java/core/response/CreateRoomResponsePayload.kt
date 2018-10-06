@@ -1,5 +1,6 @@
 package core.response
 
+import core.Constants
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
@@ -63,7 +64,7 @@ class CreateRoomResponsePayload private constructor(
             return CreateRoomResponsePayload.fail(status)
           }
 
-          val chatRoomName = byteSink.readString()
+          val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
             ?: throw ResponseDeserializationException("Could not read chatRoomName")
 
           CreateRoomResponsePayload(status, chatRoomName)

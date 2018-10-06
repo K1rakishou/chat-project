@@ -1,5 +1,6 @@
 package core.response
 
+import core.Constants
 import core.model.drainable.PublicUserInChat
 import core.ResponseType
 import core.Status
@@ -66,12 +67,12 @@ class UserHasJoinedResponsePayload private constructor(
             return UserHasJoinedResponsePayload.fail(status)
           }
 
-          val roomName = byteSink.readString()
-            ?: throw ResponseDeserializationException("Could not read roomName")
+          val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            ?: throw ResponseDeserializationException("Could not read chatRoomName")
           val user = byteSink.readDrainable<PublicUserInChat>(PublicUserInChat::class)
             ?: throw ResponseDeserializationException("Could not read user")
 
-          return UserHasJoinedResponsePayload(status, roomName, user)
+          return UserHasJoinedResponsePayload(status, chatRoomName, user)
         }
         UserHasJoinedResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
       }

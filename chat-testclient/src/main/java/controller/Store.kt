@@ -33,7 +33,7 @@ class Store : Controller() {
   fun setPublicChatRoomList(list: List<PublicChatRoom>) {
     publicChatRoomList.clear()
     publicChatRoomList.addAll(list.map { chatRoom ->
-      PublicChatRoomItem(chatRoom.roomName, chatRoom.usersCount, FXCollections.observableArrayList(), FXCollections.observableArrayList())
+      PublicChatRoomItem(chatRoom.chatRoomName, chatRoom.usersCount, FXCollections.observableArrayList(), FXCollections.observableArrayList())
     })
   }
 

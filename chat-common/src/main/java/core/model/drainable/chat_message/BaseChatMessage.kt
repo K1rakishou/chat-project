@@ -1,5 +1,6 @@
 package core.model.drainable.chat_message
 
+import core.Constants
 import core.byte_sink.ByteSink
 import core.exception.UnknownChatMessageType
 import core.interfaces.CanBeDrainedToSink
@@ -28,8 +29,8 @@ abstract class BaseChatMessage(
 
       when (messageType) {
         ChatMessageType.Text -> {
-          val senderName = byteSink.readString()
-          val message = byteSink.readString()
+          val senderName = byteSink.readString(Constants.maxUserNameLen)
+          val message = byteSink.readString(Constants.maxTextMessageLen)
 
           return TextChatMessage(id, senderName!!, message!!) as T
         }

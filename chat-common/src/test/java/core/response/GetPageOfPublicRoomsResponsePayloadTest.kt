@@ -24,7 +24,7 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
       assertEquals(status, restoredResponse.status)
 
       for (i in 0 until publicChatRoomList.size) {
-        assertEquals(restoredResponse.publicChatRoomList[i].roomName, restoredResponse.publicChatRoomList[i].roomName)
+        assertEquals(restoredResponse.publicChatRoomList[i].chatRoomName, restoredResponse.publicChatRoomList[i].chatRoomName)
       }
     })
   }
@@ -40,7 +40,7 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
       assertEquals(status, restoredResponse.status)
 
       for (i in 0 until publicChatRoomList.size) {
-        assertEquals(restoredResponse.publicChatRoomList[i].roomName, restoredResponse.publicChatRoomList[i].roomName)
+        assertEquals(restoredResponse.publicChatRoomList[i].chatRoomName, restoredResponse.publicChatRoomList[i].chatRoomName)
       }
     })
   }
@@ -56,7 +56,7 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
       assertEquals(status, restoredResponse.status)
 
       for (i in 0 until publicChatRoomList.size) {
-        assertEquals(restoredResponse.publicChatRoomList[i].roomName, restoredResponse.publicChatRoomList[i].roomName)
+        assertEquals(restoredResponse.publicChatRoomList[i].chatRoomName, restoredResponse.publicChatRoomList[i].chatRoomName)
       }
     })
   }

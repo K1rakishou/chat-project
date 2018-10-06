@@ -61,7 +61,7 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
             return GetPageOfPublicRoomsResponsePayload.fail(status)
           }
 
-          val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class)
+          val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, Constants.maxChatRoomsCount)
           return GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList)
         }
         GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()

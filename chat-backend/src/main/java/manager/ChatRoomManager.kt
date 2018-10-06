@@ -1,6 +1,7 @@
 package manager
 
 import core.ChatRoom
+import core.Constants
 import core.model.drainable.PublicChatRoom
 import core.User
 import core.UserInRoom
@@ -12,7 +13,6 @@ import kotlinx.coroutines.experimental.sync.withLock
 class ChatRoomManager {
   private val mutex = Mutex()
   private val defaultChatRoomLength = 10
-  private val maxUsersInRoom = 100
 
   private val chatRooms = mutableMapOf<String, ChatRoom>()
 
@@ -25,7 +25,7 @@ class ChatRoomManager {
     val chatRoom = ChatRoom(roomName, chatRoomPasswordHash, isPublic, TimeUtils.getCurrentTime())
 
     mutex.withLock {
-      require(chatRooms.size < maxUsersInRoom)
+      require(chatRooms.size < Constants.maxUsersInRoomCount)
       require(!chatRooms.containsKey(roomName))
 
       chatRooms[roomName] = chatRoom
@@ -102,7 +102,7 @@ class ChatRoomManager {
         .filter { chatRoom -> chatRoom.isPublic }
         .map { chatRoom ->
           val copy = chatRoom.copy()
-          return@map PublicChatRoom(copy.roomName, copy.countUsers().toShort())
+          return@map PublicChatRoom(copy.chatRoomName, copy.countUsers().toShort())
         }
     }
   }

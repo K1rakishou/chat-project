@@ -6,12 +6,12 @@ import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 
 data class ChatRoom(
-  val roomName: String,
+  val chatRoomName: String,
   val roomPasswordHash: String?,
   val isPublic: Boolean,
   val createdOn: Long,
   val userList: MutableList<UserInRoom> = mutableListOf(),
-  val messageHistory: RingBuffer<BaseChatMessage> = RingBuffer(messagesHistoryMaxSize)
+  val messageHistory: RingBuffer<BaseChatMessage> = RingBuffer(Constants.maxRoomHistoryMessagesCount)
 ) {
   private val mutex = Mutex()
 
@@ -75,14 +75,10 @@ data class ChatRoom(
   }
 
   override fun toString(): String {
-    return "[roomName: $roomName, roomPasswordHash: $roomPasswordHash, isPublic: $isPublic, createdOn: $createdOn]"
+    return "[chatRoomName: $chatRoomName, roomPasswordHash: $roomPasswordHash, isPublic: $isPublic, createdOn: $createdOn]"
   }
 
   fun copy(): ChatRoom {
-    return ChatRoom(roomName, roomPasswordHash, isPublic, createdOn, userList.toMutableList(), messageHistory.clone())
-  }
-
-  companion object {
-    const val messagesHistoryMaxSize = 100
+    return ChatRoom(chatRoomName, roomPasswordHash, isPublic, createdOn, userList.toMutableList(), messageHistory.clone())
   }
 }
