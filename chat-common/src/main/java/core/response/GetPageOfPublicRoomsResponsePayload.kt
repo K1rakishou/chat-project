@@ -23,6 +23,8 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
     when (CURRENT_RESPONSE_VERSION) {
       GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
+
+        //TODO: check status before writing anything to byte buffer
         byteSink.writeList(publicChatRoomList)
       }
       GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()

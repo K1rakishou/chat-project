@@ -27,6 +27,8 @@ class JoinChatRoomResponsePayload private constructor(
     when (CURRENT_RESPONSE_VERSION) {
       JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
+
+        //TODO: check status before writing anything to byte buffer
         byteSink.writeString(roomName)
         byteSink.writeList(messageHistory)
         byteSink.writeList(users)

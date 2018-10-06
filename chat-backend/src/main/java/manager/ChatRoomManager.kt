@@ -117,7 +117,13 @@ class ChatRoomManager {
 
   suspend fun getChatRoom(roomName: String): ChatRoom? {
     return mutex.withLock {
-      return@withLock chatRooms[roomName]?.copy()
+      return@withLock chatRooms[roomName]
+    }
+  }
+
+  suspend fun getUser(roomName: String, userName: String): UserInRoom? {
+    return mutex.withLock {
+      return@withLock chatRooms[roomName]?.getUser(userName)
     }
   }
 }

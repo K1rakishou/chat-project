@@ -26,6 +26,8 @@ class CreateRoomResponsePayload private constructor(
     when (CURRENT_RESPONSE_VERSION) {
       CreateRoomResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
+
+        //TODO: check status before writing anything to byte buffer
         byteSink.writeString(chatRoomName)
       }
       CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()

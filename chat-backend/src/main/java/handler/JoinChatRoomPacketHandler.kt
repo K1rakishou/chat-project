@@ -104,13 +104,13 @@ class JoinChatRoomPacketHandler(
       return
     }
 
-    val usersInRoom = chatRoom.getEveryoneExcept(userName)
+    val roomParticipants = chatRoom.getEveryoneExcept(userName)
     val publicUserInChatList = mutableListOf<PublicUserInChat>()
 
-    println("There are ${usersInRoom.size} users in room")
+    println("There are ${roomParticipants.size} users in room")
 
     //get all info from all users in the chat room
-    for (userInRoom in usersInRoom) {
+    for (userInRoom in roomParticipants) {
       val publicUserInChat = PublicUserInChat(userInRoom.user.userName, userInRoom.user.ecPublicKey)
 
       //send to every user in the chat room that a new user has joined
