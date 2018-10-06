@@ -109,4 +109,21 @@ class RingBufferTest {
     assertEquals(98, elements[8])
     assertEquals(99, elements[9])
   }
+
+  @Test
+  fun `should be able to clone itself`() {
+    for (i in 0 until 50) {
+      ringBuffer.add(i)
+    }
+
+    val newRingBuffer = ringBuffer.clone()
+
+    assertEquals(ringBuffer.size, newRingBuffer.size)
+    assertEquals(ringBuffer.headIndex, newRingBuffer.headIndex)
+    assertEquals(ringBuffer.emptyCount, newRingBuffer.emptyCount)
+
+    for (i in 0 until ringBuffer.size) {
+      assertEquals(ringBuffer.get(i), newRingBuffer.get(i))
+    }
+  }
 }

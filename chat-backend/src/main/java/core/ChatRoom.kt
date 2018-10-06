@@ -10,15 +10,10 @@ data class ChatRoom(
   val roomPasswordHash: String?,
   val isPublic: Boolean,
   val createdOn: Long,
-  val userList: MutableList<UserInRoom> = mutableListOf()
+  val userList: MutableList<UserInRoom> = mutableListOf(),
+  val messageHistory: RingBuffer<BaseChatMessage> = RingBuffer(messagesHistoryMaxSize)
 ) {
   private val mutex = Mutex()
-  private val messagesHistoryMaxSize = 100
-  private val messageHistory: RingBuffer<BaseChatMessage>
-
-  init {
-    messageHistory = RingBuffer(messagesHistoryMaxSize)
-  }
 
   suspend fun addUser(userInRoom: UserInRoom) {
     mutex.withLock { userList.add(userInRoom) }
@@ -84,6 +79,10 @@ data class ChatRoom(
   }
 
   fun copy(): ChatRoom {
-    return ChatRoom(roomName, roomPasswordHash, isPublic, createdOn, userList.toMutableList())
+    return ChatRoom(roomName, roomPasswordHash, isPublic, createdOn, userList.toMutableList(), messageHistory.clone())
+  }
+
+  companion object {
+    const val messagesHistoryMaxSize = 100
   }
 }

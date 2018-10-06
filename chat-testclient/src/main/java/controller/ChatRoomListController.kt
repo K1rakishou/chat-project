@@ -7,41 +7,50 @@ import core.Status
 import core.packet.JoinChatRoomPacket
 import core.response.JoinChatRoomResponsePayload
 import core.response.UserHasJoinedResponsePayload
-import javafx.beans.property.SimpleObjectProperty
-import javafx.collections.FXCollections
+import javafx.collections.ObservableList
 import javafx.scene.control.Alert
 import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
 import model.PublicChatRoomItem
-import model.PublicUserInChatItem
+import model.chat_message.BaseChatMessageItem
 import tornadofx.Controller
 import tornadofx.alert
 import tornadofx.runLater
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
+import java.lang.IllegalStateException
 
 class ChatRoomListController : Controller() {
   private val networkManager = (app as ChatApp).networkManager
   private val store: Store by inject()
   private val keyStore: KeyStore by inject()
-
-  val chatRooms = FXCollections.observableArrayList<PublicChatRoomItem>()
-  val chatRoomUsers = FXCollections.observableArrayList<PublicUserInChatItem>()
-  val selectedChatRoom = SimpleObjectProperty<PublicChatRoomItem>()
+  private var selectedRoomName: String? = null
 
   init {
-    chatRooms.addAll(store.getChatRoomList().map { PublicChatRoomItem(it.roomName, it.usersCount, it.getRoomMessagesAsString()) })
-
     launch { startListeningToPackets() }
   }
 
+  fun getCurrentChatRoomMessageHistory(): ObservableList<BaseChatMessageItem> {
+    val roomName = requireNotNull(selectedRoomName)
+    return store.getChatRoomMessageHistory(roomName)
+  }
+
+  fun sendMessage(messageText: String) {
+
+  }
+
   fun joinChatRoom(publicChatRoomItem: PublicChatRoomItem) {
+    if (selectedRoomName != null && selectedRoomName == publicChatRoomItem.roomName) {
+      return
+    }
+
     if (store.isAlreadyJoined(publicChatRoomItem.roomName)) {
       //TODO: update current room
       return
     }
 
     launch {
+      selectedRoomName = publicChatRoomItem.roomName
       networkManager.sendPacket(JoinChatRoomPacket(keyStore.getMyPublicKeyEncoded(), "test", publicChatRoomItem.roomName, null))
     }
   }
@@ -74,9 +83,12 @@ class ChatRoomListController : Controller() {
           return
         }
 
-        store.addUserInChatRoomList(response.users)
-        chatRoomUsers.addAll(response.users.map { PublicUserInChatItem(it.userName, it.ecPublicKey) })
-        selectedChatRoom.value = chatRooms.firstOrNull { it.roomName == response.roomName }
+        if (selectedRoomName != response.roomName) {
+          throw IllegalStateException("The user has selected and the one that sent server does not match up. Wut?")
+        }
+
+        store.setChatRoomUserList(response.roomName!!, response.users)
+        store.setChatRoomMessageList(response.roomName!!, response.messageHistory)
 
         runLater {
           find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
@@ -101,8 +113,8 @@ class ChatRoomListController : Controller() {
 
   private fun onDisconnected() {
     runLater {
+      store.clearPublicChatRoomList()
       alert(Alert.AlertType.INFORMATION, "Disconnected from the server")
-      chatRooms.clear()
     }
   }
 }

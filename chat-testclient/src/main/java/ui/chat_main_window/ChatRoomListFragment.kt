@@ -1,6 +1,7 @@
 package ui.chat_main_window
 
 import controller.ChatRoomListController
+import controller.Store
 import javafx.scene.Parent
 import javafx.scene.input.MouseEvent
 import tornadofx.Fragment
@@ -9,8 +10,9 @@ import tornadofx.selectedItem
 
 class ChatRoomListFragment : Fragment() {
   val chatRoomListController: ChatRoomListController by inject()
+  val store: Store by inject()
 
-  override val root = listview(chatRoomListController.chatRooms) {
+  override val root = listview(store.getPublicChatRoomList()) {
     cellFragment(ChatRoomListCellFragment::class)
 
     addEventFilter(MouseEvent.MOUSE_CLICKED) { event ->

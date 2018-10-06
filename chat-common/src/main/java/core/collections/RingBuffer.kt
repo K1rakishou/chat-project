@@ -4,16 +4,12 @@ package core.collections
  * Thread-unsafe implementation of the RingBuffer collection
  * */
 class RingBuffer<T>(
-  val size: Int
+  val size: Int,
+  val array: Array<T> = arrayOfNulls<Any?>(size) as Array<T>,
+  var emptyCount: Int = size,
+  var headIndex: Int = 0
 ) {
-  @Suppress("UNCHECKED_CAST")
-  private val array = arrayOfNulls<Any?>(size) as Array<T>
 
-  var emptyCount = size
-    private set
-
-  var headIndex = 0
-    private set
   fun add(element: T) {
     array[headIndex] = element
 
@@ -52,5 +48,9 @@ class RingBuffer<T>(
     }
 
     return list
+  }
+
+  fun clone(): RingBuffer<T> {
+    return RingBuffer(size, array, emptyCount, headIndex)
   }
 }

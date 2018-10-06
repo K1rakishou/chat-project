@@ -4,19 +4,23 @@ import Styles
 import controller.ChatRoomListController
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
+import javafx.scene.text.Text
 import javafx.scene.text.TextFlow
 import javafx.util.Duration
+import model.chat_message.TextChatMessageItem
 import tornadofx.*
+import java.lang.IllegalArgumentException
+import java.util.concurrent.atomic.AtomicInteger
 
 
 class ChatRoomView : View() {
   private val delayBeforeUpdatingScrollBarPosition = 50.0
-  private val textAreaId = "chatMessagesTextArea"
+  private val childIndex = AtomicInteger(0)
 
   private lateinit var textFlow: TextFlow
   private lateinit var scrollPane: ScrollPane
 
-  val chatRoomListController: ChatRoomListController by inject()
+  private val chatRoomListController: ChatRoomListController by inject()
 
   override val root = vbox {
     scrollPane = scrollpane {
@@ -24,7 +28,12 @@ class ChatRoomView : View() {
       vbarPolicy = ScrollPane.ScrollBarPolicy.ALWAYS
 
       textFlow = textflow {
-        id = textAreaId
+        bindChildren(chatRoomListController.getCurrentChatRoomMessageHistory()) { baseChatMessage ->
+          return@bindChildren when (baseChatMessage) {
+            is TextChatMessageItem -> createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+            else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
+          }
+        }
 
         addClass(Styles.chatRoomTextArea)
       }
@@ -36,16 +45,16 @@ class ChatRoomView : View() {
       promptText = "Enter your message here"
 
       setOnAction {
-        val text = if (textFlow.children.size == 0) {
-          text(text)
-        } else {
-          text("\n$text")
+        if (text.isEmpty()) {
+          return@setOnAction
         }
 
-        textFlow.children.add(text)
+        textFlow.children.add(createTextChatMessage("test", text))
 
         clear()
         requestFocus()
+
+        chatRoomListController.sendMessage(text)
 
         //goddamn hacks I swear
         //So, if you don't add a delay here before trying to update scrollbar's position it will scroll to the
@@ -55,5 +64,16 @@ class ChatRoomView : View() {
         }
       }
     }
+  }
+
+  private fun createTextChatMessage(senderName: String, messageText: String): Text {
+    val child = if (childIndex.getAndIncrement() == 0) {
+      Text("$senderName: $messageText")
+    } else {
+      Text("\n$senderName: $messageText")
+    }
+
+    child.id = "child_id_${childIndex.get()}"
+    return child
   }
 }
