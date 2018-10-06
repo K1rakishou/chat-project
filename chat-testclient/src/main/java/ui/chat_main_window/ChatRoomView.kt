@@ -2,6 +2,7 @@ package ui.chat_main_window
 
 import Styles
 import controller.ChatRoomListController
+import controller.Store
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
 import javafx.scene.text.Text
@@ -21,6 +22,7 @@ class ChatRoomView : View() {
   private lateinit var scrollPane: ScrollPane
 
   private val chatRoomListController: ChatRoomListController by inject()
+  private val store: Store by inject()
 
   override val root = vbox {
     scrollPane = scrollpane {
@@ -49,12 +51,11 @@ class ChatRoomView : View() {
           return@setOnAction
         }
 
-        textFlow.children.add(createTextChatMessage("test", text))
+        textFlow.children.add(createTextChatMessage(store.getCurrentUserName(), text))
+        chatRoomListController.sendMessage(text)
 
         clear()
         requestFocus()
-
-        chatRoomListController.sendMessage(text)
 
         //goddamn hacks I swear
         //So, if you don't add a delay here before trying to update scrollbar's position it will scroll to the

@@ -6,8 +6,10 @@ import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
 import core.model.drainable.chat_message.ChatMessageType
 import core.model.drainable.chat_message.TextChatMessage
+import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
+import model.CurrentUser
 import model.PublicChatRoomItem
 import model.PublicUserInChatItem
 import model.chat_message.BaseChatMessageItem
@@ -15,8 +17,13 @@ import model.chat_message.TextChatMessageItem
 import tornadofx.Controller
 
 class Store : Controller() {
+  private val currentUser: SimpleObjectProperty<CurrentUser> = SimpleObjectProperty(CurrentUser("test user"))
   private val publicChatRoomList: ObservableList<PublicChatRoomItem> = FXCollections.observableArrayList()
   private val joinedRooms: ObservableList<String> = FXCollections.observableArrayList()
+
+  fun getCurrentUserName(): String {
+    return currentUser.get().userName
+  }
 
   fun getPublicChatRoomList(): ObservableList<PublicChatRoomItem> {
     return publicChatRoomList
