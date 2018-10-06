@@ -49,18 +49,20 @@ class Server(
         .bind(InetSocketAddress("127.0.0.1", 2323))
 
       //test zone
-      chatRoomManager.createChatRoom(true).apply {
-        addUser(UserInRoom(User("test_user1", "test_address1", ByteArray(128) { 0xAA.toByte()} )))
-        addUser(UserInRoom(User("test_user2", "test_address2", ByteArray(128) { 0xAB.toByte()} )))
-        addUser(UserInRoom(User("test_user3", "test_address3", ByteArray(128) { 0xAC.toByte()} )))
+      chatRoomManager.createChatRoom(true)
 
-        addMessage(TextChatMessage(0L, "test_user1", "test message 1"))
-        addMessage(TextChatMessage(1L, "test_user2", "test message 2"))
-        addMessage(TextChatMessage(2L, "test_user3", "test message 3"))
-        addMessage(TextChatMessage(3L, "test_user1", "test message 4"))
-        addMessage(TextChatMessage(4L, "test_user2", "test message 5"))
-        addMessage(TextChatMessage(5L, "test_user3", "test message 6"))
-      }
+//      chatRoomManager.createChatRoom(true).apply {
+//        addUser(UserInRoom(User("test_user1", "test_address1", ByteArray(128) { 0xAA.toByte()} )))
+//        addUser(UserInRoom(User("test_user2", "test_address2", ByteArray(128) { 0xAB.toByte()} )))
+//        addUser(UserInRoom(User("test_user3", "test_address3", ByteArray(128) { 0xAC.toByte()} )))
+//
+//        addMessage(TextChatMessage(0L, "test_user1", "test message 1"))
+//        addMessage(TextChatMessage(1L, "test_user2", "test message 2"))
+//        addMessage(TextChatMessage(2L, "test_user3", "test message 3"))
+//        addMessage(TextChatMessage(3L, "test_user1", "test message 4"))
+//        addMessage(TextChatMessage(4L, "test_user2", "test message 5"))
+//        addMessage(TextChatMessage(5L, "test_user3", "test message 6"))
+//      }
       //test zone
 
       println("Started server at ${server.localAddress}")

@@ -10,15 +10,15 @@ import core.sizeof
 
 class UserHasJoinedResponsePayload private constructor(
   status: Status,
-  private val roomName: String? = null,
-  private val user: PublicUserInChat? = null
+  val roomName: String? = null,
+  val user: PublicUserInChat? = null
 ) : BaseResponse(status) {
 
   override val packetType: Short
     get() = ResponseType.UserHasJoinedResponseType.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(status) + sizeof(user)
+    return super.getPayloadSize() + sizeof(roomName) + sizeof(user)
   }
 
   override fun toByteSink(byteSink: ByteSink) {

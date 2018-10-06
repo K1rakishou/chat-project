@@ -13,6 +13,7 @@ import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
 import model.PublicChatRoomItem
 import model.chat_message.BaseChatMessageItem
+import model.chat_message.TextChatMessageItem
 import tornadofx.Controller
 import tornadofx.alert
 import tornadofx.runLater
@@ -51,7 +52,7 @@ class ChatRoomListController : Controller() {
 
     launch {
       selectedRoomName = publicChatRoomItem.roomName
-      networkManager.sendPacket(JoinChatRoomPacket(keyStore.getMyPublicKeyEncoded(), "test", publicChatRoomItem.roomName, null))
+      networkManager.sendPacket(JoinChatRoomPacket(keyStore.getMyPublicKeyEncoded(), store.getCurrentUserName(), publicChatRoomItem.roomName, null))
     }
   }
 
@@ -87,10 +88,12 @@ class ChatRoomListController : Controller() {
           throw IllegalStateException("The user has selected and the one that sent server does not match up. Wut?")
         }
 
-        store.setChatRoomUserList(response.roomName!!, response.users)
-        store.setChatRoomMessageList(response.roomName!!, response.messageHistory)
-
         runLater {
+          store.addChatRoomMessage(response.roomName!!, TextChatMessageItem("Server", "Joined chat room ${response.roomName!!}"))
+
+          store.setChatRoomUserList(response.roomName!!, response.users)
+          store.setChatRoomMessageList(response.roomName!!, response.messageHistory)
+
           find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
         }
       }
@@ -103,7 +106,9 @@ class ChatRoomListController : Controller() {
           return
         }
 
-        println()
+        runLater {
+          store.addChatRoomMessage(response.roomName!!, TextChatMessageItem("Server", "User ${response.roomName!!} has joined to chat room"))
+        }
       }
       else -> {
         //Do nothing

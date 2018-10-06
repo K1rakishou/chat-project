@@ -6,6 +6,7 @@ import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
 import core.model.drainable.chat_message.ChatMessageType
 import core.model.drainable.chat_message.TextChatMessage
+import core.security.SecurityUtils
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
@@ -17,7 +18,7 @@ import model.chat_message.TextChatMessageItem
 import tornadofx.Controller
 
 class Store : Controller() {
-  private val currentUser: SimpleObjectProperty<CurrentUser> = SimpleObjectProperty(CurrentUser("test user"))
+  private val currentUser: SimpleObjectProperty<CurrentUser> = SimpleObjectProperty(CurrentUser("test user ${SecurityUtils.Generation.generateRandomString(6)}"))
   private val publicChatRoomList: ObservableList<PublicChatRoomItem> = FXCollections.observableArrayList()
   private val joinedRooms: ObservableList<String> = FXCollections.observableArrayList()
 
@@ -66,6 +67,11 @@ class Store : Controller() {
 
     chatRoom.roomMessagesProperty().get().clear()
     chatRoom.roomMessagesProperty().get().addAll(convertedMessageList)
+  }
+
+  fun addChatRoomMessage(roomName: String, message: BaseChatMessageItem) {
+    val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
+    chatRoom.roomMessages.add(message)
   }
 
   fun getChatRoomMessageHistory(roomName: String): ObservableList<BaseChatMessageItem> {
