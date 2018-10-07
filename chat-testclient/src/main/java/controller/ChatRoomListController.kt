@@ -85,16 +85,20 @@ class ChatRoomListController : Controller() {
         }
 
         if (selectedRoomName != response.roomName) {
-          throw IllegalStateException("The user has selected and the one that sent server does not match up. Wut?")
+          throw IllegalStateException("The room that the user has selected and the one that the server has sent back do not match up. Wut?")
         }
 
+        val roomName = response.roomName!!
+        val users = response.users
+        val messageHistory = response.messageHistory
+
         runLater {
-          store.setChatRoomUserList(response.roomName!!, response.users)
-          store.setChatRoomMessageList(response.roomName!!, response.messageHistory)
+          store.setChatRoomUserList(roomName, users)
+          store.setChatRoomMessageList(roomName, messageHistory)
 
           find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
 
-          store.addChatRoomMessage(response.roomName!!, TextChatMessageItem("Server", "You've joined the chat room"))
+          store.addChatRoomMessage(roomName, TextChatMessageItem("Server", "You've joined the chat room"))
         }
       }
       ResponseType.UserHasJoinedResponseType -> {
@@ -106,8 +110,10 @@ class ChatRoomListController : Controller() {
           return
         }
 
+        val roomName = response.roomName!!
+
         runLater {
-          store.addChatRoomMessage(response.roomName!!, TextChatMessageItem("Server", "User \"${response.roomName!!}\" has joined to chat room"))
+          store.addChatRoomMessage(roomName, TextChatMessageItem("Server", "User \"$roomName\" has joined to chat room"))
         }
       }
       else -> {
