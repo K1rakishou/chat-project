@@ -23,7 +23,6 @@ class SecurityUtilsTest {
 
   @Before
   fun setUp() {
-    Security.setProperty("crypto.policy", "unlimited")
     Security.addProvider(BouncyCastleProvider())
   }
 
