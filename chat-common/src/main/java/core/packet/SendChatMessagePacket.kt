@@ -21,7 +21,7 @@ class SendChatMessagePacket(
   override fun getPacketType(): PacketType = PacketType.SendChatMessagePacketType
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(messageId) + sizeof(message) + sizeof(roomName) + sizeof(userName) + sizeof(message)
+    return super.getPayloadSize() + sizeof(messageId) + sizeof(roomName) + sizeof(userName) + sizeof(message)
   }
 
   override fun toByteSink(): ByteSink {
@@ -63,9 +63,9 @@ class SendChatMessagePacket(
           val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
             ?: throw PacketDeserializationException("Could not read roomName")
           val userName = byteSink.readString(Constants.maxUserNameLen)
-            ?: throw PacketDeserializationException("Could not read roomName")
+            ?: throw PacketDeserializationException("Could not read userName")
           val message = byteSink.readString(Constants.maxTextMessageLen)
-            ?: throw PacketDeserializationException("Could not read roomName")
+            ?: throw PacketDeserializationException("Could not read message")
 
           return SendChatMessagePacket(messageId, roomName, userName, message)
         }
