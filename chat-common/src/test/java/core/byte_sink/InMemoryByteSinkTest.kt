@@ -1,5 +1,7 @@
 package core.byte_sink
 
+import core.exception.ByteSinkReadException
+import core.model.drainable.PublicUserInChat
 import org.junit.Assert
 import org.junit.Assert.assertArrayEquals
 import org.junit.Before
@@ -117,5 +119,42 @@ class InMemoryByteSinkTest {
     assertEquals(long, byteSink.readLong())
     assertArrayEquals(byteArray, byteSink.readByteArray(byteArray.size))
     assertEquals(string, byteSink.readString(string.length))
+  }
+
+  @Test(expected = ByteSinkReadException::class)
+  fun testExceedByteArraySize() {
+    val byteArray = ByteArray(10) { 0xAA.toByte() }
+
+    byteSink.writeByteArray(byteArray)
+    byteSink.readByteArray(5)
+  }
+
+  @Test(expected = ByteSinkReadException::class)
+  fun testExceedStringSize() {
+    val string = "45436734734838"
+
+    byteSink.writeString(string)
+    byteSink.readString(5)
+  }
+
+  @Test(expected = ByteSinkReadException::class)
+  fun testExceedListSize() {
+    val list = listOf(
+      PublicUserInChat("123", ByteArray(10) { 0xBB.toByte() }),
+      PublicUserInChat("234", ByteArray(10) { 0xAA.toByte() }),
+      PublicUserInChat("345", ByteArray(10) { 0xCC.toByte() }),
+      PublicUserInChat("456", ByteArray(10) { 0xDD.toByte() })
+    )
+
+    byteSink.writeList(list)
+    byteSink.readList<PublicUserInChat>(PublicUserInChat::class, 2)
+  }
+
+  @Test
+  fun testWriteReadEmptyList() {
+    val list = listOf<PublicUserInChat>()
+
+    byteSink.writeList(list)
+    byteSink.readList<PublicUserInChat>(PublicUserInChat::class, 0)
   }
 }
