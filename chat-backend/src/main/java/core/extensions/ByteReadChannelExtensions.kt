@@ -30,7 +30,7 @@ suspend fun ByteReadChannel.readPacketInfo(byteSinkFileCachePath: String, bodySi
     }
   } else {
     val file = File("$byteSinkFileCachePath\\test_file-${TimeUtils.getCurrentTime()}.tmp")
-    val randomAccessFile = RandomAccessFile(file, "w")
+    val randomAccessFile = RandomAccessFile(file, "rw")
 
     randomAccessFile.use { raf ->
       val sink = OnDiskByteSink.fromFile(file)

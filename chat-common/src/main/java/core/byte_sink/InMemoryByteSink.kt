@@ -1,6 +1,8 @@
 package core.byte_sink
 
-import core.exception.ByteSinkReadException
+import core.exception.ByteSinkBufferOverflowException
+import core.exception.MaxListSizeExceededException
+import core.exception.ReaderPositionExceededBufferSizeException
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
 import core.model.drainable.DrainableFactory
@@ -35,7 +37,7 @@ class InMemoryByteSink private constructor(
 
   override fun readBoolean(): Boolean {
     if (getReaderPosition() + sizeof<Boolean>() > array.size) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Boolean>(), array.size)
     }
 
     return array[readPosition.getAndIncrement()] == 1.toByte()
@@ -50,7 +52,7 @@ class InMemoryByteSink private constructor(
 
   override fun readByte(): Byte {
     if (getReaderPosition() + sizeof<Byte>() > array.size) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Byte>(), array.size)
     }
 
     return array[readPosition.getAndIncrement()]
@@ -72,7 +74,7 @@ class InMemoryByteSink private constructor(
 
   override fun readShort(): Short {
     if (getReaderPosition() + sizeof<Short>() > array.size) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Short>(), array.size)
     }
 
     var result: Int = 0
@@ -103,7 +105,7 @@ class InMemoryByteSink private constructor(
 
   override fun readInt(): Int {
     if (getReaderPosition() + sizeof<Int>() > array.size) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Int>(), array.size)
     }
 
     var result: Int = 0
@@ -126,7 +128,7 @@ class InMemoryByteSink private constructor(
 
   override fun readLong(): Long {
     if (getReaderPosition() + sizeof<Long>() > array.size) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Long>(), array.size)
     }
 
     var result: Long = 0
@@ -155,17 +157,17 @@ class InMemoryByteSink private constructor(
     return if (readByte() == NO_VALUE) {
       null
     } else {
-      val size = readInt()
-      if (size > maxSize) {
-        throw ByteSinkReadException()
+      val arrayLen = readInt()
+      if (arrayLen > maxSize) {
+        throw ByteSinkBufferOverflowException(arrayLen, maxSize)
       }
 
-      if (getReaderPosition() + size > array.size) {
-        throw ByteSinkReadException()
+      if (getReaderPosition() + arrayLen > array.size) {
+        throw ReaderPositionExceededBufferSizeException(getReaderPosition(), arrayLen, array.size)
       }
 
-      return array.copyOfRange(readPosition.get(), readPosition.get() + size)
-        .also { readPosition.getAndAdd(size) }
+      return array.copyOfRange(readPosition.get(), readPosition.get() + arrayLen)
+        .also { readPosition.getAndAdd(arrayLen) }
     }
   }
 
@@ -196,13 +198,13 @@ class InMemoryByteSink private constructor(
     writeByteArray(string?.toByteArray())
   }
 
-  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>, maxCount: Int): List<T> {
+  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>, maxSize: Int): List<T> {
     if (readByte() == NO_VALUE) {
       return emptyList()
     } else {
       val listSize = readShort()
-      if (listSize > maxCount) {
-        throw ByteSinkReadException()
+      if (listSize > maxSize) {
+        throw MaxListSizeExceededException(listSize, maxSize)
       }
 
       val objList = mutableListOf<T>()

@@ -5,7 +5,7 @@ import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
 import core.exception.ResponseDeserializationException
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.sizeof
 
 class CreateRoomResponsePayload private constructor(
@@ -34,7 +34,7 @@ class CreateRoomResponsePayload private constructor(
           byteSink.writeString(chatRoomName)
         }
       }
-      CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+      CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(CURRENT_RESPONSE_VERSION.value)
     }
   }
 
@@ -75,7 +75,7 @@ class CreateRoomResponsePayload private constructor(
 
           CreateRoomResponsePayload(status, chatRoomName)
         }
-        CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+        CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
       }
     }
   }

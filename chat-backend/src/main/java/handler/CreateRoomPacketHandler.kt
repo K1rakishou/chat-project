@@ -2,7 +2,7 @@ package handler
 
 import core.Status
 import core.byte_sink.ByteSink
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.packet.CreateRoomPacket
 import core.response.BaseResponse
 import core.response.CreateRoomResponsePayload
@@ -15,19 +15,18 @@ class CreateRoomPacketHandler(
 ) : BasePacketHandler() {
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packetVersion = CreateRoomPacket.PacketVersion.fromShort(byteSink.readShort())
+    val packet = CreateRoomPacket.fromByteSink(byteSink)
+    val packetVersion = CreateRoomPacket.PacketVersion.fromShort(packet.packetVersion)
 
     val response = when (packetVersion) {
-      CreateRoomPacket.PacketVersion.V1 -> handleInternalV1(byteSink)
-      CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
+      CreateRoomPacket.PacketVersion.V1 -> handleInternalV1(packet)
+      CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
 
     connectionManager.sendResponse(clientAddress, response)
   }
 
-  private suspend fun handleInternalV1(byteSink: ByteSink): BaseResponse {
-    val packet = CreateRoomPacket.fromByteSink(byteSink)
-
+  private suspend fun handleInternalV1(packet: CreateRoomPacket): BaseResponse {
     if (chatRoomManager.exists(packet.chatRoomName)) {
       println("ChatRoom with name ${packet.chatRoomName} already exists")
       return CreateRoomResponsePayload.fail(Status.ChatRoomAlreadyExists)

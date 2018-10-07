@@ -2,7 +2,7 @@ package core.response
 
 import core.*
 import core.byte_sink.ByteSink
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.model.drainable.PublicChatRoom
 
 class GetPageOfPublicRoomsResponsePayload private constructor(
@@ -31,7 +31,7 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
           byteSink.writeList(publicChatRoomList)
         }
       }
-      GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+      GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(CURRENT_RESPONSE_VERSION.value)
     }
   }
 
@@ -70,7 +70,7 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
           val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, Constants.maxChatRoomsCount)
           return GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList)
         }
-        GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+        GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
       }
     }
   }

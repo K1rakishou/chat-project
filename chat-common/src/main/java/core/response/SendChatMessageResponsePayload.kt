@@ -3,7 +3,7 @@ package core.response
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 
 class SendChatMessageResponsePayload private constructor(
   status: Status
@@ -23,7 +23,7 @@ class SendChatMessageResponsePayload private constructor(
       SendChatMessageResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
       }
-      SendChatMessageResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+      SendChatMessageResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(CURRENT_RESPONSE_VERSION.value)
     }
   }
 
@@ -61,7 +61,7 @@ class SendChatMessageResponsePayload private constructor(
 
           return SendChatMessageResponsePayload(status)
         }
-        SendChatMessageResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+        SendChatMessageResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
       }
     }
   }

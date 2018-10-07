@@ -2,7 +2,7 @@ package handler
 
 import core.Status
 import core.byte_sink.ByteSink
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.model.drainable.chat_message.TextChatMessage
 import core.packet.SendChatMessagePacket
 import core.response.NewChatMessageResponsePayload
@@ -16,25 +16,39 @@ class SendChatMessageHandler(
 ) : BasePacketHandler() {
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packetVersion = SendChatMessagePacket.PacketVersion.fromShort(byteSink.readShort())
+    val packet = SendChatMessagePacket.fromByteSink(byteSink)
+    val packetVersion = SendChatMessagePacket.PacketVersion.fromShort(packet.packetVersion)
 
     when (packetVersion) {
-      SendChatMessagePacket.PacketVersion.V1 -> handleInternalV1(packetId, byteSink, clientAddress)
-      SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
+      SendChatMessagePacket.PacketVersion.V1 -> handleInternalV1(packet, packetId, clientAddress)
+      SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
   }
 
-  private suspend fun handleInternalV1(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packet = SendChatMessagePacket.fromByteSink(byteSink)
+  private suspend fun handleInternalV1(packet: SendChatMessagePacket, packetId: Long, clientAddress: String) {
     val messageId = packet.messageId
     val roomName = packet.roomName
     val userName = packet.userName
     val message = packet.message
 
     if (roomName.isEmpty() || userName.isEmpty() || message.isEmpty()) {
+      if (roomName.isEmpty()) {
+        println("roomName is empty")
+      }
+
+      if (userName.isEmpty()) {
+        println("userName is empty")
+      }
+
+      if (message.isEmpty()) {
+        println("message is empty")
+      }
+
       connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.fail(Status.BadParam))
       return
     }
+
+    println("User ($userName) is trying to send a message ($message)")
 
     val chatRoom = chatRoomManager.getChatRoom(roomName)
     if (chatRoom == null) {
@@ -52,12 +66,13 @@ class SendChatMessageHandler(
 
     chatRoom.addMessage(TextChatMessage(messageId, userName, message))
     val roomParticipants = chatRoom.getEveryoneExcept(userName)
+    val response = NewChatMessageResponsePayload.success(messageId, roomName, userName, message)
 
     for (userInRoom in roomParticipants) {
-      val response = NewChatMessageResponsePayload.success(messageId, roomName, userName, message)
       connectionManager.sendResponse(userInRoom.user.clientAddress, response)
     }
 
     connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.success())
+    println("Message ($message) has been successfully sent in room ${roomName} by user ${userName}")
   }
 }

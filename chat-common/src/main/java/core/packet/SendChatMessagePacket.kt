@@ -5,7 +5,7 @@ import core.PacketType
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 import core.exception.PacketDeserializationException
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.sizeof
 
 class SendChatMessagePacket(
@@ -35,7 +35,7 @@ class SendChatMessagePacket(
           writeString(userName)
           writeString(message)
         }
-        SendChatMessagePacket.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
+        SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
       }
     }
   }
@@ -69,7 +69,7 @@ class SendChatMessagePacket(
 
           return SendChatMessagePacket(messageId, roomName, userName, message)
         }
-        SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
+        SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
       }
     }
   }

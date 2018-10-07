@@ -1,10 +1,12 @@
-import core.*
+import core.Connection
+import core.Packet
+import core.PacketType
 import core.extensions.readPacketInfo
 import core.extensions.toHexSeparated
-import core.model.drainable.chat_message.TextChatMessage
 import handler.CreateRoomPacketHandler
 import handler.GetPageOfPublicRoomsHandler
 import handler.JoinChatRoomPacketHandler
+import handler.SendChatMessageHandler
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openReadChannel
@@ -41,6 +43,7 @@ class Server(
   private val createRoomPacketHandler = CreateRoomPacketHandler(connectionManager, chatRoomManager)
   private val getPageOfPublicChatRoomsHandler = GetPageOfPublicRoomsHandler(connectionManager, chatRoomManager)
   private val joinRoomPacketHandler = JoinChatRoomPacketHandler(connectionManager, chatRoomManager)
+  private val sendChatMessageHandler = SendChatMessageHandler(connectionManager, chatRoomManager)
 
   fun run() {
     runBlocking {
@@ -121,6 +124,9 @@ class Server(
           }
           PacketType.JoinRoomPacketType -> {
             joinRoomPacketHandler.handle(packetInfo.packetId, byteSink, clientAddress)
+          }
+          PacketType.SendChatMessagePacketType -> {
+            sendChatMessageHandler.handle(packetInfo.packetId, byteSink, clientAddress)
           }
         }
       }

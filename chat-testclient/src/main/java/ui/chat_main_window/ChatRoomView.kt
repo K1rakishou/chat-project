@@ -24,6 +24,12 @@ class ChatRoomView : View() {
   private val chatRoomListController: ChatRoomListController by inject()
   private val store: Store by inject()
 
+  init {
+    chatRoomListController.scrollToBottomFlag.addListener { _, _, _ ->
+      scrollToBottom()
+    }
+  }
+
   override val root = vbox {
     scrollPane = scrollpane {
       hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
@@ -51,30 +57,27 @@ class ChatRoomView : View() {
           return@setOnAction
         }
 
-        textFlow.children.add(createTextChatMessage(store.getCurrentUserName(), text))
         chatRoomListController.sendMessage(text)
 
         clear()
         requestFocus()
-
-        //goddamn hacks I swear
-        //So, if you don't add a delay here before trying to update scrollbar's position it will scroll to the
-        //currentItemPosition-1 and not to the last one because it needs some time to calculate that item's size
-        runLater(Duration.millis(delayBeforeUpdatingScrollBarPosition)) {
-          scrollPane.vvalue = 1.0
-        }
+        scrollToBottom()
       }
     }
   }
 
-  private fun createTextChatMessage(senderName: String, messageText: String): Text {
-    val child = if (childIndex.getAndIncrement() == 0) {
-      Text("$senderName: $messageText")
-    } else {
-      Text("\n$senderName: $messageText")
+  private fun scrollToBottom() {
+    //goddamn hacks I swear
+    //So, if you don't add a delay here before trying to update scrollbar's position it will scroll to the
+    //currentItemPosition-1 and not to the last one because it needs some time to calculate that item's size
+    runLater(Duration.millis(delayBeforeUpdatingScrollBarPosition)) {
+      scrollPane.vvalue = 1.0
     }
+  }
 
-    child.id = "child_id_${childIndex.get()}"
-    return child
+  private fun createTextChatMessage(senderName: String, messageText: String): Text {
+    return Text("$senderName: $messageText\n").apply {
+      id = "child_id_${childIndex.get()}"
+    }
   }
 }

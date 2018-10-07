@@ -4,7 +4,7 @@ import core.*
 import core.model.drainable.PublicUserInChat
 import core.byte_sink.ByteSink
 import core.exception.ResponseDeserializationException
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.model.drainable.chat_message.BaseChatMessage
 
 class JoinChatRoomResponsePayload private constructor(
@@ -37,7 +37,7 @@ class JoinChatRoomResponsePayload private constructor(
           byteSink.writeList(users)
         }
       }
-      JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+      JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(CURRENT_RESPONSE_VERSION.value)
     }
   }
 
@@ -84,7 +84,7 @@ class JoinChatRoomResponsePayload private constructor(
 
           JoinChatRoomResponsePayload(status, chatRoomName, messageHistory, users)
         }
-        JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+        JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
       }
     }
   }

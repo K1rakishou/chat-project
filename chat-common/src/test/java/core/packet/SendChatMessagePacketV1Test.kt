@@ -1,12 +1,12 @@
 package core.packet
 
 import core.Constants
-import core.exception.ByteSinkReadException
+import core.exception.ByteSinkBufferOverflowException
 import core.security.SecurityUtils
 import org.junit.Assert.*
 import org.junit.Test
 
-class SendChatMessagePacketTest : BasePacketPayloadTest() {
+class SendChatMessagePacketV1Test : BasePacketPayloadTest() {
 
   @Test
   fun testPacket() {
@@ -37,7 +37,7 @@ class SendChatMessagePacketTest : BasePacketPayloadTest() {
     })
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testPacketExceedRoomNameSize() {
     val messageId = 1
     val roomName = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomNameLength + 10)
@@ -54,7 +54,7 @@ class SendChatMessagePacketTest : BasePacketPayloadTest() {
     })
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testPacketExceedUserNameSize() {
     val messageId = 1
     val roomName = "test room"
@@ -71,7 +71,7 @@ class SendChatMessagePacketTest : BasePacketPayloadTest() {
     })
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testPacketExceedMessageSize() {
     val messageId = 1
     val roomName = "test room"

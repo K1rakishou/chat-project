@@ -5,7 +5,7 @@ import core.PacketType
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 import core.exception.PacketDeserializationException
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.sizeof
 
 class JoinChatRoomPacket(
@@ -35,7 +35,7 @@ class JoinChatRoomPacket(
           writeString(roomName)
           writeString(roomPasswordHash)
         }
-        JoinChatRoomPacket.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
+        JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
       }
     }
   }
@@ -69,7 +69,7 @@ class JoinChatRoomPacket(
 
           return JoinChatRoomPacket(ecPublicKey, userName, roomName, roomPasswordHash)
         }
-        JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
+        JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
       }
     }
   }

@@ -3,7 +3,7 @@ package core.packet
 import org.junit.Assert.*
 import org.junit.Test
 
-class GetPageOfPublicRoomsPacketTest : BasePacketPayloadTest() {
+class GetPageOfPublicRoomsPacketV1Test : BasePacketPayloadTest() {
 
   @Test
   fun testPacket() {

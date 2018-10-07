@@ -3,7 +3,7 @@ package core.model.drainable.chat_message
 import core.Constants
 import core.byte_sink.ByteSink
 import core.exception.ResponseDeserializationException
-import core.exception.UnknownChatMessageType
+import core.exception.UnknownChatMessageTypeException
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanBeRestoredFromSink
 import core.interfaces.CanMeasureSizeOfFields
@@ -37,7 +37,7 @@ abstract class BaseChatMessage(
 
           return TextChatMessage(messageId, senderName, message) as T
         }
-        ChatMessageType.Unknown -> throw UnknownChatMessageType()
+        ChatMessageType.Unknown -> throw UnknownChatMessageTypeException()
       }
     }
   }

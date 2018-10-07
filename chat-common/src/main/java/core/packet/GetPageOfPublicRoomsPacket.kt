@@ -3,9 +3,8 @@ package core.packet
 import core.PacketType
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.sizeof
-import java.lang.IllegalStateException
 
 class GetPageOfPublicRoomsPacket(
   val currentPage: Short,
@@ -30,7 +29,7 @@ class GetPageOfPublicRoomsPacket(
           writeShort(currentPage)
           writeByte(roomsPerPage)
         }
-        GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
+        GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
       }
     }
   }
@@ -59,7 +58,7 @@ class GetPageOfPublicRoomsPacket(
 
           return GetPageOfPublicRoomsPacket(currentPage, roomsPerPage)
         }
-        GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
+        GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
       }
     }
   }

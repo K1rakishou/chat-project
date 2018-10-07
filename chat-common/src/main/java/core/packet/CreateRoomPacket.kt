@@ -4,6 +4,7 @@ import core.Constants
 import core.PacketType
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
+import core.exception.UnknownPacketVersionException
 import core.sizeof
 
 class CreateRoomPacket(
@@ -31,7 +32,7 @@ class CreateRoomPacket(
           writeString(chatRoomName)
           writeString(chatRoomPasswordHash)
         }
-        CreateRoomPacket.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
+        CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
       }
     }
   }
@@ -61,7 +62,7 @@ class CreateRoomPacket(
 
           return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash)
         }
-        CreateRoomPacket.PacketVersion.Unknown -> throw IllegalStateException("Should not happen")
+        CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
       }
     }
   }

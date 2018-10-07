@@ -1,6 +1,7 @@
 package core.byte_sink
 
-import core.exception.ByteSinkReadException
+import core.exception.ByteSinkBufferOverflowException
+import core.exception.MaxListSizeExceededException
 import core.model.drainable.PublicUserInChat
 import org.junit.Assert
 import org.junit.Assert.assertArrayEquals
@@ -121,7 +122,7 @@ class InMemoryByteSinkTest {
     assertEquals(string, byteSink.readString(string.length))
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testExceedByteArraySize() {
     val byteArray = ByteArray(10) { 0xAA.toByte() }
 
@@ -129,7 +130,7 @@ class InMemoryByteSinkTest {
     byteSink.readByteArray(5)
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testExceedStringSize() {
     val string = "45436734734838"
 
@@ -137,7 +138,7 @@ class InMemoryByteSinkTest {
     byteSink.readString(5)
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = MaxListSizeExceededException::class)
   fun testExceedListSize() {
     val list = listOf(
       PublicUserInChat("123", ByteArray(10) { 0xBB.toByte() }),

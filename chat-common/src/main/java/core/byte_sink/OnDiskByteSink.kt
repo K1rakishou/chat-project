@@ -1,7 +1,9 @@
 package core.byte_sink
 
 import core.Constants.maxInMemoryByteSinkSize
-import core.exception.ByteSinkReadException
+import core.exception.ByteSinkBufferOverflowException
+import core.exception.MaxListSizeExceededException
+import core.exception.ReaderPositionExceededBufferSizeException
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
 import core.model.drainable.DrainableFactory
@@ -49,7 +51,7 @@ class OnDiskByteSink private constructor(
 
   override fun readBoolean(): Boolean {
     if (getReaderPosition() + sizeof<Boolean>() > raf.length()) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Boolean>(), raf.length())
     }
 
     raf.seek(readPosition.getAndIncrement().toLong())
@@ -63,7 +65,7 @@ class OnDiskByteSink private constructor(
 
   override fun readByte(): Byte {
     if (getReaderPosition() + sizeof<Byte>() > raf.length()) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Byte>(), raf.length())
     }
 
     raf.seek(readPosition.getAndIncrement().toLong())
@@ -77,7 +79,7 @@ class OnDiskByteSink private constructor(
 
   override fun readByteAsInt(): Int {
     if (getReaderPosition() + sizeof<Byte>() > raf.length()) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Byte>(), raf.length())
     }
 
     raf.seek(readPosition.getAndIncrement().toLong())
@@ -91,7 +93,7 @@ class OnDiskByteSink private constructor(
 
   override fun readShort(): Short {
     if (getReaderPosition() + sizeof<Short>() > raf.length()) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Short>(), raf.length())
     }
 
     raf.seek(readPosition.getAndAdd(sizeof<Short>()).toLong())
@@ -105,7 +107,7 @@ class OnDiskByteSink private constructor(
 
   override fun readShortAsInt(): Int {
     if (getReaderPosition() + sizeof<Short>() > raf.length()) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Short>(), raf.length())
     }
 
     raf.seek(readPosition.getAndAdd(sizeof<Short>()).toLong())
@@ -119,7 +121,7 @@ class OnDiskByteSink private constructor(
 
   override fun readInt(): Int {
     if (getReaderPosition() + sizeof<Int>() > raf.length()) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Int>(), raf.length())
     }
 
     raf.seek(readPosition.getAndAdd(sizeof<Int>()).toLong())
@@ -133,7 +135,7 @@ class OnDiskByteSink private constructor(
 
   override fun readLong(): Long {
     if (getReaderPosition() + sizeof<Long>() > raf.length()) {
-      throw ByteSinkReadException()
+      throw ReaderPositionExceededBufferSizeException(getReaderPosition(), sizeof<Long>(), raf.length())
     }
 
     raf.seek(readPosition.getAndAdd(sizeof<Long>()).toLong())
@@ -151,11 +153,11 @@ class OnDiskByteSink private constructor(
     } else {
       val arrayLen = readInt()
       if (arrayLen > maxSize) {
-        throw ByteSinkReadException()
+        throw ByteSinkBufferOverflowException(arrayLen, maxSize)
       }
 
       if (getReaderPosition() + arrayLen > raf.length()) {
-        throw ByteSinkReadException()
+        throw ReaderPositionExceededBufferSizeException(getReaderPosition(), arrayLen, raf.length())
       }
 
       val array = ByteArray(arrayLen)
@@ -191,13 +193,13 @@ class OnDiskByteSink private constructor(
     writeByteArray(string?.toByteArray())
   }
 
-  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>, maxCount: Int): List<T> {
+  override fun <T : CanBeDrainedToSink> readList(clazz: KClass<*>, maxSize: Int): List<T> {
     if (readByte() == NO_VALUE) {
       return emptyList()
     } else {
       val listSize = readShort()
-      if (listSize > maxCount) {
-        throw ByteSinkReadException()
+      if (listSize > maxSize) {
+        throw MaxListSizeExceededException(listSize, maxSize)
       }
 
       val objList = mutableListOf<T>()

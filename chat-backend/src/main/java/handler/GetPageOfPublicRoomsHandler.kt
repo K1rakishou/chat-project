@@ -1,8 +1,7 @@
 package handler
 
-import core.Status
 import core.byte_sink.ByteSink
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.packet.GetPageOfPublicRoomsPacket
 import core.response.BaseResponse
 import core.response.GetPageOfPublicRoomsResponsePayload
@@ -18,19 +17,20 @@ class GetPageOfPublicRoomsHandler(
   private val maximumRoomsPerPage = 50
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packetVersion = GetPageOfPublicRoomsPacket.PacketVersion.fromShort(byteSink.readShort())
+    val packet = GetPageOfPublicRoomsPacket.fromByteSink(byteSink)
+    val packetVersion = GetPageOfPublicRoomsPacket.PacketVersion.fromShort(packet.packetVersion)
 
     val response = when (packetVersion) {
-      GetPageOfPublicRoomsPacket.PacketVersion.V1 -> handleInternalV1(byteSink)
-      GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
+      GetPageOfPublicRoomsPacket.PacketVersion.V1 -> handleInternalV1(packet)
+      GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
 
     connectionManager.sendResponse(clientAddress, response)
   }
 
-  private suspend fun handleInternalV1(byteSink: ByteSink): BaseResponse {
-    val currentPage = byteSink.readShort()
-    val roomsPerPage = byteSink.readByte()
+  private suspend fun handleInternalV1(packet: GetPageOfPublicRoomsPacket): BaseResponse {
+    val currentPage = packet.currentPage
+    val roomsPerPage = packet.roomsPerPage
 
     val count = roomsPerPage
       .toInt()

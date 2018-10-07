@@ -4,7 +4,7 @@ import core.*
 import core.model.drainable.PublicUserInChat
 import core.byte_sink.ByteSink
 import core.exception.ResponseDeserializationException
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 
 class UserHasJoinedResponsePayload private constructor(
   status: Status,
@@ -34,7 +34,7 @@ class UserHasJoinedResponsePayload private constructor(
           byteSink.writeDrainable(user)
         }
       }
-      UserHasJoinedResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+      UserHasJoinedResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(CURRENT_RESPONSE_VERSION.value )
     }
   }
 
@@ -77,7 +77,7 @@ class UserHasJoinedResponsePayload private constructor(
 
           return UserHasJoinedResponsePayload(status, chatRoomName, user)
         }
-        UserHasJoinedResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
+        UserHasJoinedResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
       }
     }
   }

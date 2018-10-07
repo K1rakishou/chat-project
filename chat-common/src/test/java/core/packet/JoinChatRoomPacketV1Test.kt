@@ -1,12 +1,12 @@
 package core.packet
 
 import core.Constants
-import core.exception.ByteSinkReadException
+import core.exception.ByteSinkBufferOverflowException
 import core.security.SecurityUtils
 import org.junit.Assert.*
 import org.junit.Test
 
-class JoinChatRoomPacketTest : BasePacketPayloadTest() {
+class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
 
   @Test
   fun testPacket() {
@@ -42,7 +42,7 @@ class JoinChatRoomPacketTest : BasePacketPayloadTest() {
     })
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testPacketExceedUserName() {
     val ecPublicKey = ByteArray(555) { 0x66.toByte() }
     val userName = SecurityUtils.Generation.generateRandomString(Constants.maxUserNameLen + 10)
@@ -59,7 +59,7 @@ class JoinChatRoomPacketTest : BasePacketPayloadTest() {
     })
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testPacketExceedRoomName() {
     val ecPublicKey = ByteArray(555) { 0x66.toByte() }
     val userName = "test_user_name"
@@ -76,7 +76,7 @@ class JoinChatRoomPacketTest : BasePacketPayloadTest() {
     })
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testPacketExceedRoomPassword() {
     val ecPublicKey = ByteArray(555) { 0x66.toByte() }
     val userName = "test_user_name"

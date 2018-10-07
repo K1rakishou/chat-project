@@ -1,6 +1,6 @@
 package controller
 
-import core.exception.UnknownChatMessageType
+import core.exception.UnknownChatMessageTypeException
 import core.model.drainable.PublicChatRoom
 import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
@@ -41,7 +41,11 @@ class Store : Controller() {
     publicChatRoomList.clear()
   }
 
-  fun isAlreadyJoined(roomName: String): Boolean {
+  fun addJoinedRoom(roomName: String) {
+    joinedRooms.add(roomName)
+  }
+
+  fun isUserInRoom(roomName: String): Boolean {
     return joinedRooms.any { it == roomName }
   }
 
@@ -57,7 +61,7 @@ class Store : Controller() {
     val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
     val convertedMessageList = messageHistory.map { message ->
       when (message.messageType) {
-        ChatMessageType.Unknown -> throw UnknownChatMessageType()
+        ChatMessageType.Unknown -> throw UnknownChatMessageTypeException()
         ChatMessageType.Text -> {
           message as TextChatMessage
           TextChatMessageItem(message.senderName, message.message)
@@ -71,7 +75,7 @@ class Store : Controller() {
 
   fun addChatRoomMessage(roomName: String, message: BaseChatMessageItem) {
     val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
-    chatRoom.roomMessagesProperty().get().add(message)
+    chatRoom.roomMessagesProperty().add(message)
   }
 
   fun getChatRoomMessageHistory(roomName: String): ObservableList<BaseChatMessageItem> {

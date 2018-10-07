@@ -3,7 +3,7 @@ package handler
 import core.Status
 import core.User
 import core.byte_sink.ByteSink
-import core.exception.UnknownPacketVersion
+import core.exception.UnknownPacketVersionException
 import core.extensions.isNullOrEmpty
 import core.model.drainable.PublicUserInChat
 import core.packet.JoinChatRoomPacket
@@ -18,16 +18,16 @@ class JoinChatRoomPacketHandler(
 ) : BasePacketHandler() {
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packetVersion = JoinChatRoomPacket.PacketVersion.fromShort(byteSink.readShort())
+    val packet = JoinChatRoomPacket.fromByteSink(byteSink)
+    val packetVersion = JoinChatRoomPacket.PacketVersion.fromShort(packet.packetVersion)
 
     when (packetVersion) {
-      JoinChatRoomPacket.PacketVersion.V1 -> handleInternalV1(packetId, byteSink, clientAddress)
-      JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersion()
+      JoinChatRoomPacket.PacketVersion.V1 -> handleInternalV1(packet, packetId, clientAddress)
+      JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
   }
 
-  private suspend fun handleInternalV1(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packet = JoinChatRoomPacket.fromByteSink(byteSink)
+  private suspend fun handleInternalV1(packet: JoinChatRoomPacket, packetId: Long, clientAddress: String) {
     val ecPublicKey = packet.ecPublicKey
     val userName = packet.userName
     val roomName = packet.roomName

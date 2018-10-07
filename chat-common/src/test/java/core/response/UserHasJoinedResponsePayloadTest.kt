@@ -2,7 +2,7 @@ package core.response
 
 import core.Constants
 import core.Status
-import core.exception.ByteSinkReadException
+import core.exception.ByteSinkBufferOverflowException
 import core.model.drainable.PublicUserInChat
 import core.security.SecurityUtils
 import org.junit.Assert.*
@@ -38,7 +38,7 @@ class UserHasJoinedResponsePayloadTest : BaseResponsePayloadTest() {
     })
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testResponseExceedUserNameSize() {
     val roomName = "test room"
     val userName = SecurityUtils.Generation.generateRandomString(Constants.maxUserNameLen + 10)
@@ -55,7 +55,7 @@ class UserHasJoinedResponsePayloadTest : BaseResponsePayloadTest() {
     })
   }
 
-  @Test(expected = ByteSinkReadException::class)
+  @Test(expected = ByteSinkBufferOverflowException::class)
   fun testResponseExceedEcPublicKeySize() {
     val roomName = "test room"
     val ecPublicKey = SecurityUtils.Generation.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray()
