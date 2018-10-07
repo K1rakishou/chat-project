@@ -18,7 +18,10 @@ class JoinChatRoomResponsePayload private constructor(
     get() = ResponseType.JoinChatRoomResponseType.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(roomName) + sizeofList(messageHistory) + sizeofList(users)
+    return super.getPayloadSize() + when (status) {
+      Status.Ok -> sizeof(roomName) + sizeofList(messageHistory) + sizeofList(users)
+      else -> 0
+    }
   }
 
   override fun toByteSink(byteSink: ByteSink) {

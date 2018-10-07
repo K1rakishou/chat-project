@@ -1,13 +1,10 @@
 package core.response
 
-import core.Constants
+import core.*
 import core.model.drainable.PublicUserInChat
-import core.ResponseType
-import core.Status
 import core.byte_sink.ByteSink
 import core.exception.ResponseDeserializationException
 import core.exception.UnknownPacketVersion
-import core.sizeof
 
 class UserHasJoinedResponsePayload private constructor(
   status: Status,
@@ -19,7 +16,10 @@ class UserHasJoinedResponsePayload private constructor(
     get() = ResponseType.UserHasJoinedResponseType.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(roomName) + sizeof(user)
+    return super.getPayloadSize() + when (status) {
+      Status.Ok -> sizeof(roomName) + sizeof(user)
+      else -> 0
+    }
   }
 
   override fun toByteSink(byteSink: ByteSink) {

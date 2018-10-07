@@ -14,7 +14,10 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
     get() = ResponseType.GetPageOfPublicRoomsResponseType.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeofList(publicChatRoomList)
+    return super.getPayloadSize() + when (status) {
+      Status.Ok -> sizeofList(publicChatRoomList)
+      else -> 0
+    }
   }
 
   override fun toByteSink(byteSink: ByteSink) {

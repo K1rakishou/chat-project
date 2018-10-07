@@ -17,7 +17,10 @@ class CreateRoomResponsePayload private constructor(
     get() = ResponseType.CreateRoomResponseType.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(chatRoomName)
+    return super.getPayloadSize() + when (status) {
+      Status.Ok -> sizeof(chatRoomName)
+      else -> 0
+    }
   }
 
   override fun toByteSink(byteSink: ByteSink) {
