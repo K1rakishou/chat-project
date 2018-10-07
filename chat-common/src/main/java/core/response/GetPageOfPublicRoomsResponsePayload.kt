@@ -24,8 +24,9 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
       GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
 
-        //TODO: check status before writing anything to byte buffer
-        byteSink.writeList(publicChatRoomList)
+        if (status == Status.Ok) {
+          byteSink.writeList(publicChatRoomList)
+        }
       }
       GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
     }
@@ -60,7 +61,7 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
         GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
           if (status != Status.Ok) {
-            return GetPageOfPublicRoomsResponsePayload.fail(status)
+            return fail(status)
           }
 
           val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, Constants.maxChatRoomsCount)

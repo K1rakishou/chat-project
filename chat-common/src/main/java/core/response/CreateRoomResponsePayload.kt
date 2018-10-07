@@ -27,8 +27,9 @@ class CreateRoomResponsePayload private constructor(
       CreateRoomResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
 
-        //TODO: check status before writing anything to byte buffer
-        byteSink.writeString(chatRoomName)
+        if (status == Status.Ok) {
+          byteSink.writeString(chatRoomName)
+        }
       }
       CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
     }
@@ -63,7 +64,7 @@ class CreateRoomResponsePayload private constructor(
         CreateRoomResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
           if (status != Status.Ok) {
-            return CreateRoomResponsePayload.fail(status)
+            return fail(status)
           }
 
           val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)

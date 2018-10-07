@@ -28,10 +28,11 @@ class JoinChatRoomResponsePayload private constructor(
       JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
         byteSink.writeShort(status.value)
 
-        //TODO: check status before writing anything to byte buffer
-        byteSink.writeString(roomName)
-        byteSink.writeList(messageHistory)
-        byteSink.writeList(users)
+        if (status == Status.Ok) {
+          byteSink.writeString(roomName)
+          byteSink.writeList(messageHistory)
+          byteSink.writeList(users)
+        }
       }
       JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersion()
     }
@@ -70,7 +71,7 @@ class JoinChatRoomResponsePayload private constructor(
         JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
           if (status != Status.Ok) {
-            return JoinChatRoomResponsePayload.fail(status)
+            return fail(status)
           }
 
           val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)

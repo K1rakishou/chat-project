@@ -55,6 +55,9 @@ class SendChatMessageResponsePayload private constructor(
       when (responseVersion) {
         SendChatMessageResponsePayload.ResponseVersion.V1 -> {
           val status = Status.fromShort(byteSink.readShort())
+          if (status != Status.Ok) {
+            return fail(status)
+          }
 
           return SendChatMessageResponsePayload(status)
         }
