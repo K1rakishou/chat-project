@@ -26,7 +26,8 @@ import java.security.Security
 
 fun main(args: Array<String>) {
   if (args.size != 1) {
-    println("Please, provide path to byte-sink-cache directory!")
+    println()
+    println("Please, provide a path to a directory where ByteSink cache will be created")
     return
   }
 
