@@ -21,7 +21,7 @@ class ChatRoomManager {
     chatRoomName: String? = null,
     chatRoomPasswordHash: String? = null
   ): ChatRoom {
-    val roomName = (chatRoomName ?: SecurityUtils.Generation.generateRandomString(defaultChatRoomLength))
+    val roomName = (chatRoomName ?: SecurityUtils.Generator.generateRandomString(defaultChatRoomLength))
     val chatRoom = ChatRoom(roomName, chatRoomPasswordHash, isPublic, TimeUtils.getCurrentTime())
 
     mutex.withLock {

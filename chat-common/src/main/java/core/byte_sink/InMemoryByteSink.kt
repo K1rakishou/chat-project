@@ -31,7 +31,7 @@ class InMemoryByteSink private constructor(
     return DataInputStream(ByteArrayInputStream(array))
   }
 
-  fun getArray(): ByteArray {
+  override fun getArray(): ByteArray {
     return array.copyOfRange(0, writePosition.get())
   }
 
@@ -202,7 +202,7 @@ class InMemoryByteSink private constructor(
     if (readByte() == NO_VALUE) {
       return emptyList()
     } else {
-      val listSize = readShort()
+      val listSize = readShort().toInt()
       if (listSize > maxSize) {
         throw MaxListSizeExceededException(listSize, maxSize)
       }

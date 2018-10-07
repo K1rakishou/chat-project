@@ -20,17 +20,15 @@ class GetPageOfPublicRoomsPacket(
     return super.getPayloadSize() + sizeof(currentPage) + sizeof(roomsPerPage)
   }
 
-  override fun toByteSink(): InMemoryByteSink {
-    return InMemoryByteSink.createWithInitialSize(getPayloadSize()).apply {
-      writeShort(packetVersion)
+  override fun toByteSink(byteSink: ByteSink) {
+    byteSink.writeShort(packetVersion)
 
-      when (CURRENT_PACKET_VERSION) {
-        GetPageOfPublicRoomsPacket.PacketVersion.V1 -> {
-          writeShort(currentPage)
-          writeByte(roomsPerPage)
-        }
-        GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
+    when (CURRENT_PACKET_VERSION) {
+      GetPageOfPublicRoomsPacket.PacketVersion.V1 -> {
+        byteSink.writeShort(currentPage)
+        byteSink.writeByte(roomsPerPage)
       }
+      GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
     }
   }
 

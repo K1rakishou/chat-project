@@ -41,7 +41,7 @@ class UserHasJoinedResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ByteSinkBufferOverflowException::class)
   fun testResponseExceedUserNameSize() {
     val roomName = "test room"
-    val userName = SecurityUtils.Generation.generateRandomString(Constants.maxUserNameLen + 10)
+    val userName = SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10)
 
     val user = PublicUserInChat(userName, ByteArray(266) { 0xF0.toByte() })
 
@@ -58,7 +58,7 @@ class UserHasJoinedResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ByteSinkBufferOverflowException::class)
   fun testResponseExceedEcPublicKeySize() {
     val roomName = "test room"
-    val ecPublicKey = SecurityUtils.Generation.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray()
+    val ecPublicKey = SecurityUtils.Generator.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray()
 
     val user = PublicUserInChat("test user", ecPublicKey)
 

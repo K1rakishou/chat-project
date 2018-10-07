@@ -15,7 +15,7 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
       PublicChatRoom("testRoom154364r6dr76rt7", 44),
       PublicChatRoom("45476d478", 52),
       PublicChatRoom("88888888888888888888888888888888888888888888888", 0),
-      PublicChatRoom("5", 1)
+      PublicChatRoom("545745", 46)
     )
 
     testPayload(GetPageOfPublicRoomsResponsePayload.success(publicChatRoomList), { byteSink ->

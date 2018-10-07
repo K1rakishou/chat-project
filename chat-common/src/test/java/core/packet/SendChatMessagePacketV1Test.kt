@@ -40,7 +40,7 @@ class SendChatMessagePacketV1Test : BasePacketPayloadTest() {
   @Test(expected = ByteSinkBufferOverflowException::class)
   fun testPacketExceedRoomNameSize() {
     val messageId = 1
-    val roomName = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomNameLength + 10)
+    val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10)
     val userName = "test user"
     val message = "test message"
 
@@ -58,7 +58,7 @@ class SendChatMessagePacketV1Test : BasePacketPayloadTest() {
   fun testPacketExceedUserNameSize() {
     val messageId = 1
     val roomName = "test room"
-    val userName = SecurityUtils.Generation.generateRandomString(Constants.maxUserNameLen + 10)
+    val userName = SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10)
     val message = "test message"
 
     testPayload(SendChatMessagePacket(messageId, roomName, userName, message), { byteSink ->
@@ -76,7 +76,7 @@ class SendChatMessagePacketV1Test : BasePacketPayloadTest() {
     val messageId = 1
     val roomName = "test room"
     val userName =  "test user"
-    val message = SecurityUtils.Generation.generateRandomString(Constants.maxTextMessageLen + 10)
+    val message = SecurityUtils.Generator.generateRandomString(Constants.maxTextMessageLen + 10)
 
     testPayload(SendChatMessagePacket(messageId, roomName, userName, message), { byteSink ->
       SendChatMessagePacket.fromByteSink(byteSink)

@@ -22,18 +22,16 @@ class CreateRoomPacket(
     return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash)
   }
 
-  override fun toByteSink(): InMemoryByteSink {
-    return InMemoryByteSink.createWithInitialSize(getPayloadSize()).apply {
-      writeShort(packetVersion)
+  override fun toByteSink(byteSink: ByteSink) {
+    byteSink.writeShort(packetVersion)
 
-      when (CURRENT_PACKET_VERSION) {
-        CreateRoomPacket.PacketVersion.V1 -> {
-          writeBoolean(isPublic)
-          writeString(chatRoomName)
-          writeString(chatRoomPasswordHash)
-        }
-        CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
+    when (CURRENT_PACKET_VERSION) {
+      CreateRoomPacket.PacketVersion.V1 -> {
+        byteSink.writeBoolean(isPublic)
+        byteSink.writeString(chatRoomName)
+        byteSink.writeString(chatRoomPasswordHash)
       }
+      CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
     }
   }
 

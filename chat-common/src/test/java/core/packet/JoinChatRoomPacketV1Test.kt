@@ -45,7 +45,7 @@ class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
   @Test(expected = ByteSinkBufferOverflowException::class)
   fun testPacketExceedUserName() {
     val ecPublicKey = ByteArray(555) { 0x66.toByte() }
-    val userName = SecurityUtils.Generation.generateRandomString(Constants.maxUserNameLen + 10)
+    val userName = SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10)
     val roomName = "test_room_name"
     val roomPasswordHash = "12345678"
 
@@ -63,7 +63,7 @@ class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
   fun testPacketExceedRoomName() {
     val ecPublicKey = ByteArray(555) { 0x66.toByte() }
     val userName = "test_user_name"
-    val roomName = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomNameLength + 10)
+    val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10)
     val roomPasswordHash = "12345678"
 
     testPayload(JoinChatRoomPacket(ecPublicKey, userName, roomName, roomPasswordHash), { byteSink ->
@@ -81,7 +81,7 @@ class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
     val ecPublicKey = ByteArray(555) { 0x66.toByte() }
     val userName = "test_user_name"
     val roomName = "test_room_name"
-    val roomPasswordHash = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomPasswordHash + 10)
+    val roomPasswordHash = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomPasswordHash + 10)
 
     testPayload(JoinChatRoomPacket(ecPublicKey, userName, roomName, roomPasswordHash), { byteSink ->
       JoinChatRoomPacket.fromByteSink(byteSink)

@@ -4,6 +4,7 @@ import core.Constants
 import core.Packet
 import core.ResponseInfo
 import core.byte_sink.InMemoryByteSink
+import core.extensions.toHex
 import core.extensions.toHexSeparated
 import core.packet.BasePacket
 import extensions.readResponseInfo
@@ -171,25 +172,25 @@ class NetworkManager {
   private suspend fun readMagicNumber(): Boolean {
     val magicNumberFirstByte = readChannel.readByte()
     if (magicNumberFirstByte != Packet.MAGIC_NUMBER_BYTES[0]) {
-      println("Bad magicNumber first byte $magicNumberFirstByte")
+      println("Bad magicNumber first byte ${magicNumberFirstByte.toHex()}")
       return false
     }
 
     val magicNumberSecondByte = readChannel.readByte()
     if (magicNumberSecondByte != Packet.MAGIC_NUMBER_BYTES[1]) {
-      println("Bad magicNumber second byte $magicNumberSecondByte")
+      println("Bad magicNumber second byte ${magicNumberSecondByte.toHex()}")
       return false
     }
 
     val magicNumberThirdByte = readChannel.readByte()
     if (magicNumberThirdByte != Packet.MAGIC_NUMBER_BYTES[2]) {
-      println("Bad magicNumber third byte $magicNumberThirdByte")
+      println("Bad magicNumber third byte ${magicNumberThirdByte.toHex()}")
       return false
     }
 
     val magicNumberFourthByte = readChannel.readByte()
     if (magicNumberFourthByte != Packet.MAGIC_NUMBER_BYTES[3]) {
-      println("Bad magicNumber fourth byte $magicNumberFourthByte")
+      println("Bad magicNumber fourth byte ${magicNumberFourthByte.toHex()}")
       return false
     }
 

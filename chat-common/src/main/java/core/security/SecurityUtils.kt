@@ -21,7 +21,7 @@ object SecurityUtils {
   private val alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
   private val secureRandom = SecureRandom.getInstanceStrong()
 
-  object Generation {
+  object Generator {
     fun generateRandomString(len: Int): String {
       val bytes = ByteArray(len)
       secureRandom.nextBytes(bytes)

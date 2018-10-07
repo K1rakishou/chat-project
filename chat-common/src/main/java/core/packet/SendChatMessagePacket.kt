@@ -24,19 +24,17 @@ class SendChatMessagePacket(
     return super.getPayloadSize() + sizeof(messageId) + sizeof(roomName) + sizeof(userName) + sizeof(message)
   }
 
-  override fun toByteSink(): ByteSink {
-    return InMemoryByteSink.createWithInitialSize(getPayloadSize()).apply {
-      writeShort(packetVersion)
+  override fun toByteSink(byteSink: ByteSink) {
+    byteSink.writeShort(packetVersion)
 
-      when (CURRENT_PACKET_VERSION) {
-        PacketVersion.V1 -> {
-          writeInt(messageId)
-          writeString(roomName)
-          writeString(userName)
-          writeString(message)
-        }
-        SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
+    when (CURRENT_PACKET_VERSION) {
+      PacketVersion.V1 -> {
+        byteSink.writeInt(messageId)
+        byteSink.writeString(roomName)
+        byteSink.writeString(userName)
+        byteSink.writeString(message)
       }
+      SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
     }
   }
 

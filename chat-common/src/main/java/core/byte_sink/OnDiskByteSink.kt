@@ -25,12 +25,13 @@ class OnDiskByteSink private constructor(
       throw IllegalArgumentException("Input file ${file.absolutePath} can not be a directory!")
     }
 
-    raf = RandomAccessFile(file, "rw")
-
     if (!file.exists()) {
-      raf.setLength(defaultLen)
+      throw IllegalStateException("File does not exist ${file.absolutePath}")
     }
 
+    raf = RandomAccessFile(file, "rw")
+    raf.setLength(defaultLen)
+    raf.seek(0)
   }
 
   override fun resizeIfNeeded(dataToWriteSize: Int) {
@@ -47,6 +48,14 @@ class OnDiskByteSink private constructor(
 
   override fun getStream(): DataInputStream {
     return DataInputStream(FileInputStream(file))
+  }
+
+  //Use only for tests! May cause OOM!!!
+  override fun getArray(): ByteArray {
+    val array = ByteArray(getWriterPosition())
+    getStream().read(array)
+
+    return array
   }
 
   override fun readBoolean(): Boolean {
@@ -197,16 +206,17 @@ class OnDiskByteSink private constructor(
     if (readByte() == NO_VALUE) {
       return emptyList()
     } else {
-      val listSize = readShort()
+      val listSize = readShort().toInt()
       if (listSize > maxSize) {
         throw MaxListSizeExceededException(listSize, maxSize)
       }
 
-      val objList = mutableListOf<T>()
+      val objList = ArrayList<T>(listSize)
 
       for (i in 0 until listSize) {
         objList += DrainableFactory.fromByteSink<CanBeDrainedToSink>(clazz, this) as T
       }
+
       return objList
     }
   }
@@ -217,7 +227,9 @@ class OnDiskByteSink private constructor(
     if (listOfObjects.isEmpty()) {
       writeByte(NO_VALUE)
     } else {
+      writeByte(HAS_VALUE)
       writeShort(listOfObjects.size.toShort())
+
       listOfObjects.forEach { it.serialize(this) }
     }
   }
@@ -247,10 +259,14 @@ class OnDiskByteSink private constructor(
     //rewrite file with junk bytes before deleting
     val array = ByteArray(raf.length().toInt()) { 0xFF.toByte() }
 
+    raf.seek(0L)
     raf.write(array)
     raf.close()
 
-    file.delete()
+    //TODO: sometimes does not work, needs a fix
+    if (!file.delete()) {
+      println("Could not delete file ${file.absolutePath}")
+    }
   }
 
   companion object {

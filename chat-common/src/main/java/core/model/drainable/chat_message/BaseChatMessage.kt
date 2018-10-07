@@ -37,7 +37,7 @@ abstract class BaseChatMessage(
 
           return TextChatMessage(messageId, senderName, message) as T
         }
-        ChatMessageType.Unknown -> throw UnknownChatMessageTypeException()
+        ChatMessageType.Unknown -> throw UnknownChatMessageTypeException(messageType)
       }
     }
   }

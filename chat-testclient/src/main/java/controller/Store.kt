@@ -18,7 +18,7 @@ import model.chat_message.TextChatMessageItem
 import tornadofx.Controller
 
 class Store : Controller() {
-  private val currentUser: SimpleObjectProperty<CurrentUser> = SimpleObjectProperty(CurrentUser("test user ${SecurityUtils.Generation.generateRandomString(6)}"))
+  private val currentUser: SimpleObjectProperty<CurrentUser> = SimpleObjectProperty(CurrentUser("test user ${SecurityUtils.Generator.generateRandomString(6)}"))
   private val publicChatRoomList: ObservableList<PublicChatRoomItem> = FXCollections.observableArrayList()
   private val joinedRooms: ObservableList<String> = FXCollections.observableArrayList()
 
@@ -61,7 +61,7 @@ class Store : Controller() {
     val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
     val convertedMessageList = messageHistory.map { message ->
       when (message.messageType) {
-        ChatMessageType.Unknown -> throw UnknownChatMessageTypeException()
+        ChatMessageType.Unknown -> throw UnknownChatMessageTypeException(message.messageType)
         ChatMessageType.Text -> {
           message as TextChatMessage
           TextChatMessageItem(message.senderName, message.message)

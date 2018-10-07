@@ -19,6 +19,7 @@ abstract class ByteSink : AutoCloseable {
   abstract fun getWriterPosition(): Int
 
   abstract fun getStream(): DataInputStream
+  abstract fun getArray(): ByteArray
 
   abstract fun readBoolean(): Boolean
   abstract fun writeBoolean(boolean: Boolean)
@@ -39,7 +40,7 @@ abstract class ByteSink : AutoCloseable {
   abstract fun readString(maxSize: Int): String?
   abstract fun writeString(string: String?)
 
-  abstract fun <T> readList(clazz: KClass<*>, maxCount: Int): List<T>
+  abstract fun <T> readList(clazz: KClass<*>, maxSize: Int): List<T>
     where T : CanBeDrainedToSink
 
   abstract fun <T> writeList(listOfObjects: List<T>)

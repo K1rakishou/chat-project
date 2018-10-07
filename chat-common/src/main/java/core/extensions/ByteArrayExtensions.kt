@@ -19,6 +19,17 @@ fun ByteArray.toHex(separator: Char? = null): String {
   return result.toString()
 }
 
+fun Byte.toHex(): String {
+  return buildString {
+    val octet = this@toHex.toInt()
+    val firstIndex = (octet and 0xF0).ushr(4)
+    val secondIndex = octet and 0x0F
+
+    append(HEX_CHARS[firstIndex])
+    append(HEX_CHARS[secondIndex])
+  }
+}
+
 fun ByteArray.toHexSeparated(separator: Char? = ' '): String {
   return toHex(separator)
 }

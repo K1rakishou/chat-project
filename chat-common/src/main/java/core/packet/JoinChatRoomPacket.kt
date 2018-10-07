@@ -24,19 +24,17 @@ class JoinChatRoomPacket(
     return super.getPayloadSize() + sizeof(ecPublicKey) + sizeof(userName) + sizeof(roomName) + sizeof(roomPasswordHash)
   }
 
-  override fun toByteSink(): ByteSink {
-    return InMemoryByteSink.createWithInitialSize(getPayloadSize()).apply {
-      writeShort(packetVersion)
+  override fun toByteSink(byteSink: ByteSink) {
+    byteSink.writeShort(packetVersion)
 
-      when (CURRENT_PACKET_VERSION) {
-        JoinChatRoomPacket.PacketVersion.V1 -> {
-          writeByteArray(ecPublicKey)
-          writeString(userName)
-          writeString(roomName)
-          writeString(roomPasswordHash)
-        }
-        JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
+    when (CURRENT_PACKET_VERSION) {
+      JoinChatRoomPacket.PacketVersion.V1 -> {
+        byteSink.writeByteArray(ecPublicKey)
+        byteSink.writeString(userName)
+        byteSink.writeString(roomName)
+        byteSink.writeString(roomPasswordHash)
       }
+      JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
     }
   }
 

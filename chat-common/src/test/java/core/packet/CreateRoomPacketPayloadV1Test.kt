@@ -41,7 +41,7 @@ class CreateRoomPacketPayloadV1Test : BasePacketPayloadTest() {
   @Test(expected = ByteSinkBufferOverflowException::class)
   fun testPacketExceedMaxRoomName() {
     val isPublic = true
-    val roomName = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomNameLength + 10)
+    val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10)
     val roomPassword = "fgfdhd"
 
     testPayload(CreateRoomPacket(isPublic, roomName, roomPassword), { byteSink ->
@@ -57,7 +57,7 @@ class CreateRoomPacketPayloadV1Test : BasePacketPayloadTest() {
   fun testPacketExceedMaxRoomPassword() {
     val isPublic = true
     val roomName = "fgfdhd"
-    val roomPassword = SecurityUtils.Generation.generateRandomString(Constants.maxChatRoomPasswordHash + 10)
+    val roomPassword = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomPasswordHash + 10)
 
     testPayload(CreateRoomPacket(isPublic, roomName, roomPassword), { byteSink ->
       CreateRoomPacket.fromByteSink(byteSink)
