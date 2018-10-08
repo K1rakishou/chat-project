@@ -124,8 +124,10 @@ class NetworkManager {
         val bodySize = readChannel.readInt()
         val responseInfo = readChannel.readResponseInfo(byteSinkFileCachePath, bodySize)
 
-        //TODO: for debug only! may cause OOM when internal buffer is way too big!
-        println(" >>> RECEIVING (${bodySize} bytes): ${responseInfo.byteSink.getStream().readAllBytes().toHexSeparated()}")
+        responseInfo.byteSink.getStream().use { stream ->
+          //TODO: for debug only! may cause OOM when internal buffer is way too big!
+          println(" >>> RECEIVING (${bodySize} bytes): ${stream.readAllBytes().toHexSeparated()}")
+        }
 
         socketEventsQueue.send(SocketEvent.ResponseReceived(responseInfo))
       }
