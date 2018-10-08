@@ -43,7 +43,10 @@ class OnDiskByteSink private constructor(
   }
 
   override fun getReaderPosition() = readPosition.get()
+  override fun setReaderPosition(position: Int) = readPosition.set(position)
+
   override fun getWriterPosition() = writePosition.get()
+  override fun setWriterPosition(position: Int) = writePosition.set(position)
 
   override fun getStream(): DataInputStream {
     return DataInputStream(FileInputStream(file))

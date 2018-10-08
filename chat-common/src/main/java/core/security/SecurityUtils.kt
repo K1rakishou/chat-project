@@ -1,5 +1,6 @@
 package core.security
 
+import core.byte_sink.ByteSink
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement
 import org.bouncycastle.crypto.ec.CustomNamedCurves
 import org.bouncycastle.crypto.engines.XSalsa20Engine
@@ -51,15 +52,19 @@ object SecurityUtils {
       return xSalsa20(key, iv, inBuffer, Mode.Decryption, tempBufferSize)
     }
 
-    private fun xSalsa20(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, mode: Mode, tempBufferSize: Int): ByteArray {
+    fun xSalsa20Encrypt(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int) {
+      xSalsa20(key, iv, byteSink, byteSinkSize, Mode.Encryption)
+    }
+
+    fun xSalsa20Decrypt(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int) {
+      xSalsa20(key, iv, byteSink, byteSinkSize, Mode.Decryption)
+    }
+
+    private fun xSalsa20(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int, mode: Mode) {
       require(key.size == 32)
       require(iv.size == 24)
 
-      val bufferSize = if (inBuffer.size < tempBufferSize) {
-        inBuffer.size
-      } else {
-        tempBufferSize
-      }
+      val defaultChunkSize = 4096
 
       val cp = KeyParameter(key)
       val params = ParametersWithIV(cp, iv)
@@ -71,7 +76,43 @@ object SecurityUtils {
 
       engine.init(doEncryption, params)
 
+      val chunkSize = if (byteSinkSize < defaultChunkSize) {
+        byteSinkSize
+      } else {
+        defaultChunkSize
+      }
+
+      for (offset in 0 until byteSinkSize step chunkSize) {
+        val size = Math.min(byteSinkSize - offset, chunkSize)
+
+        val chunk = byteSink.readByteArrayRaw(offset, size)
+        val encryptedChunk = ByteArray(size)
+        engine.processBytes(chunk, 0, size, encryptedChunk, 0)
+
+        byteSink.writeByteArrayRaw(offset, encryptedChunk)
+      }
+    }
+
+    private fun xSalsa20(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, mode: Mode, tempBufferSize: Int): ByteArray {
+      require(key.size == 32)
+      require(iv.size == 24)
+
+      val bufferSize = if (inBuffer.size < tempBufferSize) {
+        inBuffer.size
+      } else {
+        tempBufferSize
+      }
+
       val outBufferList = mutableListOf<ByteArray>()
+      val cp = KeyParameter(key)
+      val params = ParametersWithIV(cp, iv)
+      val engine = XSalsa20Engine()
+      val doEncryption = when (mode) {
+        SecurityUtils.Encryption.Mode.Encryption -> true
+        SecurityUtils.Encryption.Mode.Decryption -> false
+      }
+
+      engine.init(doEncryption, params)
 
       for (offset in 0 until inBuffer.size step bufferSize) {
         val size = Math.min(inBuffer.size - offset, bufferSize)

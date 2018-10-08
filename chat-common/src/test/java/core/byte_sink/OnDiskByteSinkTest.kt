@@ -233,4 +233,33 @@ class OnDiskByteSinkTest {
 
     assertEquals(false, file.exists())
   }
+
+  @Test
+  fun testByteSinkEncryption2() {
+    val size = 16384
+
+    val file = File.createTempFile("temp", "file")
+    file.createNewFile()
+    val key = ByteArray(32) { 0xAA.toByte() }
+    val iv = ByteArray(24) { 0xBB.toByte() }
+
+    OnDiskByteSink.fromFile(file, size).use { bs ->
+      val testArrays = mutableListOf<ByteArray>()
+
+      for (i in 0 until size step 32) {
+        testArrays += ByteArray(32) { 0x11.toByte() }
+      }
+
+      for ((index, array) in testArrays.withIndex()) {
+        bs.writeByteArrayRaw(index * 32, array)
+      }
+
+      SecurityUtils.Encryption.xSalsa20Encrypt(key, iv, bs, size)
+      SecurityUtils.Encryption.xSalsa20Decrypt(key, iv, bs, size)
+
+      for ((index, array) in testArrays.withIndex()) {
+        assertArrayEquals(array, bs.readByteArrayRaw(index * 32, 32))
+      }
+    }
+  }
 }

@@ -17,7 +17,10 @@ abstract class ByteSink : AutoCloseable {
   protected abstract fun resizeIfNeeded(dataToWriteSize: Int)
 
   abstract fun getReaderPosition(): Int
+  abstract fun setReaderPosition(position: Int)
+
   abstract fun getWriterPosition(): Int
+  abstract fun setWriterPosition(position: Int)
 
   abstract fun getStream(): DataInputStream
   abstract fun getArray(): ByteArray
