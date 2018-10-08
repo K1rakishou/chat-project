@@ -12,6 +12,7 @@ import java.io.DataInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.RandomAccessFile
+import java.nio.file.Files
 import kotlin.reflect.KClass
 
 class OnDiskByteSink private constructor(
@@ -53,7 +54,10 @@ class OnDiskByteSink private constructor(
   //Use only for tests! May cause OOM!!!
   override fun getArray(): ByteArray {
     val array = ByteArray(getWriterPosition())
-    getStream().read(array)
+
+    getStream().use { stream ->
+      stream.read(array)
+    }
 
     return array
   }
@@ -263,10 +267,7 @@ class OnDiskByteSink private constructor(
     raf.write(array)
     raf.close()
 
-    //TODO: sometimes does not work, needs a fix
-    if (!file.delete()) {
-      println("Could not delete file ${file.absolutePath}")
-    }
+    Files.deleteIfExists(file.toPath())
   }
 
   companion object {
