@@ -191,10 +191,18 @@ class OnDiskByteSink private constructor(
     }
   }
 
-  fun writeByteArrayRaw(inArray: ByteArray) {
-    raf.seek(writePosition.get().toLong())
+  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray) {
+    raf.seek(offset.toLong())
     raf.write(inArray)
-    writePosition.getAndAdd(inArray.size)
+  }
+
+  override fun readByteArrayRaw(offset: Int, readAmount: Int): ByteArray {
+    raf.seek(offset.toLong())
+
+    val array = ByteArray(readAmount) { 0xFF.toByte() }
+    raf.read(array, 0, readAmount)
+
+    return array
   }
 
   override fun readString(maxSize: Int): String? {

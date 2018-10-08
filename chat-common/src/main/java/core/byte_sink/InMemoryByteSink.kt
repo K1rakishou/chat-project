@@ -183,6 +183,14 @@ class InMemoryByteSink private constructor(
     }
   }
 
+  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray) {
+    System.arraycopy(inArray, 0, array, offset, inArray.size)
+  }
+
+  override fun readByteArrayRaw(offset: Int, readAmount: Int): ByteArray {
+    return array.copyOfRange(offset, offset + readAmount)
+  }
+
   override fun readString(maxSize: Int): String? {
     val array = readByteArray(maxSize)
     if (array == null) {

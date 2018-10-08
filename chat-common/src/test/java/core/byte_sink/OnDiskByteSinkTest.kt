@@ -1,5 +1,8 @@
 package core.byte_sink
 
+import core.exception.ByteSinkBufferOverflowException
+import core.exception.MaxListSizeExceededException
+import core.model.drainable.PublicUserInChat
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assert.*
@@ -126,5 +129,65 @@ class OnDiskByteSinkTest {
     assertEquals(long, byteSink.readLong())
     Assert.assertArrayEquals(byteArray, byteSink.readByteArray(byteArray.size))
     assertEquals(string, byteSink.readString(string.length))
+  }
+
+  @Test(expected = ByteSinkBufferOverflowException::class)
+  fun testExceedByteArraySize() {
+    val byteArray = ByteArray(10) { 0xAA.toByte() }
+
+    byteSink.writeByteArray(byteArray)
+    byteSink.readByteArray(5)
+  }
+
+  @Test(expected = ByteSinkBufferOverflowException::class)
+  fun testExceedStringSize() {
+    val string = "45436734734838"
+
+    byteSink.writeString(string)
+    byteSink.readString(5)
+  }
+
+  @Test(expected = MaxListSizeExceededException::class)
+  fun testExceedListSize() {
+    val list = listOf(
+      PublicUserInChat("123", ByteArray(10) { 0xBB.toByte() }),
+      PublicUserInChat("234", ByteArray(10) { 0xAA.toByte() }),
+      PublicUserInChat("345", ByteArray(10) { 0xCC.toByte() }),
+      PublicUserInChat("456", ByteArray(10) { 0xDD.toByte() })
+    )
+
+    byteSink.writeList(list)
+    byteSink.readList<PublicUserInChat>(PublicUserInChat::class, 2)
+  }
+
+  @Test
+  fun testWriteReadEmptyList() {
+    val list = listOf<PublicUserInChat>()
+
+    byteSink.writeList(list)
+    byteSink.readList<PublicUserInChat>(PublicUserInChat::class, 0)
+  }
+
+  @Test
+  fun testRawReadWrite() {
+    val file = File.createTempFile("temp", "file")
+    file.createNewFile()
+
+    OnDiskByteSink.fromFile(file, 128).use { bs ->
+      val testArray1 = ByteArray(32) { 0x11.toByte() }
+      val testArray2 = ByteArray(32) { 0x22.toByte() }
+      val testArray3 = ByteArray(32) { 0x33.toByte() }
+      val testArray4 = ByteArray(32) { 0x44.toByte() }
+
+      bs.writeByteArrayRaw(0, testArray1)
+      bs.writeByteArrayRaw(32, testArray2)
+      bs.writeByteArrayRaw(64, testArray3)
+      bs.writeByteArrayRaw(96, testArray4)
+
+      assertArrayEquals(testArray1, bs.readByteArrayRaw(0, 32))
+      assertArrayEquals(testArray2, bs.readByteArrayRaw(32, 32))
+      assertArrayEquals(testArray3, bs.readByteArrayRaw(64, 32))
+      assertArrayEquals(testArray4, bs.readByteArrayRaw(96, 32))
+    }
   }
 }

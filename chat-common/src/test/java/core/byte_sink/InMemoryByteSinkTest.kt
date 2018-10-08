@@ -158,4 +158,24 @@ class InMemoryByteSinkTest {
     byteSink.writeList(list)
     byteSink.readList<PublicUserInChat>(PublicUserInChat::class, 0)
   }
+
+  @Test
+  fun testRawReadWrite() {
+    InMemoryByteSink.createWithInitialSize(128).use { bs ->
+      val testArray1 = ByteArray(32) { 0x11.toByte() }
+      val testArray2 = ByteArray(32) { 0x22.toByte() }
+      val testArray3 = ByteArray(32) { 0x33.toByte() }
+      val testArray4 = ByteArray(32) { 0x44.toByte() }
+
+      bs.writeByteArrayRaw(0, testArray1)
+      bs.writeByteArrayRaw(32, testArray2)
+      bs.writeByteArrayRaw(64, testArray3)
+      bs.writeByteArrayRaw(96, testArray4)
+
+      assertArrayEquals(testArray1, bs.readByteArrayRaw(0, 32))
+      assertArrayEquals(testArray2, bs.readByteArrayRaw(32, 32))
+      assertArrayEquals(testArray3, bs.readByteArrayRaw(64, 32))
+      assertArrayEquals(testArray4, bs.readByteArrayRaw(96, 32))
+    }
+  }
 }
