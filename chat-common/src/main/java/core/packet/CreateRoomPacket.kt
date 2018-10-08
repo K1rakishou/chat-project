@@ -3,8 +3,7 @@ package core.packet
 import core.Constants
 import core.PacketType
 import core.byte_sink.ByteSink
-import core.byte_sink.InMemoryByteSink
-import core.exception.UnknownPacketVersionException
+import core.exception.*
 import core.sizeof
 
 class CreateRoomPacket(
@@ -49,18 +48,31 @@ class CreateRoomPacket(
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
+    @Throws(PacketDeserializationException::class)
     fun fromByteSink(byteSink: ByteSink): CreateRoomPacket {
-      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
+      try {
+        val packetVersion = PacketVersion.fromShort(byteSink.readShort())
+        when (packetVersion) {
+          CreateRoomPacket.PacketVersion.V1 -> {
+            val isPublic = byteSink.readBoolean()
+            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            val chatRoomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHash)
 
-      when (packetVersion) {
-        CreateRoomPacket.PacketVersion.V1 -> {
-          val isPublic = byteSink.readBoolean()
-          val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
-          val chatRoomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHash)
-
-          return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash)
+            return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash)
+          }
+          CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
         }
-        CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
+      } catch (error: Throwable) {
+        when (error) {
+          is ByteSinkBufferOverflowException,
+          is ReaderPositionExceededBufferSizeException,
+          is MaxListSizeExceededException,
+          is UnknownPacketVersionException,
+          is DrainableDeserializationException -> {
+            throw PacketDeserializationException(error.message ?: "No exception message")
+          }
+          else -> throw error
+        }
       }
     }
   }

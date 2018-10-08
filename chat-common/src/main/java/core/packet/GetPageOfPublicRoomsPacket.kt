@@ -2,8 +2,7 @@ package core.packet
 
 import core.PacketType
 import core.byte_sink.ByteSink
-import core.byte_sink.InMemoryByteSink
-import core.exception.UnknownPacketVersionException
+import core.exception.*
 import core.sizeof
 
 class GetPageOfPublicRoomsPacket(
@@ -46,17 +45,30 @@ class GetPageOfPublicRoomsPacket(
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
+    @Throws(PacketDeserializationException::class)
     fun fromByteSink(byteSink: ByteSink): GetPageOfPublicRoomsPacket {
-      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
+      try {
+        val packetVersion = PacketVersion.fromShort(byteSink.readShort())
+        when (packetVersion) {
+          GetPageOfPublicRoomsPacket.PacketVersion.V1 -> {
+            val currentPage = byteSink.readShort()
+            val roomsPerPage = byteSink.readByte()
 
-      when (packetVersion) {
-        GetPageOfPublicRoomsPacket.PacketVersion.V1 -> {
-          val currentPage = byteSink.readShort()
-          val roomsPerPage = byteSink.readByte()
-
-          return GetPageOfPublicRoomsPacket(currentPage, roomsPerPage)
+            return GetPageOfPublicRoomsPacket(currentPage, roomsPerPage)
+          }
+          GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
         }
-        GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
+      } catch (error: Throwable) {
+        when (error) {
+          is ByteSinkBufferOverflowException,
+          is ReaderPositionExceededBufferSizeException,
+          is MaxListSizeExceededException,
+          is UnknownPacketVersionException,
+          is DrainableDeserializationException -> {
+            throw PacketDeserializationException(error.message ?: "No exception message")
+          }
+          else -> throw error
+        }
       }
     }
   }

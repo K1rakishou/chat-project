@@ -3,6 +3,7 @@ package handler
 import core.Status
 import core.User
 import core.byte_sink.ByteSink
+import core.exception.PacketDeserializationException
 import core.exception.UnknownPacketVersionException
 import core.extensions.isNullOrEmpty
 import core.model.drainable.PublicUserInChat
@@ -18,7 +19,14 @@ class JoinChatRoomPacketHandler(
 ) : BasePacketHandler() {
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packet = JoinChatRoomPacket.fromByteSink(byteSink)
+    val packet = try {
+      JoinChatRoomPacket.fromByteSink(byteSink)
+    } catch (error: PacketDeserializationException) {
+      error.printStackTrace()
+      connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.fail(Status.BadPacket))
+      return
+    }
+
     val packetVersion = JoinChatRoomPacket.PacketVersion.fromShort(packet.packetVersion)
 
     when (packetVersion) {

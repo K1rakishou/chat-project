@@ -43,7 +43,7 @@ suspend fun ByteReadChannel.readPacketInfo(byteSinkFileCachePath: String, bodySi
         }
 
         val array = ByteArray(chunk)
-        this.readAvailable(array)
+        readAvailable(array)
         raf.write(array)
       }
 

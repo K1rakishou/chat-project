@@ -3,9 +3,7 @@ package core.packet
 import core.Constants
 import core.PacketType
 import core.byte_sink.ByteSink
-import core.byte_sink.InMemoryByteSink
-import core.exception.PacketDeserializationException
-import core.exception.UnknownPacketVersionException
+import core.exception.*
 import core.sizeof
 
 class SendChatMessagePacket(
@@ -52,22 +50,35 @@ class SendChatMessagePacket(
   companion object {
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
+    @Throws(PacketDeserializationException::class)
     fun fromByteSink(byteSink: ByteSink): SendChatMessagePacket {
-      val packetVersion = PacketVersion.fromShort(byteSink.readShort())
+      try {
+        val packetVersion = PacketVersion.fromShort(byteSink.readShort())
+        when (packetVersion) {
+          SendChatMessagePacket.PacketVersion.V1 -> {
+            val messageId = byteSink.readInt()
+            val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
+              ?: throw PacketDeserializationException("Could not read roomName")
+            val userName = byteSink.readString(Constants.maxUserNameLen)
+              ?: throw PacketDeserializationException("Could not read userName")
+            val message = byteSink.readString(Constants.maxTextMessageLen)
+              ?: throw PacketDeserializationException("Could not read message")
 
-      when (packetVersion) {
-        SendChatMessagePacket.PacketVersion.V1 -> {
-          val messageId = byteSink.readInt()
-          val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
-            ?: throw PacketDeserializationException("Could not read roomName")
-          val userName = byteSink.readString(Constants.maxUserNameLen)
-            ?: throw PacketDeserializationException("Could not read userName")
-          val message = byteSink.readString(Constants.maxTextMessageLen)
-            ?: throw PacketDeserializationException("Could not read message")
-
-          return SendChatMessagePacket(messageId, roomName, userName, message)
+            return SendChatMessagePacket(messageId, roomName, userName, message)
+          }
+          SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
         }
-        SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
+      } catch (error: Throwable) {
+        when (error) {
+          is ByteSinkBufferOverflowException,
+          is ReaderPositionExceededBufferSizeException,
+          is MaxListSizeExceededException,
+          is UnknownPacketVersionException,
+          is DrainableDeserializationException -> {
+            throw PacketDeserializationException(error.message ?: "No exception message")
+          }
+          else -> throw error
+        }
       }
     }
   }

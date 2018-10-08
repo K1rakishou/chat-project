@@ -1,5 +1,6 @@
 package core.byte_sink
 
+import core.exception.*
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
 import java.io.DataInputStream
@@ -35,11 +36,16 @@ abstract class ByteSink : AutoCloseable {
   abstract fun writeInt(int: Int)
   abstract fun readLong(): Long
   abstract fun writeLong(long: Long)
+
+  @Throws(ByteSinkBufferOverflowException::class, ReaderPositionExceededBufferSizeException::class)
   abstract fun readByteArray(maxSize: Int): ByteArray?
   abstract fun writeByteArray(inArray: ByteArray?)
+
+  @Throws(ByteSinkBufferOverflowException::class, ReaderPositionExceededBufferSizeException::class)
   abstract fun readString(maxSize: Int): String?
   abstract fun writeString(string: String?)
 
+  @Throws(MaxListSizeExceededException::class, DrainableDeserializationException::class)
   abstract fun <T> readList(clazz: KClass<*>, maxSize: Int): List<T>
     where T : CanBeDrainedToSink
 

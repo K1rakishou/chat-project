@@ -2,6 +2,7 @@ package handler
 
 import core.Status
 import core.byte_sink.ByteSink
+import core.exception.PacketDeserializationException
 import core.exception.UnknownPacketVersionException
 import core.model.drainable.chat_message.TextChatMessage
 import core.packet.SendChatMessagePacket
@@ -16,7 +17,14 @@ class SendChatMessageHandler(
 ) : BasePacketHandler() {
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packet = SendChatMessagePacket.fromByteSink(byteSink)
+    val packet = try {
+      SendChatMessagePacket.fromByteSink(byteSink)
+    } catch (error: PacketDeserializationException) {
+      error.printStackTrace()
+      connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.fail(Status.BadPacket))
+      return
+    }
+
     val packetVersion = SendChatMessagePacket.PacketVersion.fromShort(packet.packetVersion)
 
     when (packetVersion) {

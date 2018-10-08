@@ -1,6 +1,8 @@
 package handler
 
+import core.Status
 import core.byte_sink.ByteSink
+import core.exception.PacketDeserializationException
 import core.exception.UnknownPacketVersionException
 import core.packet.GetPageOfPublicRoomsPacket
 import core.response.BaseResponse
@@ -17,7 +19,14 @@ class GetPageOfPublicRoomsHandler(
   private val maximumRoomsPerPage = 50
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packet = GetPageOfPublicRoomsPacket.fromByteSink(byteSink)
+    val packet = try {
+      GetPageOfPublicRoomsPacket.fromByteSink(byteSink)
+    } catch (error: PacketDeserializationException) {
+      error.printStackTrace()
+      connectionManager.sendResponse(clientAddress, GetPageOfPublicRoomsResponsePayload.fail(Status.BadPacket))
+      return
+    }
+
     val packetVersion = GetPageOfPublicRoomsPacket.PacketVersion.fromShort(packet.packetVersion)
 
     val response = when (packetVersion) {

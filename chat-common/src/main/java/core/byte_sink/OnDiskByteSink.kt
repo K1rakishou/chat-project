@@ -1,9 +1,7 @@
 package core.byte_sink
 
 import core.Constants.maxInMemoryByteSinkSize
-import core.exception.ByteSinkBufferOverflowException
-import core.exception.MaxListSizeExceededException
-import core.exception.ReaderPositionExceededBufferSizeException
+import core.exception.*
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
 import core.model.drainable.DrainableFactory
@@ -217,8 +215,13 @@ class OnDiskByteSink private constructor(
 
       val objList = ArrayList<T>(listSize)
 
-      for (i in 0 until listSize) {
-        objList += DrainableFactory.fromByteSink<CanBeDrainedToSink>(clazz, this) as T
+      for (listIndex in 0 until listSize) {
+        val obj = DrainableFactory.fromByteSink<CanBeDrainedToSink>(clazz, this)
+        if (obj == null) {
+          throw DrainableDeserializationException(clazz, listIndex)
+        }
+
+        objList += obj as T
       }
 
       return objList

@@ -2,6 +2,7 @@ package handler
 
 import core.Status
 import core.byte_sink.ByteSink
+import core.exception.PacketDeserializationException
 import core.exception.UnknownPacketVersionException
 import core.packet.CreateRoomPacket
 import core.response.BaseResponse
@@ -15,7 +16,14 @@ class CreateRoomPacketHandler(
 ) : BasePacketHandler() {
 
   override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
-    val packet = CreateRoomPacket.fromByteSink(byteSink)
+    val packet = try {
+      CreateRoomPacket.fromByteSink(byteSink)
+    } catch (error: PacketDeserializationException) {
+      error.printStackTrace()
+      connectionManager.sendResponse(clientAddress, CreateRoomResponsePayload.fail(Status.BadPacket))
+      return
+    }
+
     val packetVersion = CreateRoomPacket.PacketVersion.fromShort(packet.packetVersion)
 
     val response = when (packetVersion) {
