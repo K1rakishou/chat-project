@@ -1,4 +1,4 @@
-package controller
+package store
 
 import core.security.SecurityUtils
 import tornadofx.Controller

@@ -2,7 +2,7 @@ package ui.chat_main_window
 
 import Styles
 import controller.ChatRoomListController
-import controller.Store
+import store.Store
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
 import javafx.scene.text.Text

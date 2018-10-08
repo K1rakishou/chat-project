@@ -22,13 +22,15 @@ import manager.NetworkManager
 import model.PublicChatRoomItem
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.TextChatMessageItem
+import store.KeyStore
+import store.Store
 import tornadofx.Controller
 import tornadofx.alert
 import tornadofx.runLater
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
 
-class ChatRoomListController : Controller() {
+class ChatRoomListController : BaseController() {
   private val delayBeforeAddFirstChatRoomMessage = 250.0
 
   private val networkManager = (app as ChatApp).networkManager
@@ -111,7 +113,7 @@ class ChatRoomListController : Controller() {
         }
 
         if (response.status != Status.Ok) {
-          showAlert(message = "Error while trying to join a chat room")
+          showErrorAlert("Error while trying to join a chat room")
           return
         }
 
@@ -131,7 +133,7 @@ class ChatRoomListController : Controller() {
           return
         }
         if (response.status != Status.Ok) {
-          showAlert(message = "UserHasJoinedResponsePayload with non ok status ${response.status}")
+          showErrorAlert("UserHasJoinedResponsePayload with non ok status ${response.status}")
           return
         }
 
@@ -148,7 +150,7 @@ class ChatRoomListController : Controller() {
         }
 
         if (response.status != Status.Ok) {
-          showAlert(message = "SendChatMessageResponseType with non ok status ${response.status}")
+          showErrorAlert("SendChatMessageResponseType with non ok status ${response.status}")
           return
         }
       }
@@ -163,7 +165,7 @@ class ChatRoomListController : Controller() {
         }
 
         if (response.status != Status.Ok) {
-          showAlert(message =  "NewChatMessageResponsePayload with non ok status ${response.status}")
+          showErrorAlert("NewChatMessageResponsePayload with non ok status ${response.status}")
           return
         }
 
@@ -201,12 +203,6 @@ class ChatRoomListController : Controller() {
 
         scrollToBottomFlag.set(true)
       }
-    }
-  }
-
-  private fun showAlert(message: String = "", header: String = "", type: Alert.AlertType = Alert.AlertType.INFORMATION) {
-    runLater {
-      alert(type, header, message)
     }
   }
 

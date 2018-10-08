@@ -1,7 +1,7 @@
 package ui.chat_main_window
 
 import controller.ChatRoomListController
-import controller.Store
+import store.Store
 import javafx.scene.Node
 import javafx.scene.Parent
 import javafx.scene.control.Label

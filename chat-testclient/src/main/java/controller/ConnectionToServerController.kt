@@ -12,6 +12,8 @@ import javafx.scene.control.Alert
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
+import store.KeyStore
+import store.Store
 import tornadofx.Controller
 import tornadofx.alert
 import tornadofx.runLater
@@ -19,7 +21,7 @@ import ui.chat_main_window.ChatMainWindow
 import ui.loading_window.ConnectionToServerWindow
 import java.util.concurrent.atomic.AtomicInteger
 
-class ConnectionToServerController : Controller() {
+class ConnectionToServerController : BaseController() {
   private val networkManager = (app as ChatApp).networkManager
   private var delayTime = AtomicInteger(3000)
   private val maxDelayTime: Int = 15000
@@ -76,12 +78,12 @@ class ConnectionToServerController : Controller() {
         val response = try {
           GetPageOfPublicRoomsResponsePayload.fromByteSink(responseInfo.byteSink)
         } catch (error: ResponseDeserializationException) {
-          showAlert(header = "Error", message = "Could not deserialize packet GetPageOfPublicRoomsResponse, error: ${error.message}")
+          showErrorAlert("Could not deserialize packet GetPageOfPublicRoomsResponse, error: ${error.message}")
           return
         }
 
         if (response.status != Status.Ok) {
-          showAlert(header = "Error", message = "UserHasJoinedResponsePayload with non ok status ${response.status}")
+          showErrorAlert("UserHasJoinedResponsePayload with non ok status ${response.status}")
           return
         }
 
@@ -93,12 +95,6 @@ class ConnectionToServerController : Controller() {
       else -> {
         //Do nothing
       }
-    }
-  }
-
-  private fun showAlert(message: String = "", header: String = "", type: Alert.AlertType = Alert.AlertType.INFORMATION) {
-    runLater {
-      alert(type, header, message)
     }
   }
 

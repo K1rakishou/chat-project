@@ -1,4 +1,4 @@
-package controller
+package store
 
 import core.exception.UnknownChatMessageTypeException
 import core.model.drainable.PublicChatRoom
