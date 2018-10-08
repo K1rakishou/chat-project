@@ -3,6 +3,7 @@ package core.byte_sink
 import core.exception.ByteSinkBufferOverflowException
 import core.exception.MaxListSizeExceededException
 import core.model.drainable.PublicUserInChat
+import core.security.SecurityUtils
 import org.junit.Assert
 import org.junit.Assert.assertArrayEquals
 import org.junit.Before
@@ -176,6 +177,43 @@ class InMemoryByteSinkTest {
       assertArrayEquals(testArray2, bs.readByteArrayRaw(32, 32))
       assertArrayEquals(testArray3, bs.readByteArrayRaw(64, 32))
       assertArrayEquals(testArray4, bs.readByteArrayRaw(96, 32))
+    }
+  }
+
+  @Test
+  fun testByteSinkEncryption() {
+    val size = 16384
+    val key = ByteArray(32) { 0xAA.toByte() }
+    val iv = ByteArray(24) { 0xBB.toByte() }
+
+    InMemoryByteSink.createWithInitialSize(size).use { bs ->
+      val testArrays = mutableListOf<ByteArray>()
+
+      for (i in 0 until size step 32) {
+        testArrays += ByteArray(32) { 0x11.toByte() }
+      }
+
+      for ((index, array) in testArrays.withIndex()) {
+        bs.writeByteArrayRaw(index * 32, array)
+      }
+
+      for (i in 0 until size step 32) {
+        val chunk = bs.readByteArrayRaw(i, 32)
+        val encryptedChunk = SecurityUtils.Encryption.xSalsa20Encrypt(key, iv, chunk)
+
+        bs.writeByteArrayRaw(i, encryptedChunk)
+      }
+
+      for (i in 0 until size step 32) {
+        val chunk = bs.readByteArrayRaw(i, 32)
+        val encryptedChunk = SecurityUtils.Encryption.xSalsa20Decrypt(key, iv, chunk)
+
+        bs.writeByteArrayRaw(i, encryptedChunk)
+      }
+
+      for ((index, array) in testArrays.withIndex()) {
+        assertArrayEquals(array, bs.readByteArrayRaw(index * 32, 32))
+      }
     }
   }
 }

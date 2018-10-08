@@ -2,7 +2,7 @@ package core.security
 
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement
 import org.bouncycastle.crypto.ec.CustomNamedCurves
-import org.bouncycastle.crypto.engines.ChaChaEngine
+import org.bouncycastle.crypto.engines.XSalsa20Engine
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
@@ -43,21 +43,27 @@ object SecurityUtils {
       Decryption
     }
 
-    fun chaCha20Encrypt(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, tempBufferSize: Int = 4096): ByteArray {
-      return chaCha20(key, iv, inBuffer, Mode.Encryption, tempBufferSize)
+    fun xSalsa20Encrypt(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, tempBufferSize: Int = 4096): ByteArray {
+      return xSalsa20(key, iv, inBuffer, Mode.Encryption, tempBufferSize)
     }
 
-    fun chaCha20Decrypt(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, tempBufferSize: Int = 4096): ByteArray {
-      return chaCha20(key, iv, inBuffer, Mode.Decryption, tempBufferSize)
+    fun xSalsa20Decrypt(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, tempBufferSize: Int = 4096): ByteArray {
+      return xSalsa20(key, iv, inBuffer, Mode.Decryption, tempBufferSize)
     }
 
-    private fun chaCha20(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, mode: Mode, tempBufferSize: Int = 4096): ByteArray {
+    private fun xSalsa20(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, mode: Mode, tempBufferSize: Int): ByteArray {
       require(key.size == 32)
-      require(iv.size == 8)
+      require(iv.size == 24)
+
+      val bufferSize = if (inBuffer.size < tempBufferSize) {
+        inBuffer.size
+      } else {
+        tempBufferSize
+      }
 
       val cp = KeyParameter(key)
       val params = ParametersWithIV(cp, iv)
-      val engine = ChaChaEngine()
+      val engine = XSalsa20Engine()
       val doEncryption = when (mode) {
         SecurityUtils.Encryption.Mode.Encryption -> true
         SecurityUtils.Encryption.Mode.Decryption -> false
@@ -67,8 +73,8 @@ object SecurityUtils {
 
       val outBufferList = mutableListOf<ByteArray>()
 
-      for (offset in 0 until inBuffer.size step tempBufferSize) {
-        val size = Math.min(inBuffer.size - offset, tempBufferSize)
+      for (offset in 0 until inBuffer.size step bufferSize) {
+        val size = Math.min(inBuffer.size - offset, bufferSize)
         val tempBuffer = ByteArray(size)
 
         engine.processBytes(inBuffer, offset, size, tempBuffer, 0)
