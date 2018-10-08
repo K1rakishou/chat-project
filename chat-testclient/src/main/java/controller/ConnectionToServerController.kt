@@ -4,13 +4,16 @@ import ChatApp
 import core.ResponseInfo
 import core.ResponseType
 import core.Status
+import core.exception.ResponseDeserializationException
 import core.packet.GetPageOfPublicRoomsPacket
 import core.response.GetPageOfPublicRoomsResponsePayload
 import javafx.beans.property.SimpleStringProperty
+import javafx.scene.control.Alert
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
 import tornadofx.Controller
+import tornadofx.alert
 import tornadofx.runLater
 import ui.chat_main_window.ChatMainWindow
 import ui.loading_window.ConnectionToServerWindow
@@ -70,19 +73,32 @@ class ConnectionToServerController : Controller() {
   private fun handleIncomingResponses(responseInfo: ResponseInfo) {
     when (responseInfo.responseType) {
       ResponseType.GetPageOfPublicRoomsResponseType -> {
-        val response = GetPageOfPublicRoomsResponsePayload.fromByteSink(responseInfo.byteSink)
-        if (response.status == Status.Ok) {
-          runLater {
-            store.setPublicChatRoomList(response.publicChatRoomList)
-            find<ConnectionToServerWindow>().replaceWith<ChatMainWindow>()
-          }
-        } else {
-          TODO("Error handling")
+        val response = try {
+          GetPageOfPublicRoomsResponsePayload.fromByteSink(responseInfo.byteSink)
+        } catch (error: ResponseDeserializationException) {
+          showAlert(header = "Error", message = "Could not deserialize packet GetPageOfPublicRoomsResponse, error: ${error.message}")
+          return
+        }
+
+        if (response.status != Status.Ok) {
+          showAlert(header = "Error", message = "UserHasJoinedResponsePayload with non ok status ${response.status}")
+          return
+        }
+
+        runLater {
+          store.setPublicChatRoomList(response.publicChatRoomList)
+          find<ConnectionToServerWindow>().replaceWith<ChatMainWindow>()
         }
       }
       else -> {
         //Do nothing
       }
+    }
+  }
+
+  private fun showAlert(message: String = "", header: String = "", type: Alert.AlertType = Alert.AlertType.INFORMATION) {
+    runLater {
+      alert(type, header, message)
     }
   }
 

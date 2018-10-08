@@ -45,6 +45,8 @@ class Store : Controller() {
     joinedRooms.add(roomName)
   }
 
+  fun getJoinedRoomsList() = ArrayList(joinedRooms)
+
   fun isUserInRoom(roomName: String): Boolean {
     return joinedRooms.any { it == roomName }
   }

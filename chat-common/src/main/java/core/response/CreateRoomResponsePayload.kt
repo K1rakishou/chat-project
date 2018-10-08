@@ -4,8 +4,7 @@ import core.Constants
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
-import core.exception.ResponseDeserializationException
-import core.exception.UnknownPacketVersionException
+import core.exception.*
 import core.sizeof
 
 class CreateRoomResponsePayload private constructor(
@@ -60,22 +59,35 @@ class CreateRoomResponsePayload private constructor(
       return CreateRoomResponsePayload(status)
     }
 
+    @Throws(ResponseDeserializationException::class)
     fun fromByteSink(byteSink: ByteSink): CreateRoomResponsePayload {
-      val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+      try {
+        val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+        return when (responseVersion) {
+          CreateRoomResponsePayload.ResponseVersion.V1 -> {
+            val status = Status.fromShort(byteSink.readShort())
+            if (status != Status.Ok) {
+              return fail(status)
+            }
 
-      return when (responseVersion) {
-        CreateRoomResponsePayload.ResponseVersion.V1 -> {
-          val status = Status.fromShort(byteSink.readShort())
-          if (status != Status.Ok) {
-            return fail(status)
+            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+              ?: throw ResponseDeserializationException("Could not read chatRoomName")
+
+            CreateRoomResponsePayload(status, chatRoomName)
           }
-
-          val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
-            ?: throw ResponseDeserializationException("Could not read chatRoomName")
-
-          CreateRoomResponsePayload(status, chatRoomName)
+          CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
         }
-        CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
+      } catch (error: Throwable) {
+        when (error) {
+          is ByteSinkBufferOverflowException,
+          is ReaderPositionExceededBufferSizeException,
+          is MaxListSizeExceededException,
+          is UnknownPacketVersionException,
+          is DrainableDeserializationException -> {
+            throw ResponseDeserializationException(error.message ?: "No exception message")
+          }
+          else -> throw error
+        }
       }
     }
   }

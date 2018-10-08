@@ -3,8 +3,7 @@ package core.response
 import core.*
 import core.model.drainable.PublicUserInChat
 import core.byte_sink.ByteSink
-import core.exception.ResponseDeserializationException
-import core.exception.UnknownPacketVersionException
+import core.exception.*
 
 class UserHasJoinedResponsePayload private constructor(
   status: Status,
@@ -60,24 +59,37 @@ class UserHasJoinedResponsePayload private constructor(
       return UserHasJoinedResponsePayload(status)
     }
 
+    @Throws(ResponseDeserializationException::class)
     fun fromByteSink(byteSink: ByteSink): UserHasJoinedResponsePayload {
-      val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+      try {
+        val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+        when (responseVersion) {
+          UserHasJoinedResponsePayload.ResponseVersion.V1 -> {
+            val status = Status.fromShort(byteSink.readShort())
+            if (status != Status.Ok) {
+              return fail(status)
+            }
 
-      when (responseVersion) {
-        UserHasJoinedResponsePayload.ResponseVersion.V1 -> {
-          val status = Status.fromShort(byteSink.readShort())
-          if (status != Status.Ok) {
-            return fail(status)
+            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+              ?: throw ResponseDeserializationException("Could not read chatRoomName")
+            val user = byteSink.readDrainable<PublicUserInChat>(PublicUserInChat::class)
+              ?: throw ResponseDeserializationException("Could not read user")
+
+            return UserHasJoinedResponsePayload(status, chatRoomName, user)
           }
-
-          val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
-            ?: throw ResponseDeserializationException("Could not read chatRoomName")
-          val user = byteSink.readDrainable<PublicUserInChat>(PublicUserInChat::class)
-            ?: throw ResponseDeserializationException("Could not read user")
-
-          return UserHasJoinedResponsePayload(status, chatRoomName, user)
+          UserHasJoinedResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
         }
-        UserHasJoinedResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
+      } catch (error: Throwable) {
+        when (error) {
+          is ByteSinkBufferOverflowException,
+          is ReaderPositionExceededBufferSizeException,
+          is MaxListSizeExceededException,
+          is UnknownPacketVersionException,
+          is DrainableDeserializationException -> {
+            throw ResponseDeserializationException(error.message ?: "No exception message")
+          }
+          else -> throw error
+        }
       }
     }
   }

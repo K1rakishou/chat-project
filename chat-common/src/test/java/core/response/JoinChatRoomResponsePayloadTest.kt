@@ -1,6 +1,8 @@
 package core.response
 
+import core.Constants
 import core.Status
+import core.exception.ResponseDeserializationException
 import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
 import core.model.drainable.chat_message.TextChatMessage
@@ -61,6 +63,134 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
     val roomName = "test"
     val messageHistory = emptyList<BaseChatMessage>()
     val usersInChatRoom = emptyList<PublicUserInChat>()
+
+    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+      JoinChatRoomResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(Status.Ok.value, restoredResponse.status.value)
+      assertEquals(roomName, restoredResponse.roomName)
+
+      for (i in 0 until messageHistory.size) {
+        val expectedMessage = messageHistory[i] as TextChatMessage
+        val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
+
+        assertEquals(expectedMessage.messageId, actualMessage.messageId)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
+        assertEquals(expectedMessage.message, actualMessage.message)
+      }
+
+      for (i in 0 until usersInChatRoom.size) {
+        assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
+        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+      }
+    })
+  }
+
+  @Test(expected = ResponseDeserializationException::class)
+  fun testResponseExceedTextMessageSenderName() {
+    val roomName = "121314"
+    val messageHistory = listOf<BaseChatMessage>(
+      TextChatMessage(0, SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10), "wwwwwwwwwwwwwwwwwwwwww")
+    )
+    val usersInChatRoom = listOf(
+      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() })
+    )
+
+    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+      JoinChatRoomResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(Status.Ok.value, restoredResponse.status.value)
+      assertEquals(roomName, restoredResponse.roomName)
+
+      for (i in 0 until messageHistory.size) {
+        val expectedMessage = messageHistory[i] as TextChatMessage
+        val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
+
+        assertEquals(expectedMessage.messageId, actualMessage.messageId)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
+        assertEquals(expectedMessage.message, actualMessage.message)
+      }
+
+      for (i in 0 until usersInChatRoom.size) {
+        assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
+        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+      }
+    })
+  }
+
+  @Test(expected = ResponseDeserializationException::class)
+  fun testResponseExceedTextMessageMessage() {
+    val roomName = "121314"
+    val messageHistory = listOf<BaseChatMessage>(
+      TextChatMessage(0, "e5we6s76", SecurityUtils.Generator.generateRandomString(Constants.maxTextMessageLen + 10))
+    )
+    val usersInChatRoom = listOf(
+      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() })
+    )
+
+    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+      JoinChatRoomResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(Status.Ok.value, restoredResponse.status.value)
+      assertEquals(roomName, restoredResponse.roomName)
+
+      for (i in 0 until messageHistory.size) {
+        val expectedMessage = messageHistory[i] as TextChatMessage
+        val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
+
+        assertEquals(expectedMessage.messageId, actualMessage.messageId)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
+        assertEquals(expectedMessage.message, actualMessage.message)
+      }
+
+      for (i in 0 until usersInChatRoom.size) {
+        assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
+        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+      }
+    })
+  }
+
+  @Test(expected = ResponseDeserializationException::class)
+  fun testResponseExceedUserInChatUserName() {
+    val roomName = "121314"
+    val messageHistory = listOf<BaseChatMessage>(
+      TextChatMessage(0, "e5we6s76", "45346347")
+    )
+    val usersInChatRoom = listOf(
+      PublicUserInChat(SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10), ByteArray(277) { 0xAA.toByte() })
+    )
+
+    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+      JoinChatRoomResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(Status.Ok.value, restoredResponse.status.value)
+      assertEquals(roomName, restoredResponse.roomName)
+
+      for (i in 0 until messageHistory.size) {
+        val expectedMessage = messageHistory[i] as TextChatMessage
+        val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
+
+        assertEquals(expectedMessage.messageId, actualMessage.messageId)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
+        assertEquals(expectedMessage.message, actualMessage.message)
+      }
+
+      for (i in 0 until usersInChatRoom.size) {
+        assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
+        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+      }
+    })
+  }
+
+  @Test(expected = ResponseDeserializationException::class)
+  fun testResponseExceedUserInChatEcPublicKey() {
+    val roomName = "121314"
+    val messageHistory = listOf<BaseChatMessage>(
+      TextChatMessage(0, "e5we6s76", "45346347")
+    )
+    val usersInChatRoom = listOf(
+      PublicUserInChat("43546der7", SecurityUtils.Generator.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray())
+    )
 
     testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)

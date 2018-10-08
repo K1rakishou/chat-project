@@ -42,6 +42,12 @@ class TextChatMessageItem(
   override fun hashCode(): Int {
     return id.hashCode()
   }
+
+  companion object {
+    fun systemMessage(messageText: String): TextChatMessageItem {
+      return TextChatMessageItem("System", messageText)
+    }
+  }
 }
 
 class TextChatMessageItemModel(

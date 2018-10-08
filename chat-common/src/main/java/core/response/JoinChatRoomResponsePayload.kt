@@ -3,8 +3,7 @@ package core.response
 import core.*
 import core.model.drainable.PublicUserInChat
 import core.byte_sink.ByteSink
-import core.exception.ResponseDeserializationException
-import core.exception.UnknownPacketVersionException
+import core.exception.*
 import core.model.drainable.chat_message.BaseChatMessage
 
 class JoinChatRoomResponsePayload private constructor(
@@ -67,24 +66,37 @@ class JoinChatRoomResponsePayload private constructor(
       return JoinChatRoomResponsePayload(status)
     }
 
+    @Throws(ResponseDeserializationException::class)
     fun fromByteSink(byteSink: ByteSink): JoinChatRoomResponsePayload {
-      val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+      try {
+        val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+        return when (responseVersion) {
+          JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
+            val status = Status.fromShort(byteSink.readShort())
+            if (status != Status.Ok) {
+              return fail(status)
+            }
 
-      return when (responseVersion) {
-        JoinChatRoomResponsePayload.ResponseVersion.V1 -> {
-          val status = Status.fromShort(byteSink.readShort())
-          if (status != Status.Ok) {
-            return fail(status)
+            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+              ?: throw ResponseDeserializationException("Could not read chatRoomName")
+            val messageHistory = byteSink.readList<BaseChatMessage>(BaseChatMessage::class, Constants.maxRoomHistoryMessagesCount)
+            val users = byteSink.readList<PublicUserInChat>(PublicUserInChat::class, Constants.maxUsersInRoomCount)
+
+            JoinChatRoomResponsePayload(status, chatRoomName, messageHistory, users)
           }
-
-          val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
-            ?: throw ResponseDeserializationException("Could not read chatRoomName")
-          val messageHistory = byteSink.readList<BaseChatMessage>(BaseChatMessage::class, Constants.maxRoomHistoryMessagesCount)
-          val users = byteSink.readList<PublicUserInChat>(PublicUserInChat::class, Constants.maxUsersInRoomCount)
-
-          JoinChatRoomResponsePayload(status, chatRoomName, messageHistory, users)
+          JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
         }
-        JoinChatRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
+      } catch (error: Throwable) {
+        when (error) {
+          is ByteSinkBufferOverflowException,
+          is ReaderPositionExceededBufferSizeException,
+          is MaxListSizeExceededException,
+          is UnknownPacketVersionException,
+          is DrainableDeserializationException -> {
+            throw ResponseDeserializationException(error.message ?: "No exception message")
+          }
+          else -> throw error
+        }
       }
     }
   }

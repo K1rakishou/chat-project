@@ -3,7 +3,7 @@ package core.response
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
-import core.exception.UnknownPacketVersionException
+import core.exception.*
 
 class SendChatMessageResponsePayload private constructor(
   status: Status
@@ -49,19 +49,32 @@ class SendChatMessageResponsePayload private constructor(
       return SendChatMessageResponsePayload(status)
     }
 
+    @Throws(ResponseDeserializationException::class)
     fun fromByteSink(byteSink: ByteSink): SendChatMessageResponsePayload {
-      val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+      try {
+        val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+        when (responseVersion) {
+          SendChatMessageResponsePayload.ResponseVersion.V1 -> {
+            val status = Status.fromShort(byteSink.readShort())
+            if (status != Status.Ok) {
+              return fail(status)
+            }
 
-      when (responseVersion) {
-        SendChatMessageResponsePayload.ResponseVersion.V1 -> {
-          val status = Status.fromShort(byteSink.readShort())
-          if (status != Status.Ok) {
-            return fail(status)
+            return SendChatMessageResponsePayload(status)
           }
-
-          return SendChatMessageResponsePayload(status)
+          SendChatMessageResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
         }
-        SendChatMessageResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
+      } catch (error: Throwable) {
+        when (error) {
+          is ByteSinkBufferOverflowException,
+          is ReaderPositionExceededBufferSizeException,
+          is MaxListSizeExceededException,
+          is UnknownPacketVersionException,
+          is DrainableDeserializationException -> {
+            throw ResponseDeserializationException(error.message ?: "No exception message")
+          }
+          else -> throw error
+        }
       }
     }
   }

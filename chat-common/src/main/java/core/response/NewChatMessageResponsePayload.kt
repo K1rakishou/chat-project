@@ -4,8 +4,7 @@ import core.Constants
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
-import core.exception.ResponseDeserializationException
-import core.exception.UnknownPacketVersionException
+import core.exception.*
 import core.sizeof
 
 class NewChatMessageResponsePayload private constructor(
@@ -63,27 +62,40 @@ class NewChatMessageResponsePayload private constructor(
       return NewChatMessageResponsePayload(status)
     }
 
+    @Throws(ResponseDeserializationException::class)
     fun fromByteSink(byteSink: ByteSink): NewChatMessageResponsePayload {
-      val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+      try {
+        val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
+        when (responseVersion) {
+          NewChatMessageResponsePayload.ResponseVersion.V1 -> {
+            val status = Status.fromShort(byteSink.readShort())
+            if (status != Status.Ok) {
+              return fail(status)
+            }
 
-      when (responseVersion) {
-        NewChatMessageResponsePayload.ResponseVersion.V1 -> {
-          val status = Status.fromShort(byteSink.readShort())
-          if (status != Status.Ok) {
-            return fail(status)
+            val messageId = byteSink.readInt()
+            val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
+              ?: throw ResponseDeserializationException("Could not read chatRoomName")
+            val userName = byteSink.readString(Constants.maxUserNameLen)
+              ?: throw ResponseDeserializationException("Could not read chatRoomName")
+            val message = byteSink.readString(Constants.maxTextMessageLen)
+              ?: throw ResponseDeserializationException("Could not read chatRoomName")
+
+            return NewChatMessageResponsePayload(status, messageId, roomName, userName, message)
           }
-
-          val messageId = byteSink.readInt()
-          val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
-            ?: throw ResponseDeserializationException("Could not read chatRoomName")
-          val userName = byteSink.readString(Constants.maxUserNameLen)
-            ?: throw ResponseDeserializationException("Could not read chatRoomName")
-          val message = byteSink.readString(Constants.maxTextMessageLen)
-            ?: throw ResponseDeserializationException("Could not read chatRoomName")
-
-          return NewChatMessageResponsePayload(status, messageId, roomName, userName, message)
+          NewChatMessageResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
         }
-        NewChatMessageResponsePayload.ResponseVersion.Unknown ->  throw UnknownPacketVersionException(responseVersion.value)
+      } catch (error: Throwable) {
+        when (error) {
+          is ByteSinkBufferOverflowException,
+          is ReaderPositionExceededBufferSizeException,
+          is MaxListSizeExceededException,
+          is UnknownPacketVersionException,
+          is DrainableDeserializationException -> {
+            throw ResponseDeserializationException(error.message ?: "No exception message")
+          }
+          else -> throw error
+        }
       }
     }
   }

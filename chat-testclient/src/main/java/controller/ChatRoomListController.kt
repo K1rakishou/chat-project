@@ -4,6 +4,7 @@ import ChatApp
 import core.ResponseInfo
 import core.ResponseType
 import core.Status
+import core.exception.ResponseDeserializationException
 import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
 import core.packet.JoinChatRoomPacket
@@ -26,9 +27,10 @@ import tornadofx.alert
 import tornadofx.runLater
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
-import java.lang.IllegalStateException
 
 class ChatRoomListController : Controller() {
+  private val delayBeforeAddFirstChatRoomMessage = 250.0
+
   private val networkManager = (app as ChatApp).networkManager
   private val store: Store by inject()
   private val keyStore: KeyStore by inject()
@@ -101,14 +103,16 @@ class ChatRoomListController : Controller() {
       ResponseType.JoinChatRoomResponseType -> {
         println("JoinChatRoomResponseType response received")
 
-        val response = JoinChatRoomResponsePayload.fromByteSink(responseInfo.byteSink)
-        if (response.status != Status.Ok) {
-          showAlert(message = "Error while trying to join a chat room")
+        val response = try {
+          JoinChatRoomResponsePayload.fromByteSink(responseInfo.byteSink)
+        } catch (error: ResponseDeserializationException) {
+          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet JoinChatRoomResponse, error: ${error.message}"))
           return
         }
 
-        if (selectedRoomName != response.roomName) {
-          throw IllegalStateException("The room that the user has selected and the one that the server has sent back do not match up. Wut?")
+        if (response.status != Status.Ok) {
+          showAlert(message = "Error while trying to join a chat room")
+          return
         }
 
         val roomName = response.roomName!!
@@ -120,19 +124,29 @@ class ChatRoomListController : Controller() {
       ResponseType.UserHasJoinedResponseType -> {
         println("UserHasJoinedResponseType response received")
 
-        val response = UserHasJoinedResponsePayload.fromByteSink(responseInfo.byteSink)
+        val response = try {
+          UserHasJoinedResponsePayload.fromByteSink(responseInfo.byteSink)
+        } catch (error: ResponseDeserializationException) {
+          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet UserHasJoinedResponse, error: ${error.message}"))
+          return
+        }
         if (response.status != Status.Ok) {
           showAlert(message = "UserHasJoinedResponsePayload with non ok status ${response.status}")
           return
         }
 
-        val roomName = response.roomName!!
-        addChatMessage(roomName, TextChatMessageItem("Server", "User \"${response.user!!.userName}\" has joined to chat room"))
+        addChatMessage(response.roomName!!, TextChatMessageItem.systemMessage("User \"${response.user!!.userName}\" has joined to chat room"))
       }
       ResponseType.SendChatMessageResponseType -> {
         println("SendChatMessageResponseType response received")
 
-        val response = SendChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
+        val response = try {
+          SendChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
+        } catch (error: ResponseDeserializationException) {
+          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet SendChatMessageResponse, error: ${error.message}"))
+          return
+        }
+
         if (response.status != Status.Ok) {
           showAlert(message = "SendChatMessageResponseType with non ok status ${response.status}")
           return
@@ -141,7 +155,13 @@ class ChatRoomListController : Controller() {
       ResponseType.NewChatMessageResponseType -> {
         println("NewChatMessageResponseType response received")
 
-        val response = NewChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
+        val response = try {
+          NewChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
+        } catch (error: ResponseDeserializationException) {
+          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet NewChatMessageResponse, error: ${error.message}"))
+          return
+        }
+
         if (response.status != Status.Ok) {
           showAlert(message =  "NewChatMessageResponsePayload with non ok status ${response.status}")
           return
@@ -161,13 +181,19 @@ class ChatRoomListController : Controller() {
     }
   }
 
+  private fun addChatMessageToAllRooms(chatMessage: TextChatMessageItem) {
+    store.getJoinedRoomsList().forEach { joinedRoomName ->
+      addChatMessage(joinedRoomName, chatMessage)
+    }
+  }
+
   private fun loadRoomInfo(roomName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
     runLater {
       find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
 
       //Wait some time before ChatRoomView shows up
-      runLater(Duration.millis(250.0)) {
-        store.addChatRoomMessage(roomName, TextChatMessageItem("Server", "You've joined the chat room"))
+      runLater(Duration.millis(delayBeforeAddFirstChatRoomMessage)) {
+        store.addChatRoomMessage(roomName, TextChatMessageItem.systemMessage("You've joined the chat room"))
 
         store.addJoinedRoom(roomName)
         store.setChatRoomUserList(roomName, users)
@@ -187,7 +213,6 @@ class ChatRoomListController : Controller() {
   private fun onDisconnected() {
     runLater {
       store.clearPublicChatRoomList()
-      alert(Alert.AlertType.INFORMATION, "Disconnected from the server")
     }
   }
 }
