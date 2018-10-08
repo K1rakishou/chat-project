@@ -7,7 +7,7 @@ import tornadofx.runLater
 
 abstract class BaseController : Controller() {
 
-  protected fun showErrorAlert(message: String = "") {
+  protected fun showErrorAlert(message: String) {
     runLater {
       alert(Alert.AlertType.ERROR, "Error", message)
     }
