@@ -2,15 +2,14 @@ package ui.chat_main_window
 
 import Styles
 import controller.ChatRoomListController
-import store.Store
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
 import javafx.scene.text.Text
 import javafx.scene.text.TextFlow
 import javafx.util.Duration
 import model.chat_message.TextChatMessageItem
+import store.Store
 import tornadofx.*
-import java.lang.IllegalArgumentException
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -61,7 +60,6 @@ class ChatRoomView : View() {
 
         clear()
         requestFocus()
-        scrollToBottom()
       }
     }
   }

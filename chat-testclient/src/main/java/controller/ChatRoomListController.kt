@@ -13,9 +13,8 @@ import core.response.JoinChatRoomResponsePayload
 import core.response.NewChatMessageResponsePayload
 import core.response.SendChatMessageResponsePayload
 import core.response.UserHasJoinedResponsePayload
-import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.property.SimpleIntegerProperty
 import javafx.collections.ObservableList
-import javafx.scene.control.Alert
 import javafx.util.Duration
 import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
@@ -24,8 +23,6 @@ import model.chat_message.BaseChatMessageItem
 import model.chat_message.TextChatMessageItem
 import store.KeyStore
 import store.Store
-import tornadofx.Controller
-import tornadofx.alert
 import tornadofx.runLater
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
@@ -38,7 +35,7 @@ class ChatRoomListController : BaseController() {
   private val keyStore: KeyStore by inject()
   private var selectedRoomName: String? = null
 
-  val scrollToBottomFlag = SimpleBooleanProperty(false)
+  val scrollToBottomFlag = SimpleIntegerProperty(0)
 
   init {
     launch { startListeningToPackets() }
@@ -180,6 +177,8 @@ class ChatRoomListController : BaseController() {
   private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem) {
     runLater {
       store.addChatRoomMessage(roomName, chatMessage)
+
+      scrollChatToBottom()
     }
   }
 
@@ -201,9 +200,15 @@ class ChatRoomListController : BaseController() {
         store.setChatRoomUserList(roomName, users)
         store.setChatRoomMessageList(roomName, messageHistory)
 
-        scrollToBottomFlag.set(true)
+        scrollChatToBottom()
       }
     }
+  }
+
+  private fun scrollChatToBottom() {
+    //To make the listener receive the new value we need it to be different from the last value.
+    //Otherwise it doesn't work
+    scrollToBottomFlag.set(scrollToBottomFlag.value + 1)
   }
 
   private fun onDisconnected() {
