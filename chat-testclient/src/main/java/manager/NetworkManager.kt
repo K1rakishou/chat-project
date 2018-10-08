@@ -84,7 +84,7 @@ class NetworkManager {
             socket = newSocket
             readChannel = newSocket.openReadChannel()
             writeChannel = newSocket.openWriteChannel(autoFlush = false)
-            launch { listenServer() }
+            launch { listenServer(isActive) }
 
             isConnected.set(true)
             socketEventsQueue.send(SocketEvent.ConnectedToServer())
@@ -114,9 +114,9 @@ class NetworkManager {
     }
   }
 
-  private suspend fun listenServer() {
+  private suspend fun listenServer(isActive: Boolean) {
     try {
-      while (!readChannel.isClosedForRead) {
+      while (isActive && !readChannel.isClosedForRead) {
         if (!readMagicNumber()) {
           continue
         }

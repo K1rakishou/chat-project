@@ -8,6 +8,7 @@ import core.extensions.toHexSeparated
 import core.response.BaseResponse
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
+import kotlinx.coroutines.experimental.io.close
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 
@@ -23,16 +24,21 @@ class ConnectionManager(
   init {
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
       for (data in channel) {
-        val (connection, response) = data
+        try {
+          val (connection, response) = data
 
-        if (connection.writeChannel.isClosedForWrite) {
-          println("Could not send response because channel with clientAddress: ${connection.clientAddress} is closed for writing")
-          continue
+          if (connection.writeChannel.isClosedForWrite) {
+            println("Could not send response because channel with clientAddress: ${connection.clientAddress} is closed for writing")
+            continue
+          }
+
+          //TODO: probably should remove the connection from the connection map and also send to every group this user joined that user has disconnected
+          writeToOutputChannel(connection, response.buildResponse(0L))
+          connection.writeChannel.flush()
+
+        } catch (error: Throwable) {
+          error.printStackTrace()
         }
-
-        //TODO: probably should remove the connection from the connection map and also send to every group this user joined that user has disconnected
-        writeToOutputChannel(connection, response.buildResponse(0L))
-        connection.writeChannel.flush()
       }
     }
   }
@@ -61,7 +67,17 @@ class ConnectionManager(
   }
 
   suspend fun removeConnection(clientAddress: String) {
-    mutex.withLock { connections.remove(clientAddress) }
+    mutex.withLock {
+      try {
+        connections[clientAddress]?.let {
+          if (!it.writeChannel.isClosedForWrite) {
+            it.writeChannel.close()
+          }
+        }
+      } finally {
+        connections.remove(clientAddress)
+      }
+    }
     println("Removed connection for client $clientAddress")
   }
 

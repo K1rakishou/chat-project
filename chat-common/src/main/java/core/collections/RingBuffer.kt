@@ -51,6 +51,6 @@ class RingBuffer<T>(
   }
 
   fun clone(): RingBuffer<T> {
-    return RingBuffer(size, array, emptyCount, headIndex)
+    return RingBuffer(size, array.copyOf(), emptyCount, headIndex)
   }
 }

@@ -4,6 +4,8 @@ import core.PacketType
 import core.extensions.readPacketInfo
 import core.extensions.toHex
 import core.extensions.toHexSeparated
+import core.model.drainable.chat_message.TextChatMessage
+import core.security.SecurityUtils
 import handler.CreateRoomPacketHandler
 import handler.GetPageOfPublicRoomsHandler
 import handler.JoinChatRoomPacketHandler
@@ -54,20 +56,11 @@ class Server(
         .bind(InetSocketAddress("127.0.0.1", 2323))
 
       //test zone
-      chatRoomManager.createChatRoom(true)
-
-//      chatRoomManager.createChatRoom(true).apply {
-//        addUser(UserInRoom(User("test_user1", "test_address1", ByteArray(128) { 0xAA.toByte()} )))
-//        addUser(UserInRoom(User("test_user2", "test_address2", ByteArray(128) { 0xAB.toByte()} )))
-//        addUser(UserInRoom(User("test_user3", "test_address3", ByteArray(128) { 0xAC.toByte()} )))
-//
-//        addMessage(TextChatMessage(0L, "test_user1", "test message 1"))
-//        addMessage(TextChatMessage(1L, "test_user2", "test message 2"))
-//        addMessage(TextChatMessage(2L, "test_user3", "test message 3"))
-//        addMessage(TextChatMessage(3L, "test_user1", "test message 4"))
-//        addMessage(TextChatMessage(4L, "test_user2", "test message 5"))
-//        addMessage(TextChatMessage(5L, "test_user3", "test message 6"))
-//      }
+      chatRoomManager.createChatRoom(true).apply {
+        repeat(100) { index ->
+          addMessage(TextChatMessage(index, "test user", SecurityUtils.Generator.generateRandomString(512)))
+        }
+      }
       //test zone
 
       println("Started server at ${server.localAddress}")
@@ -82,11 +75,12 @@ class Server(
 
             try {
               connectionManager.addConnection(clientAddress, Connection(clientAddress, socket.openWriteChannel(autoFlush = false)))
-              listenClient(readChannel, clientAddress)
+              listenClient(isActive, readChannel, clientAddress)
             } catch (error: Throwable) {
               printException(error, clientAddress)
             } finally {
               connectionManager.removeConnection(clientAddress)
+              socket.dispose()
             }
           }
         }
@@ -104,8 +98,8 @@ class Server(
     }
   }
 
-  private suspend fun listenClient(readChannel: ByteReadChannel, clientAddress: String) {
-    while (!readChannel.isClosedForRead && !readChannel.isClosedForWrite) {
+  private suspend fun listenClient(isActive: Boolean, readChannel: ByteReadChannel, clientAddress: String) {
+    while (isActive && !readChannel.isClosedForRead && !readChannel.isClosedForWrite) {
       if (!readMagicNumber(readChannel)) {
         continue
       }
