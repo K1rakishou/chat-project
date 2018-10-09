@@ -10,7 +10,7 @@ class CreateRoomPacket(
   val isPublic: Boolean,
   val chatRoomName: String?,
   val chatRoomPasswordHash: String?
-) : BasePacket() {
+) : UnencryptedPacket() {
 
   override val packetVersion: Short
     get() = CURRENT_PACKET_VERSION.value

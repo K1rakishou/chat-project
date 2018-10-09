@@ -8,7 +8,7 @@ import core.sizeof
 class GetPageOfPublicRoomsPacket(
   val currentPage: Short,
   val roomsPerPage: Byte
-) : BasePacket() {
+) : UnencryptedPacket() {
 
   override val packetVersion: Short
     get() = CURRENT_PACKET_VERSION.value

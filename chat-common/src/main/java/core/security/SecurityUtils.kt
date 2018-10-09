@@ -1,23 +1,26 @@
 package core.security
 
 import core.byte_sink.ByteSink
+import org.bouncycastle.asn1.ASN1InputStream
+import org.bouncycastle.asn1.ASN1Integer
+import org.bouncycastle.asn1.DERSequenceGenerator
+import org.bouncycastle.asn1.DLSequence
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement
-import org.bouncycastle.crypto.ec.CustomNamedCurves
 import org.bouncycastle.crypto.engines.XSalsa20Engine
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter
-import org.bouncycastle.crypto.params.KeyParameter
-import org.bouncycastle.crypto.params.ParametersWithIV
+import org.bouncycastle.crypto.generators.ECKeyPairGenerator
+import org.bouncycastle.crypto.params.*
+import org.bouncycastle.crypto.signers.ECDSASigner
 import org.bouncycastle.jcajce.provider.digest.SHA3
-import org.bouncycastle.jce.spec.ECParameterSpec
+import org.bouncycastle.jce.ECNamedCurveTable
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.math.BigInteger
-import java.security.*
-import java.security.spec.X509EncodedKeySpec
+import java.security.SecureRandom
 
 
 object SecurityUtils {
   const val Curve25519 = "Curve25519"
-  const val SHA384withECDSA = "SHA384withECDSA"
-  const val ECDSA = "ECDSA"
 
   private val alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-"
   private val secureRandom = SecureRandom.getInstanceStrong()
@@ -39,17 +42,11 @@ object SecurityUtils {
   }
 
   object Encryption {
+    private val engine = XSalsa20Engine()
+
     private enum class Mode {
       Encryption,
       Decryption
-    }
-
-    fun xSalsa20Encrypt(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, tempBufferSize: Int = 4096): ByteArray {
-      return xSalsa20(key, iv, inBuffer, Mode.Encryption, tempBufferSize)
-    }
-
-    fun xSalsa20Decrypt(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, tempBufferSize: Int = 4096): ByteArray {
-      return xSalsa20(key, iv, inBuffer, Mode.Decryption, tempBufferSize)
     }
 
     fun xSalsa20Encrypt(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int) {
@@ -61,21 +58,18 @@ object SecurityUtils {
     }
 
     private fun xSalsa20(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int, mode: Mode) {
-      require(key.size == 32)
       require(iv.size == 24)
+      require(key.size == 32)
 
-      val defaultChunkSize = 4096
-
-      val cp = KeyParameter(key)
-      val params = ParametersWithIV(cp, iv)
-      val engine = XSalsa20Engine()
       val doEncryption = when (mode) {
         SecurityUtils.Encryption.Mode.Encryption -> true
         SecurityUtils.Encryption.Mode.Decryption -> false
       }
 
+      val params = ParametersWithIV(KeyParameter(key), iv)
       engine.init(doEncryption, params)
 
+      val defaultChunkSize = 4096
       val chunkSize = if (byteSinkSize < defaultChunkSize) {
         byteSinkSize
       } else {
@@ -92,67 +86,18 @@ object SecurityUtils {
         byteSink.writeByteArrayRaw(offset, encryptedChunk)
       }
     }
-
-    private fun xSalsa20(key: ByteArray, iv: ByteArray, inBuffer: ByteArray, mode: Mode, tempBufferSize: Int): ByteArray {
-      require(key.size == 32)
-      require(iv.size == 24)
-
-      val bufferSize = if (inBuffer.size < tempBufferSize) {
-        inBuffer.size
-      } else {
-        tempBufferSize
-      }
-
-      val outBufferList = mutableListOf<ByteArray>()
-      val cp = KeyParameter(key)
-      val params = ParametersWithIV(cp, iv)
-      val engine = XSalsa20Engine()
-      val doEncryption = when (mode) {
-        SecurityUtils.Encryption.Mode.Encryption -> true
-        SecurityUtils.Encryption.Mode.Decryption -> false
-      }
-
-      engine.init(doEncryption, params)
-
-      for (offset in 0 until inBuffer.size step bufferSize) {
-        val size = Math.min(inBuffer.size - offset, bufferSize)
-        val tempBuffer = ByteArray(size)
-
-        engine.processBytes(inBuffer, offset, size, tempBuffer, 0)
-        outBufferList += tempBuffer
-      }
-
-      val outBuffer = ByteArray(inBuffer.size)
-      var offset = 0
-
-      for (buffer in outBufferList) {
-        System.arraycopy(buffer, 0, outBuffer, offset, buffer.size)
-        offset += buffer.size
-      }
-
-      return outBuffer
-    }
   }
 
   object Exchange {
-    fun generateECKeyPair(): KeyPair {
-      val kp = KeyPairGenerator.getInstance(ECDSA)
-      val ecP = CustomNamedCurves.getByName(SecurityUtils.Curve25519)
-      val ecSpec = ECParameterSpec(ecP.curve, ecP.g, ecP.n, ecP.h, ecP.seed)
+    private val ecCurve = ECNamedCurveTable.getParameterSpec(SecurityUtils.Curve25519)
 
-      kp.initialize(ecSpec)
+    fun generateECKeyPair(): AsymmetricCipherKeyPair {
+      val ecDomainParam = ECDomainParameters(ecCurve.curve, ecCurve.g, ecCurve.n, ecCurve.h, ecCurve.seed)
+      val kp = ECKeyPairGenerator()
+        .apply { init(ECKeyGenerationParameters(ecDomainParam, secureRandom)) }
+
       return kp.generateKeyPair()
     }
-
-    fun decodePublicKey(encodedPubKey: ByteArray): PublicKey {
-      val kf = KeyFactory.getInstance(ECDSA)
-      return kf.generatePublic(X509EncodedKeySpec(encodedPubKey))
-    }
-
-//    fun decodePrivateKey(encodedPrivKey: ByteArray): PrivateKey {
-//      val kf = KeyFactory.getInstance(ECDSA)
-//      return kf.generatePrivate(PKCS8EncodedKeySpec(encodedPrivKey))
-//    }
 
     fun calculateAgreement(privateKey: AsymmetricKeyParameter, publicKey: AsymmetricKeyParameter): BigInteger {
       val senderAgreement = ECDHBasicAgreement()
@@ -163,28 +108,58 @@ object SecurityUtils {
   }
 
   object Signing {
-    fun generateSignature(ecPrivate: PrivateKey, input: ByteArray): ByteArray {
-      val signature = Signature.getInstance(SHA384withECDSA, "BC")
-      signature.initSign(ecPrivate)
-      signature.update(input)
-      return signature.sign()
+    private val signer = ECDSASigner()
+
+    fun generateSignature(ecPrivateKey: AsymmetricKeyParameter, message: ByteArray): ByteArray? {
+      signer.init(true, ecPrivateKey)
+
+      val signature = signer.generateSignature(message)
+      val baos = ByteArrayOutputStream()
+
+      return try {
+        val seq = DERSequenceGenerator(baos)
+        seq.addObject(ASN1Integer(signature[0]))
+        seq.addObject(ASN1Integer(signature[1]))
+        seq.close()
+
+        baos.toByteArray()
+      } catch (e: IOException) {
+        e.printStackTrace()
+        null
+      } finally {
+        try {
+          baos.close()
+        } catch (ignored: IOException) {
+        }
+      }
     }
 
-    fun verifySignature(ecPublicKey: PublicKey, input: ByteArray, encSignature: ByteArray): Boolean {
-      return try {
-        val signature = Signature.getInstance(SHA384withECDSA, "BC")
-        signature.initVerify(ecPublicKey)
-        signature.update(input)
-        signature.verify(encSignature)
-      } catch (error: SignatureException) {
-        false
+    fun verifySignature(ecPublicKey: AsymmetricKeyParameter, input: ByteArray, signature: ByteArray): Boolean {
+      val asn1 = ASN1InputStream(signature)
+
+      try {
+        signer.init(false, ecPublicKey)
+
+        val seq = asn1.readObject() as DLSequence
+        val r = (seq.getObjectAt(0) as ASN1Integer).positiveValue
+        val s = (seq.getObjectAt(1) as ASN1Integer).positiveValue
+
+        return signer.verifySignature(input, r, s);
+      } catch (e: Exception) {
+        return false
+      } finally {
+        try {
+          asn1.close()
+        } catch (ignored: IOException) {
+        }
       }
     }
   }
 
   object Hashing {
+    private val sha3 = SHA3.DigestSHA3(384)
+
     fun sha3(data: ByteArray): ByteArray {
-      val sha3 = SHA3.DigestSHA3(384)
       return sha3.digest(data)
     }
   }

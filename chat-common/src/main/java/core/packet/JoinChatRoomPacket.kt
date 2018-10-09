@@ -11,7 +11,7 @@ class JoinChatRoomPacket(
   val userName: String,
   val roomName: String,
   val roomPasswordHash: String?
-) : BasePacket() {
+) : UnencryptedPacket() {
 
   override val packetVersion: Short
     get() = CURRENT_PACKET_VERSION.value

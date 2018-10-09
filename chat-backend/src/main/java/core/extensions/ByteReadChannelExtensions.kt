@@ -42,7 +42,7 @@ suspend fun ByteReadChannel.readPacketInfo(byteSinkFileCachePath: String, bodySi
 
       val array = ByteArray(chunk)
       readFully(array)
-      sink.writeByteArrayRaw(array)
+      sink.writeByteArrayRaw(offset, array)
     }
 
     val packetId = sink.readLong()

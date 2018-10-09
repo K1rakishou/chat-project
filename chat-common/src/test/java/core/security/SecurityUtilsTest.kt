@@ -1,5 +1,8 @@
 package core.security
 
+import core.byte_sink.InMemoryByteSink
+import core.extensions.encoded
+import core.extensions.toAsymmetricKeyParameter
 import core.extensions.toHex
 import core.security.SecurityUtils.Encryption.xSalsa20Decrypt
 import core.security.SecurityUtils.Encryption.xSalsa20Encrypt
@@ -7,10 +10,8 @@ import core.security.SecurityUtils.Exchange.calculateAgreement
 import core.security.SecurityUtils.Exchange.generateECKeyPair
 import core.security.SecurityUtils.Signing.generateSignature
 import core.security.SecurityUtils.Signing.verifySignature
-import org.bouncycastle.crypto.util.PrivateKeyFactory
-import org.bouncycastle.crypto.util.PublicKeyFactory
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.junit.Assert
+import org.junit.Assert.assertArrayEquals
 import org.junit.Before
 import org.junit.Test
 import java.security.Security
@@ -31,14 +32,14 @@ class SecurityUtilsTest {
     val senderKeyPair = generateECKeyPair()
     val receiverKeyPair = generateECKeyPair()
 
-    val senderEncodedPublicKey = senderKeyPair.public.encoded
-    val receiverEncodedPublicKey = receiverKeyPair.public.encoded
+    val senderEncodedPublicKey = senderKeyPair.public.encoded()
+    val receiverEncodedPublicKey =  receiverKeyPair.public.encoded()
 
-    val senderDecodedPublicKey = PublicKeyFactory.createKey(senderEncodedPublicKey)
-    val receiverDecodedPublicKey = PublicKeyFactory.createKey(receiverEncodedPublicKey)
+    val senderDecodedPublicKey = senderEncodedPublicKey.toAsymmetricKeyParameter()
+    val receiverDecodedPublicKey = receiverEncodedPublicKey.toAsymmetricKeyParameter()
 
-    val agreement1 = calculateAgreement(PrivateKeyFactory.createKey(senderKeyPair.private.encoded), receiverDecodedPublicKey)
-    val agreement2 = calculateAgreement(PrivateKeyFactory.createKey(receiverKeyPair.private.encoded), senderDecodedPublicKey)
+    val agreement1 = calculateAgreement(senderKeyPair.private, receiverDecodedPublicKey)
+    val agreement2 = calculateAgreement(receiverKeyPair.private, senderDecodedPublicKey)
 
     assertEquals(agreement1, agreement2)
   }
@@ -47,7 +48,7 @@ class SecurityUtilsTest {
   fun testSignatureVerifying() {
     val senderKeyPair = generateECKeyPair()
     val array = "This is a test string".toByteArray()
-    val signature = generateSignature(senderKeyPair.private, array)
+    val signature = generateSignature(senderKeyPair.private, array)!!
 
     assertTrue(verifySignature(senderKeyPair.public, array, signature))
   }
@@ -56,7 +57,7 @@ class SecurityUtilsTest {
   fun testSignatureVerifyingFailWhenSignatureChanged() {
     val senderKeyPair = generateECKeyPair()
     val array = "This is a test string".toByteArray()
-    val signature = generateSignature(senderKeyPair.private, array)
+    val signature = generateSignature(senderKeyPair.private, array)!!
 
     signature[0] = 0
     signature[1] = 1
@@ -69,7 +70,7 @@ class SecurityUtilsTest {
   fun testSignatureVerifyingFailWhenMessageChanged() {
     val senderKeyPair = generateECKeyPair()
     val array = "This is a test string".toByteArray()
-    val signature = generateSignature(senderKeyPair.private, array)
+    val signature = generateSignature(senderKeyPair.private, array)!!
 
     array[0] = 0
     array[1] = 1
@@ -79,36 +80,54 @@ class SecurityUtilsTest {
   }
 
   @Test
-  fun testXSalsa20EncryptionDecryption() {
+  fun testXSalsa20EncryptionDecryptionFewTimes() {
     val key = "11223344556677889900112233445566".toByteArray()
     val iv = "112233445566778899001122".toByteArray()
-    val testData = "This is a test string".toByteArray()
+    val byteSink = InMemoryByteSink.createWithInitialSize(32)
+    byteSink.writeString("This is a test string")
 
-    val encrypted = xSalsa20Encrypt(key, iv, testData)
-    val decrypted = xSalsa20Decrypt(key, iv, encrypted)
+    val original = byteSink.getArray()
 
-    Assert.assertArrayEquals(testData, decrypted)
-  }
+    kotlin.run {
+      xSalsa20Encrypt(key, iv, byteSink, byteSink.getWriterPosition())
+      xSalsa20Decrypt(key, iv, byteSink, byteSink.getWriterPosition())
 
-  @Test
-  fun testXSalsa20EncryptionDecryptionWithSmallBuffer() {
-    val key = "11223344556677889900112233445566".toByteArray()
-    val iv = "112233445566778899001122".toByteArray()
-    val testData = ("This is a test string 11223344556677889900 11223344556677889900 11223344556677889900 " +
-      "11223344556677889900 11223344556677889900 11223344556677889900 11223344556677889900").toByteArray()
-    val bufferSize = 32
+      val decrypted = byteSink.getArray()
+      assertArrayEquals(original, decrypted)
+    }
 
-    val encrypted = xSalsa20Encrypt(key, iv, testData, bufferSize)
-    val decrypted = xSalsa20Decrypt(key, iv, encrypted, bufferSize)
+    kotlin.run {
+      xSalsa20Encrypt(key, iv, byteSink, byteSink.getWriterPosition())
+      xSalsa20Decrypt(key, iv, byteSink, byteSink.getWriterPosition())
 
-    Assert.assertArrayEquals(testData, decrypted)
+      val decrypted = byteSink.getArray()
+      assertArrayEquals(original, decrypted)
+    }
+
+    kotlin.run {
+      xSalsa20Encrypt(key, iv, byteSink, byteSink.getWriterPosition())
+      xSalsa20Decrypt(key, iv, byteSink, byteSink.getWriterPosition())
+
+      val decrypted = byteSink.getArray()
+      assertArrayEquals(original, decrypted)
+    }
+
+    kotlin.run {
+      xSalsa20Encrypt(key, iv, byteSink, byteSink.getWriterPosition())
+      xSalsa20Decrypt(key, iv, byteSink, byteSink.getWriterPosition())
+
+      val decrypted = byteSink.getArray()
+      assertArrayEquals(original, decrypted)
+    }
   }
 
   @Test
   fun testSha3_384() {
     val expectedHash = "d31c6a449362712e691534004552c29ce9ce946be8b94fb2fa8dcef52d861d607fd09b804d0cbf9604e4b7c8db2fb73c".toUpperCase()
-    val hash = SecurityUtils.Hashing.sha3("test string".toByteArray()).toHex()
 
-    assertEquals(expectedHash, hash)
+    assertEquals(expectedHash, SecurityUtils.Hashing.sha3("test string".toByteArray()).toHex())
+    assertEquals(expectedHash, SecurityUtils.Hashing.sha3("test string".toByteArray()).toHex())
+    assertEquals(expectedHash, SecurityUtils.Hashing.sha3("test string".toByteArray()).toHex())
+    assertEquals(expectedHash, SecurityUtils.Hashing.sha3("test string".toByteArray()).toHex())
   }
 }

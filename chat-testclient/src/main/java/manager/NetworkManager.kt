@@ -7,6 +7,8 @@ import core.byte_sink.InMemoryByteSink
 import core.extensions.toHex
 import core.extensions.toHexSeparated
 import core.packet.BasePacket
+import core.packet.PacketBuilder
+import core.packet.UnencryptedPacket
 import extensions.readResponseInfo
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
@@ -50,8 +52,8 @@ class NetworkManager {
     byteSinkFileCachePath = byteSinkCachePathFile.absolutePath
 
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
-      for (data in channel) {
-        writeToOutputChannel(data.buildPacket(1L))
+      for (packet in channel) {
+        writeToOutputChannel(PacketBuilder.buildPacket(packet))
         writeChannel.flush()
       }
     }

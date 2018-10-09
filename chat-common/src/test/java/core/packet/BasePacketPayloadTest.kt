@@ -16,7 +16,7 @@ open class BasePacketPayloadTest {
   }
 
   private fun <T> testWithInMemoryByteSink(basePacket: BasePacket, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
-    val response = basePacket.buildPacket(-1L, InMemoryByteSink.createWithInitialSize(basePacket.getPayloadSize()))
+    val response = PacketBuilder.buildPacket(basePacket, InMemoryByteSink.createWithInitialSize(basePacket.getPayloadSize()))
     val bodySize = response.bodySize
 
     (response.packetBody.bodyByteSink as InMemoryByteSink).use { byteSink ->
@@ -36,7 +36,7 @@ open class BasePacketPayloadTest {
       testFilePath.createNewFile()
     }
 
-    val response = basePacket.buildPacket(-1L, OnDiskByteSink.fromFile(testFilePath, 32))
+    val response = PacketBuilder.buildPacket(basePacket, OnDiskByteSink.fromFile(testFilePath, 32))
     val bodySize = response.bodySize
 
     (response.packetBody.bodyByteSink as OnDiskByteSink).use { byteSink ->
