@@ -18,21 +18,38 @@ open class BasePacketPayloadTest {
   protected fun <T> testPayload(basePacket: BasePacket, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
     when (basePacket) {
       is UnencryptedPacket -> {
-        testWithInMemoryByteSink(basePacket, restoreFunction, testFunction)
-        testWithOnDiskMemoryByteSink(basePacket, restoreFunction, testFunction)
+        kotlin.run {
+          testUnencryptedPacket(basePacket, InMemoryByteSink.createWithInitialSize(basePacket.getPayloadSize()), restoreFunction, testFunction)
+        }
+        kotlin.run {
+          if (!testFilePath.exists()) {
+            testFilePath.createNewFile()
+          }
+
+          testUnencryptedPacket(basePacket, OnDiskByteSink.fromFile(testFilePath, basePacket.getPayloadSize()), restoreFunction, testFunction)
+        }
       }
       is EncryptedPacket -> {
-        testWithInMemoryByteSink(basePacket, restoreFunction, testFunction)
+        kotlin.run {
+          testEncryptedPacket(basePacket, InMemoryByteSink.createWithInitialSize(basePacket.getPayloadSize()), restoreFunction, testFunction)
+        }
+        kotlin.run {
+          if (!testFilePath.exists()) {
+            testFilePath.createNewFile()
+          }
+
+          testEncryptedPacket(basePacket, OnDiskByteSink.fromFile(testFilePath, basePacket.getPayloadSize()), restoreFunction, testFunction)
+        }
       }
       else -> throw IllegalStateException("Not implemented for ${basePacket::class}")
     }
   }
 
-  private fun <T> testWithInMemoryByteSink(basePacket: UnencryptedPacket, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
-    val response = PacketBuilder.buildUnencryptedPacket(basePacket, InMemoryByteSink.createWithInitialSize(basePacket.getPayloadSize()))
+  private fun <T> testUnencryptedPacket(basePacket: UnencryptedPacket, _byteSink: ByteSink, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
+    val response = PacketBuilder.buildUnencryptedPacket(basePacket, _byteSink)
     val bodySize = response.bodySize
 
-    (response.packetBody.bodyByteSink as InMemoryByteSink).use { byteSink ->
+    response.packetBody.bodyByteSink.use { byteSink ->
       val calculatedBodySize = byteSink.getWriterPosition()
       val responseBytesHex = byteSink.getArray()
 
@@ -44,38 +61,17 @@ open class BasePacketPayloadTest {
     }
   }
 
-  private fun <T> testWithOnDiskMemoryByteSink(basePacket: UnencryptedPacket, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
-    if (!testFilePath.exists()) {
-      testFilePath.createNewFile()
-    }
-
-    val response = PacketBuilder.buildUnencryptedPacket(basePacket, OnDiskByteSink.fromFile(testFilePath, 32))
-    val bodySize = response.bodySize
-
-    (response.packetBody.bodyByteSink as OnDiskByteSink).use { byteSink ->
-      val calculatedBodySize = byteSink.getWriterPosition()
-      val responseBytesHex = byteSink.getArray()
-
-      assertEquals(bodySize - Packet.PACKET_BODY_SIZE, calculatedBodySize)
-      assertEquals(calculatedBodySize, responseBytesHex.size)
-
-      val restoredResponse = restoreFunction(byteSink)
-      testFunction(restoredResponse)
-    }
-  }
-
-  private fun <T> testWithInMemoryByteSink(basePacket: EncryptedPacket, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
+  private fun <T> testEncryptedPacket(basePacket: EncryptedPacket, bs: ByteSink, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
     val keys = SecurityUtils.Exchange.generateECKeyPair()
     val sharedSecret = "11223344556677881122334455667788".toByteArray()
 
-    val bs = InMemoryByteSink.createWithInitialSize(basePacket.getPayloadSize())
     basePacket.toByteSink(bs)
     val originalBytes = bs.getArray()
 
     val response = PacketBuilder.buildEncryptedPacket(keys.private, sharedSecret, basePacket, bs)
     val bodySize = response.bodySize
 
-    (response.packetBody.bodyByteSink as InMemoryByteSink).use { byteSink ->
+    response.packetBody.bodyByteSink.use { byteSink ->
       val _randomBytes = byteSink.readByteArray(16) ?: throw NullPointerException("_randomBytes is null")
       val _iv = byteSink.readByteArray(24) ?: throw NullPointerException("_iv is null")
       val _signature = byteSink.readByteArray(75) ?: throw NullPointerException("_signature is null")
