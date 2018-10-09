@@ -13,16 +13,13 @@ class InMemoryByteSink private constructor(
   private var array: ByteArray
 ) : ByteSink() {
 
-  override fun resizeIfNeeded(dataToWriteSize: Int): Boolean {
+  override fun resizeIfNeeded(dataToWriteSize: Int) {
     if (writePosition.get() + dataToWriteSize > array.size) {
       val newArray = ByteArray((array.size * 1.5f).toInt() + dataToWriteSize)
       System.arraycopy(array, 0, newArray, 0, array.size)
 
       array = newArray
-      return true
     }
-
-    return false
   }
 
   override fun getReaderPosition() = readPosition.get()

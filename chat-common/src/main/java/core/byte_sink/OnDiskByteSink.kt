@@ -33,17 +33,13 @@ class OnDiskByteSink private constructor(
     raf.seek(0)
   }
 
-  override fun resizeIfNeeded(dataToWriteSize: Int): Boolean {
+  override fun resizeIfNeeded(dataToWriteSize: Int) {
     val fileLen = raf.length()
 
     if (writePosition.get() + dataToWriteSize > fileLen) {
       val newLen = (fileLen * 2) + dataToWriteSize
       raf.setLength(newLen)
-
-      return false
     }
-
-    return false
   }
 
   override fun getReaderPosition() = readPosition.get()
