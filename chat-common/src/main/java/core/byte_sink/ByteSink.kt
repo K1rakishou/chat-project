@@ -14,7 +14,7 @@ abstract class ByteSink : AutoCloseable {
   protected val readPosition = AtomicInteger(0)
   protected val writePosition = AtomicInteger(0)
 
-  protected abstract fun resizeIfNeeded(dataToWriteSize: Int)
+  protected abstract fun resizeIfNeeded(dataToWriteSize: Int): Boolean
 
   abstract fun getReaderPosition(): Int
   abstract fun setReaderPosition(position: Int)
@@ -23,7 +23,7 @@ abstract class ByteSink : AutoCloseable {
   abstract fun setWriterPosition(position: Int)
 
   abstract fun getStream(): DataInputStream
-  abstract fun getArray(): ByteArray
+  abstract fun getArray(from: Int = -1, to: Int = -1): ByteArray
 
   abstract fun readBoolean(): Boolean
   abstract fun writeBoolean(boolean: Boolean)
@@ -44,7 +44,8 @@ abstract class ByteSink : AutoCloseable {
   abstract fun readByteArray(maxSize: Int): ByteArray?
   abstract fun writeByteArray(inArray: ByteArray?)
 
-  abstract fun writeByteArrayRaw(offset: Int, inArray: ByteArray)
+  abstract fun writeByteArrayRaw(offset: Int, inArray: ByteArray, updateWriterPosition: Boolean = false)
+  abstract fun rewriteByteArrayRaw(offset: Int, inArray: ByteArray)
   abstract fun readByteArrayRaw(offset: Int, readAmount: Int): ByteArray
 
   @Throws(ByteSinkBufferOverflowException::class, ReaderPositionExceededBufferSizeException::class)

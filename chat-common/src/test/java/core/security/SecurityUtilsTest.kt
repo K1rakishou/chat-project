@@ -59,9 +59,9 @@ class SecurityUtilsTest {
     val array = "This is a test string".toByteArray()
     val signature = generateSignature(senderKeyPair.private, array)!!
 
-    signature[0] = 0
-    signature[1] = 1
-    signature[2] = 2
+    signature[10] = 0
+    signature[11] = 1
+    signature[12] = 2
 
     assertFalse(verifySignature(senderKeyPair.public, array, signature))
   }
@@ -72,9 +72,9 @@ class SecurityUtilsTest {
     val array = "This is a test string".toByteArray()
     val signature = generateSignature(senderKeyPair.private, array)!!
 
-    array[0] = 0
-    array[1] = 1
-    array[2] = 2
+    array[10] = 0
+    array[11] = 1
+    array[12] = 2
 
     assertFalse(verifySignature(senderKeyPair.public, array, signature))
   }

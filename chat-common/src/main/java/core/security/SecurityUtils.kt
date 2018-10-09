@@ -26,15 +26,23 @@ object SecurityUtils {
   private val secureRandom = SecureRandom.getInstanceStrong()
 
   object Generator {
+
+    fun generateRandomByteArray(len: Int): ByteArray {
+      val array = ByteArray(len)
+      secureRandom.nextBytes(array)
+
+      return array
+    }
+
     fun generateRandomString(len: Int): String {
-      val bytes = ByteArray(len)
-      secureRandom.nextBytes(bytes)
+      val array = ByteArray(len)
+      secureRandom.nextBytes(array)
 
       val sb = StringBuilder()
       val alphabetLen = alphabet.length
 
       for (i in 0 until len) {
-        sb.append(alphabet[Math.abs(bytes[i] % alphabetLen)])
+        sb.append(alphabet[Math.abs(array[i] % alphabetLen)])
       }
 
       return sb.toString()
@@ -43,23 +51,26 @@ object SecurityUtils {
 
   object Encryption {
     private val engine = XSalsa20Engine()
+    const val ivLen = 24
+    const val keyLen = 32
 
     private enum class Mode {
       Encryption,
       Decryption
     }
 
-    fun xSalsa20Encrypt(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int) {
-      xSalsa20(key, iv, byteSink, byteSinkSize, Mode.Encryption)
+    fun xSalsa20Encrypt(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int, offset: Int = 0) {
+      xSalsa20(key, iv, byteSink, byteSinkSize, offset, Mode.Encryption)
     }
 
-    fun xSalsa20Decrypt(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int) {
-      xSalsa20(key, iv, byteSink, byteSinkSize, Mode.Decryption)
+    fun xSalsa20Decrypt(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int, offset: Int = 0) {
+      xSalsa20(key, iv, byteSink, byteSinkSize, offset, Mode.Decryption)
     }
 
-    private fun xSalsa20(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int, mode: Mode) {
-      require(iv.size == 24)
-      require(key.size == 32)
+    private fun xSalsa20(key: ByteArray, iv: ByteArray, byteSink: ByteSink, byteSinkSize: Int, byteSinkOffset: Int, mode: Mode) {
+      require(iv.size == ivLen) { "iv.size != $ivLen (${iv.size})" }
+      require(key.size == keyLen) { "key.size != $keyLen (${key.size})" }
+      require(byteSinkOffset < byteSink.getWriterPosition()) { "byteSinkOffset ($byteSinkOffset) >= byteSink.getWriterPosition() (${byteSink.getWriterPosition()})" }
 
       val doEncryption = when (mode) {
         SecurityUtils.Encryption.Mode.Encryption -> true
@@ -76,14 +87,16 @@ object SecurityUtils {
         defaultChunkSize
       }
 
-      for (offset in 0 until byteSinkSize step chunkSize) {
+      require(byteSinkOffset < byteSinkSize)
+
+      for (offset in byteSinkOffset until byteSinkSize step chunkSize) {
         val size = Math.min(byteSinkSize - offset, chunkSize)
 
         val chunk = byteSink.readByteArrayRaw(offset, size)
         val encryptedChunk = ByteArray(size)
         engine.processBytes(chunk, 0, size, encryptedChunk, 0)
 
-        byteSink.writeByteArrayRaw(offset, encryptedChunk)
+        byteSink.rewriteByteArrayRaw(offset, encryptedChunk)
       }
     }
   }
@@ -146,6 +159,7 @@ object SecurityUtils {
 
         return signer.verifySignature(input, r, s);
       } catch (e: Exception) {
+        e.printStackTrace()
         return false
       } finally {
         try {

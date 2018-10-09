@@ -13,13 +13,16 @@ class InMemoryByteSink private constructor(
   private var array: ByteArray
 ) : ByteSink() {
 
-  override fun resizeIfNeeded(dataToWriteSize: Int) {
+  override fun resizeIfNeeded(dataToWriteSize: Int): Boolean {
     if (writePosition.get() + dataToWriteSize > array.size) {
       val newArray = ByteArray((array.size * 1.5f).toInt() + dataToWriteSize)
       System.arraycopy(array, 0, newArray, 0, array.size)
 
       array = newArray
+      return true
     }
+
+    return false
   }
 
   override fun getReaderPosition() = readPosition.get()
@@ -32,8 +35,20 @@ class InMemoryByteSink private constructor(
     return DataInputStream(ByteArrayInputStream(array))
   }
 
-  override fun getArray(): ByteArray {
-    return array.copyOfRange(0, writePosition.get())
+  override fun getArray(from: Int, to: Int): ByteArray {
+    val start = if (from != -1) {
+      from
+    } else {
+      0
+    }
+
+    val end = if (to != -1) {
+      to
+    } else {
+      writePosition.get()
+    }
+
+    return array.copyOfRange(start, end)
   }
 
   override fun readBoolean(): Boolean {
@@ -186,7 +201,15 @@ class InMemoryByteSink private constructor(
     }
   }
 
-  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray) {
+  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray, updateWriterPosition: Boolean) {
+    resizeIfNeeded(inArray.size)
+    System.arraycopy(inArray, 0, array, offset, inArray.size)
+
+    writePosition.getAndAdd(inArray.size)
+  }
+
+  override fun rewriteByteArrayRaw(offset: Int, inArray: ByteArray) {
+    require(offset + inArray.size <= writePosition.get())
     System.arraycopy(inArray, 0, array, offset, inArray.size)
   }
 

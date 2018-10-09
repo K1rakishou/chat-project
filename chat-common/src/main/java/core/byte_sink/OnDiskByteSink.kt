@@ -33,13 +33,17 @@ class OnDiskByteSink private constructor(
     raf.seek(0)
   }
 
-  override fun resizeIfNeeded(dataToWriteSize: Int) {
+  override fun resizeIfNeeded(dataToWriteSize: Int): Boolean {
     val fileLen = raf.length()
 
     if (writePosition.get() + dataToWriteSize > fileLen) {
       val newLen = (fileLen * 2) + dataToWriteSize
       raf.setLength(newLen)
+
+      return false
     }
+
+    return false
   }
 
   override fun getReaderPosition() = readPosition.get()
@@ -53,9 +57,22 @@ class OnDiskByteSink private constructor(
   }
 
   //Use only for tests! May cause OOM!!!
-  override fun getArray(): ByteArray {
-    val array = ByteArray(getWriterPosition())
+  override fun getArray(from: Int, to: Int): ByteArray {
+    val start = if (from != -1) {
+      from
+    } else {
+      0
+    }
 
+    val end = if (to != -1) {
+      to
+    } else {
+      writePosition.get()
+    }
+
+    require(start < end) { "start ($start) >= end ($end)" }
+
+    val array = ByteArray(end - start)
     getStream().use { stream ->
       stream.read(array)
     }
@@ -194,7 +211,18 @@ class OnDiskByteSink private constructor(
     }
   }
 
-  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray) {
+  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray, updateWriterPosition: Boolean) {
+    resizeIfNeeded(inArray.size)
+
+    raf.seek(offset.toLong())
+    raf.write(inArray)
+
+    writePosition.getAndAdd(inArray.size)
+  }
+
+  override fun rewriteByteArrayRaw(offset: Int, inArray: ByteArray) {
+    require(offset + inArray.size <= writePosition.get())
+
     raf.seek(offset.toLong())
     raf.write(inArray)
   }

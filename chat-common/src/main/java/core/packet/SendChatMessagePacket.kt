@@ -11,7 +11,7 @@ class SendChatMessagePacket(
   val roomName: String,
   val userName: String,
   val message: String
-) : UnencryptedPacket() {
+) : EncryptedPacket() {
 
   override val packetVersion: Short
     get() = CURRENT_PACKET_VERSION.value
@@ -24,7 +24,6 @@ class SendChatMessagePacket(
 
   override fun toByteSink(byteSink: ByteSink) {
     byteSink.writeShort(packetVersion)
-
     when (CURRENT_PACKET_VERSION) {
       PacketVersion.V1 -> {
         byteSink.writeInt(messageId)

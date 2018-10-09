@@ -23,7 +23,6 @@ class CreateRoomPacket(
 
   override fun toByteSink(byteSink: ByteSink) {
     byteSink.writeShort(packetVersion)
-
     when (CURRENT_PACKET_VERSION) {
       CreateRoomPacket.PacketVersion.V1 -> {
         byteSink.writeBoolean(isPublic)
