@@ -198,7 +198,7 @@ class InMemoryByteSink private constructor(
     }
   }
 
-  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray, updateWriterPosition: Boolean) {
+  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray) {
     resizeIfNeeded(inArray.size)
     System.arraycopy(inArray, 0, array, offset, inArray.size)
 

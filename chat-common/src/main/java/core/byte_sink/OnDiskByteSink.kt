@@ -207,7 +207,7 @@ class OnDiskByteSink private constructor(
     }
   }
 
-  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray, updateWriterPosition: Boolean) {
+  override fun writeByteArrayRaw(offset: Int, inArray: ByteArray) {
     resizeIfNeeded(inArray.size)
 
     raf.seek(offset.toLong())

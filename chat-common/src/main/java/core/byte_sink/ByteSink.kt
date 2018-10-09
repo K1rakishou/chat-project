@@ -44,7 +44,7 @@ abstract class ByteSink : AutoCloseable {
   abstract fun readByteArray(maxSize: Int): ByteArray?
   abstract fun writeByteArray(inArray: ByteArray?)
 
-  abstract fun writeByteArrayRaw(offset: Int, inArray: ByteArray, updateWriterPosition: Boolean = false)
+  abstract fun writeByteArrayRaw(offset: Int, inArray: ByteArray)
   abstract fun rewriteByteArrayRaw(offset: Int, inArray: ByteArray)
   abstract fun readByteArrayRaw(offset: Int, readAmount: Int): ByteArray
 

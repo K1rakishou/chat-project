@@ -73,8 +73,7 @@ object PacketBuilder {
       //TODO: remove readByteArrayRaw, it may cause OOM
       encryptedByteSink.writeByteArrayRaw(
         encryptedByteSink.getWriterPosition(),
-        byteSink.readByteArrayRaw(0, byteSink.getWriterPosition()),
-        updateWriterPosition = true
+        byteSink.readByteArrayRaw(0, byteSink.getWriterPosition())
       )
 
       val packetBody = Packet.PacketBody(
