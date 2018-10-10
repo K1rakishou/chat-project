@@ -2,6 +2,7 @@ package core.byte_sink
 
 import core.exception.ByteSinkBufferOverflowException
 import core.exception.MaxListSizeExceededException
+import core.model.drainable.PublicChatRoom
 import core.model.drainable.PublicUserInChat
 import core.security.SecurityUtils
 import org.junit.After
@@ -213,6 +214,51 @@ class OnDiskByteSinkTest {
       assertArrayEquals(testArray3, bs.readByteArrayRaw(64, 32))
       assertArrayEquals(testArray4, bs.readByteArrayRaw(96, 32))
     }
+  }
+
+  @Test
+  fun testReadWriteDrainable() {
+    val expectedDrainable = PublicUserInChat("test user", ByteArray(255) { 0x44.toByte() })
+
+    byteSink.writeDrainable(expectedDrainable)
+    val actualDrainable = byteSink.readDrainable<PublicUserInChat>(PublicUserInChat::class)
+
+    assertEquals(expectedDrainable.userName, actualDrainable!!.userName)
+    assertArrayEquals(expectedDrainable.ecPublicKey, actualDrainable!!.ecPublicKey)
+  }
+
+  @Test
+  fun testReadWriteNullDrainable() {
+    byteSink.writeDrainable(null)
+    assertNull(byteSink.readDrainable<PublicChatRoom>(PublicChatRoom::class))
+  }
+
+  @Test
+  fun testReadWriteListOfDrainables() {
+    val expectedListOfDrainables = listOf(
+      PublicChatRoom("s5sdhe6e46je46j", 22),
+      PublicChatRoom("a35h35jw35kk56k", 51),
+      PublicChatRoom("s5sdhe6e4576je46j", 34),
+      PublicChatRoom("64hwhw4hj54hj", 15),
+      PublicChatRoom("fg6yfdt7futu", 5),
+      PublicChatRoom("46", 2)
+    )
+
+    byteSink.writeList(expectedListOfDrainables)
+    val actualListOfDrainables = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, expectedListOfDrainables.size)
+
+    for (i in 0 until expectedListOfDrainables.size) {
+      kotlin.test.assertEquals(expectedListOfDrainables[i].chatRoomName, actualListOfDrainables[i].chatRoomName)
+      kotlin.test.assertEquals(expectedListOfDrainables[i].usersCount, actualListOfDrainables[i].usersCount)
+    }
+  }
+
+  @Test
+  fun testGetArray() {
+    byteSink.writeString("1234567890")
+    val byteSinkArray = byteSink.getArray()
+
+    assertEquals(15, byteSinkArray.size)
   }
 
   @Test
