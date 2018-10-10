@@ -1,7 +1,8 @@
 package core
 
 object Constants {
-  const val maxInMemoryByteSinkSize = 4096
+  const val arrayChunkSize = 4096
+  const val maxInMemoryByteSinkSize = arrayChunkSize
 
   const val maxRoomHistoryMessagesCount = 100
   const val maxUsersInRoomCount = 100

@@ -1,6 +1,8 @@
 package core.byte_sink
 
+import core.Constants
 import core.exception.*
+import core.extensions.forEachChunk
 import core.interfaces.CanBeDrainedToSink
 import core.interfaces.CanMeasureSizeOfFields
 import core.model.drainable.DrainableFactory
@@ -210,9 +212,11 @@ class InMemoryByteSink private constructor(
 
   override fun writeByteSink(byteSink: ByteSink) {
     resizeIfNeeded(byteSink.getWriterPosition())
-    System.arraycopy(byteSink.getArray(), 0, array, getWriterPosition(), byteSink.getWriterPosition())
 
-    writePosition.getAndAdd(byteSink.getWriterPosition())
+    byteSink.getStream().forEachChunk(0, Constants.arrayChunkSize, byteSink.getWriterPosition()) { chunk ->
+      System.arraycopy(chunk, 0, array, getWriterPosition(), byteSink.getWriterPosition())
+      writePosition.getAndAdd(chunk.size)
+    }
   }
 
   override fun readString(maxSize: Int): String? {

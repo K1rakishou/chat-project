@@ -7,10 +7,12 @@ import org.bouncycastle.asn1.DERSequenceGenerator
 import org.bouncycastle.asn1.DLSequence
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair
 import org.bouncycastle.crypto.agreement.ECDHBasicAgreement
+import org.bouncycastle.crypto.digests.SHA512Digest
 import org.bouncycastle.crypto.engines.XSalsa20Engine
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator
 import org.bouncycastle.crypto.params.*
 import org.bouncycastle.crypto.signers.ECDSASigner
+import org.bouncycastle.crypto.signers.HMacDSAKCalculator
 import org.bouncycastle.jcajce.provider.digest.SHA3
 import org.bouncycastle.jce.ECNamedCurveTable
 import java.io.ByteArrayOutputStream
@@ -121,7 +123,7 @@ object SecurityUtils {
   }
 
   object Signing {
-    private val signer = ECDSASigner()
+    private val signer = ECDSASigner(HMacDSAKCalculator(SHA512Digest()))
 
     fun generateSignature(ecPrivateKey: AsymmetricKeyParameter, message: ByteArray): ByteArray? {
       signer.init(true, ecPrivateKey)
