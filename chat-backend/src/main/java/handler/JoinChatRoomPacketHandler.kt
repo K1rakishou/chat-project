@@ -36,14 +36,19 @@ class JoinChatRoomPacketHandler(
   }
 
   private suspend fun handleInternalV1(packet: JoinChatRoomPacket, clientAddress: String) {
-    val ecPublicKey = packet.ecPublicKey
+    val rootPublicKey = packet.rootPublicKey
+    val sessionPublicKey = packet.sessionPublicKey
     val userName = packet.userName
     val roomName = packet.roomName
     val roomPasswordHash = packet.roomPasswordHash
 
-    if (ecPublicKey.isEmpty() || userName.isEmpty() || roomName.isEmpty()) {
-      if (ecPublicKey.isNullOrEmpty()) {
-        println("ecPublicKey is empty (${ecPublicKey})")
+    if (rootPublicKey.isEmpty() || sessionPublicKey.isEmpty() || userName.isEmpty() || roomName.isEmpty()) {
+      if (rootPublicKey.isEmpty()) {
+        println("rootPublicKey is empty (${rootPublicKey})")
+      }
+
+      if (sessionPublicKey.isEmpty()) {
+        println("sessionPublicKey is empty (${sessionPublicKey})")
       }
 
       if (userName.isEmpty()) {
@@ -80,7 +85,7 @@ class JoinChatRoomPacketHandler(
       //just collect users's info and send it back
       val usersInRoom = chatRoom.getEveryoneExcept(userName)
       val publicUserInChatList = usersInRoom
-        .map { userInRoom -> PublicUserInChat(userInRoom.user.userName, userInRoom.user.ecPublicKey) }
+        .map { userInRoom -> PublicUserInChat(userInRoom.user.userName, userInRoom.user.rootPublicKey, userInRoom.user.sessionPublicKey) }
 
       val messageHistory = chatRoom.getMessageHistory()
       val response = JoinChatRoomResponsePayload.success(chatRoom.chatRoomName, messageHistory, publicUserInChatList)
@@ -103,7 +108,7 @@ class JoinChatRoomPacketHandler(
       }
     }
 
-    val newUser = User(userName, clientAddress, ecPublicKey)
+    val newUser = User(userName, clientAddress, rootPublicKey, sessionPublicKey)
     val chatRoom = chatRoomManager.joinRoom(roomName, newUser)
 
     if (chatRoom == null) {
@@ -119,10 +124,10 @@ class JoinChatRoomPacketHandler(
 
     //get all info from all users in the chat room
     for (userInRoom in roomParticipants) {
-      val publicUserInChat = PublicUserInChat(userInRoom.user.userName, userInRoom.user.ecPublicKey)
+      val publicUserInChat = PublicUserInChat(userInRoom.user.userName, userInRoom.user.rootPublicKey, userInRoom.user.sessionPublicKey)
 
       //send to every user in the chat room that a new user has joined
-      val newPublicUser = PublicUserInChat(newUser.userName, newUser.ecPublicKey)
+      val newPublicUser = PublicUserInChat(newUser.userName, newUser.rootPublicKey, newUser.sessionPublicKey)
       val response = UserHasJoinedResponsePayload.success(chatRoom.chatRoomName, newPublicUser)
       connectionManager.sendResponse(userInRoom.user.clientAddress, response)
 

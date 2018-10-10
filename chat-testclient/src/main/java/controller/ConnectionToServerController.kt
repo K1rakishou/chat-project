@@ -8,14 +8,11 @@ import core.exception.ResponseDeserializationException
 import core.packet.GetPageOfPublicRoomsPacket
 import core.response.GetPageOfPublicRoomsResponsePayload
 import javafx.beans.property.SimpleStringProperty
-import javafx.scene.control.Alert
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
-import store.KeyStore
+import store.MyKeyStore
 import store.Store
-import tornadofx.Controller
-import tornadofx.alert
 import tornadofx.runLater
 import ui.chat_main_window.ChatMainWindow
 import ui.loading_window.ConnectionToServerWindow
@@ -26,7 +23,7 @@ class ConnectionToServerController : BaseController() {
   private var delayTime = AtomicInteger(3000)
   private val maxDelayTime: Int = 15000
 
-  val keyStore: KeyStore by inject()
+  val myKeyStore: MyKeyStore by inject()
   val store: Store by inject()
   val connectionStatus = SimpleStringProperty("")
 
@@ -37,9 +34,7 @@ class ConnectionToServerController : BaseController() {
 
   fun startConnectionToServer(firstTime: Boolean = false) {
     launch {
-      if (!keyStore.areKeysGenerated()) {
-        keyStore.generateKeys()
-      }
+      myKeyStore.init(store.keyStorePasswordText)
 
       if (!firstTime) {
         delay(increaseDelayAndGet())

@@ -14,6 +14,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 open class BasePacketPayloadTest {
+  private val packetBuilder = PacketBuilder()
   private val testFilePath = File("D:\\projects\\data\\chat\\test_file")
 
   protected fun <T> testPayload(basePacket: BasePacket, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
@@ -47,7 +48,7 @@ open class BasePacketPayloadTest {
   }
 
   private fun <T> testUnencryptedPacket(basePacket: UnencryptedPacket, _byteSink: ByteSink, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
-    val response = PacketBuilder.buildUnencryptedPacket(basePacket, _byteSink)
+    val response = packetBuilder.buildUnencryptedPacket(basePacket, _byteSink)
 
     assertNotNull(response)
     //TODO
@@ -78,7 +79,7 @@ open class BasePacketPayloadTest {
       basePacket.toByteSink(bs)
       val originalBytes = bs.getArray()
 
-      val response = PacketBuilder.buildEncryptedPacket(keys.private, sharedSecret, basePacket, bs)
+      val response = packetBuilder.buildEncryptedPacket(keys.private, sharedSecret, basePacket, bs)
 
       assertNotNull(response)
       //TODO

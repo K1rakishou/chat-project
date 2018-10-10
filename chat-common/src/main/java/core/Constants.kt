@@ -12,4 +12,7 @@ object Constants {
   const val maxEcPublicKeySize = 1024
   const val maxUserNameLen = 64
   const val maxTextMessageLen = 2048
+
+  const val ivLen = 24
+  const val randomBytesLen = 16
 }

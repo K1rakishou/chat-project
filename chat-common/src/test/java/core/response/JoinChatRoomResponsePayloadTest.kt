@@ -22,7 +22,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       TextChatMessage(3, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
     )
     val usersInChatRoom = listOf(
-      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() })
+      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() }, ByteArray(422) { 0xBB.toByte() })
     )
 
     testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
@@ -42,7 +42,8 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
-        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+        assertArrayEquals(usersInChatRoom[i].rootPublicKey, restoredResponse.users[i].rootPublicKey)
+        assertArrayEquals(usersInChatRoom[i].sessionPublicKey, restoredResponse.users[i].sessionPublicKey)
       }
     })
   }
@@ -81,7 +82,8 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
-        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+        assertArrayEquals(usersInChatRoom[i].rootPublicKey, restoredResponse.users[i].rootPublicKey)
+        assertArrayEquals(usersInChatRoom[i].sessionPublicKey, restoredResponse.users[i].sessionPublicKey)
       }
     })
   }
@@ -93,7 +95,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       TextChatMessage(0, SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10), "wwwwwwwwwwwwwwwwwwwwww")
     )
     val usersInChatRoom = listOf(
-      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() })
+      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() }, ByteArray(422) { 0xBB.toByte() })
     )
 
     testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
@@ -113,7 +115,8 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
-        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+        assertArrayEquals(usersInChatRoom[i].rootPublicKey, restoredResponse.users[i].rootPublicKey)
+        assertArrayEquals(usersInChatRoom[i].sessionPublicKey, restoredResponse.users[i].sessionPublicKey)
       }
     })
   }
@@ -125,7 +128,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       TextChatMessage(0, "e5we6s76", SecurityUtils.Generator.generateRandomString(Constants.maxTextMessageLen + 10))
     )
     val usersInChatRoom = listOf(
-      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() })
+      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() }, ByteArray(422) { 0xBB.toByte() })
     )
 
     testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
@@ -145,7 +148,8 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
-        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+        assertArrayEquals(usersInChatRoom[i].rootPublicKey, restoredResponse.users[i].rootPublicKey)
+        assertArrayEquals(usersInChatRoom[i].sessionPublicKey, restoredResponse.users[i].sessionPublicKey)
       }
     })
   }
@@ -157,7 +161,8 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       TextChatMessage(0, "e5we6s76", "45346347")
     )
     val usersInChatRoom = listOf(
-      PublicUserInChat(SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10), ByteArray(277) { 0xAA.toByte() })
+      PublicUserInChat(SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10),
+        ByteArray(277) { 0xAA.toByte() }, ByteArray(422) { 0xBB.toByte() })
     )
 
     testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
@@ -177,19 +182,23 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
-        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+        assertArrayEquals(usersInChatRoom[i].rootPublicKey, restoredResponse.users[i].rootPublicKey)
+        assertArrayEquals(usersInChatRoom[i].sessionPublicKey, restoredResponse.users[i].sessionPublicKey)
       }
     })
   }
 
   @Test(expected = ResponseDeserializationException::class)
-  fun testResponseExceedUserInChatEcPublicKey() {
+  fun testResponseExceedUserInChatRootPublicKey() {
     val roomName = "121314"
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(0, "e5we6s76", "45346347")
     )
     val usersInChatRoom = listOf(
-      PublicUserInChat("43546der7", SecurityUtils.Generator.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray())
+      PublicUserInChat("43546der7",
+        SecurityUtils.Generator.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray(),
+        ByteArray(422) { 0xBB.toByte() }
+      )
     )
 
     testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
@@ -209,7 +218,44 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
-        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+        assertArrayEquals(usersInChatRoom[i].rootPublicKey, restoredResponse.users[i].rootPublicKey)
+        assertArrayEquals(usersInChatRoom[i].sessionPublicKey, restoredResponse.users[i].sessionPublicKey)
+      }
+    })
+  }
+
+  @Test(expected = ResponseDeserializationException::class)
+  fun testResponseExceedUserInChatSessionPublicKey() {
+    val roomName = "121314"
+    val messageHistory = listOf<BaseChatMessage>(
+      TextChatMessage(0, "e5we6s76", "45346347")
+    )
+    val usersInChatRoom = listOf(
+      PublicUserInChat("43546der7",
+        ByteArray(277) { 0xAA.toByte() },
+        SecurityUtils.Generator.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray()
+      )
+    )
+
+    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+      JoinChatRoomResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(Status.Ok.value, restoredResponse.status.value)
+      assertEquals(roomName, restoredResponse.roomName)
+
+      for (i in 0 until messageHistory.size) {
+        val expectedMessage = messageHistory[i] as TextChatMessage
+        val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
+
+        assertEquals(expectedMessage.messageId, actualMessage.messageId)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
+        assertEquals(expectedMessage.message, actualMessage.message)
+      }
+
+      for (i in 0 until usersInChatRoom.size) {
+        assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
+        assertArrayEquals(usersInChatRoom[i].rootPublicKey, restoredResponse.users[i].rootPublicKey)
+        assertArrayEquals(usersInChatRoom[i].sessionPublicKey, restoredResponse.users[i].sessionPublicKey)
       }
     })
   }
@@ -219,7 +265,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
     val roomName = "121314"
     val messageHistory = mutableListOf<BaseChatMessage>()
     val usersInChatRoom = listOf(
-      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() })
+      PublicUserInChat("test1", ByteArray(277) { 0xAA.toByte() }, ByteArray(422) { 0xBB.toByte() })
     )
 
     for (i in 0 until 100) {
@@ -244,7 +290,8 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
       for (i in 0 until usersInChatRoom.size) {
         assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
-        assertArrayEquals(usersInChatRoom[i].ecPublicKey, restoredResponse.users[i].ecPublicKey)
+        assertArrayEquals(usersInChatRoom[i].rootPublicKey, restoredResponse.users[i].rootPublicKey)
+        assertArrayEquals(usersInChatRoom[i].sessionPublicKey, restoredResponse.users[i].sessionPublicKey)
       }
     })
   }

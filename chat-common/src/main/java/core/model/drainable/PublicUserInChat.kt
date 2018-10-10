@@ -9,16 +9,18 @@ import core.sizeof
 
 class PublicUserInChat(
   val userName: String,
-  val ecPublicKey: ByteArray
+  val rootPublicKey: ByteArray,
+  val sessionPublicKey: ByteArray
 ) : CanMeasureSizeOfFields, CanBeDrainedToSink {
 
   override fun getSize(): Int {
-    return sizeof(userName) + sizeof(ecPublicKey)
+    return sizeof(userName) + sizeof(rootPublicKey) + sizeof(sessionPublicKey)
   }
 
   override fun serialize(sink: ByteSink) {
     sink.writeString(userName)
-    sink.writeByteArray(ecPublicKey)
+    sink.writeByteArray(rootPublicKey)
+    sink.writeByteArray(sessionPublicKey)
   }
 
   companion object : CanBeRestoredFromSink {
@@ -28,12 +30,17 @@ class PublicUserInChat(
         return null
       }
 
-      val ecPublicKey = byteSink.readByteArray(Constants.maxEcPublicKeySize)
-      if (ecPublicKey == null) {
+      val rootPublicKey = byteSink.readByteArray(Constants.maxEcPublicKeySize)
+      if (rootPublicKey == null) {
         return null
       }
 
-      return PublicUserInChat(userName, ecPublicKey) as T
+      val sessionPublicKey = byteSink.readByteArray(Constants.maxEcPublicKeySize)
+      if (sessionPublicKey == null) {
+        return null
+      }
+
+      return PublicUserInChat(userName, rootPublicKey, sessionPublicKey) as T
     }
   }
 }

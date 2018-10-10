@@ -1,5 +1,6 @@
 package core.packet
 
+import core.Constants
 import core.Packet
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
@@ -7,9 +8,7 @@ import core.security.SecurityUtils
 import core.sizeof
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter
 
-object PacketBuilder {
-  const val ivLen = 24
-  const val randomBytesLen = 16
+class PacketBuilder {
 
   fun buildUnencryptedPacket(packet: UnencryptedPacket, byteSink: ByteSink): Packet? {
     val totalBodySize = (Packet.PACKET_BODY_SIZE + packet.getPayloadSize())
@@ -45,8 +44,8 @@ object PacketBuilder {
       return null
     }
 
-    val iv = SecurityUtils.Generator.generateRandomByteArray(PacketBuilder.ivLen)
-    val randomBytes = SecurityUtils.Generator.generateRandomByteArray(PacketBuilder.randomBytesLen)
+    val iv = SecurityUtils.Generator.generateRandomByteArray(Constants.ivLen)
+    val randomBytes = SecurityUtils.Generator.generateRandomByteArray(Constants.randomBytesLen)
     SecurityUtils.Encryption.xSalsa20Encrypt(sharedSecret, iv, byteSink, byteSink.getWriterPosition())
 
     //TODO: remove getArray, it may cause OOM

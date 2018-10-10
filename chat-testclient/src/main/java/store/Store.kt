@@ -22,6 +22,9 @@ class Store : Controller() {
   private val publicChatRoomList: ObservableList<PublicChatRoomItem> = FXCollections.observableArrayList()
   private val joinedRooms: ObservableList<String> = FXCollections.observableArrayList()
 
+  //TODO
+  val keyStorePasswordText = "test 123"
+
   fun getCurrentUserName(): String {
     return currentUser.get().userName
   }
@@ -53,7 +56,7 @@ class Store : Controller() {
 
   fun setChatRoomUserList(roomName: String, userList: List<PublicUserInChat>) {
     val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
-    val convertedUserList = userList.map { user -> PublicUserInChatItem(user.userName, user.ecPublicKey) }
+    val convertedUserList = userList.map { user -> PublicUserInChatItem(user.userName, user.rootPublicKey, user.sessionPublicKey) }
 
     chatRoom.userListProperty().get().clear()
     chatRoom.userListProperty().get().addAll(convertedUserList)

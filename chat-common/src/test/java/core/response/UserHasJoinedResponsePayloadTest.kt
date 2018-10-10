@@ -14,7 +14,7 @@ class UserHasJoinedResponsePayloadTest : BaseResponsePayloadTest() {
   @Test
   fun testResponseSuccess() {
     val roomName = "test room"
-    val user = PublicUserInChat("test user", ByteArray(266) { 0xF0.toByte() })
+    val user = PublicUserInChat("test user", ByteArray(266) { 0xF0.toByte() }, ByteArray(444) { 0x04.toByte() })
 
     testPayload(UserHasJoinedResponsePayload.success(roomName, user), { byteSink ->
       UserHasJoinedResponsePayload.fromByteSink(byteSink)
@@ -22,7 +22,8 @@ class UserHasJoinedResponsePayloadTest : BaseResponsePayloadTest() {
       assertEquals(Status.Ok, restoredResponse.status)
       assertEquals(roomName, restoredResponse.roomName)
       assertEquals(user.userName, restoredResponse.user!!.userName)
-      assertArrayEquals(user.ecPublicKey, restoredResponse.user!!.ecPublicKey)
+      assertArrayEquals(user.rootPublicKey, restoredResponse.user!!.rootPublicKey)
+      assertArrayEquals(user.sessionPublicKey, restoredResponse.user!!.sessionPublicKey)
     })
   }
 
@@ -44,7 +45,7 @@ class UserHasJoinedResponsePayloadTest : BaseResponsePayloadTest() {
     val roomName = "test room"
     val userName = SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10)
 
-    val user = PublicUserInChat(userName, ByteArray(266) { 0xF0.toByte() })
+    val user = PublicUserInChat(userName, ByteArray(266) { 0xF0.toByte() }, ByteArray(444) { 0x04.toByte() })
 
     testPayload(UserHasJoinedResponsePayload.success(roomName, user), { byteSink ->
       UserHasJoinedResponsePayload.fromByteSink(byteSink)
@@ -52,16 +53,17 @@ class UserHasJoinedResponsePayloadTest : BaseResponsePayloadTest() {
       assertEquals(Status.Ok, restoredResponse.status)
       assertEquals(roomName, restoredResponse.roomName)
       assertEquals(user.userName, restoredResponse.user!!.userName)
-      assertArrayEquals(user.ecPublicKey, restoredResponse.user!!.ecPublicKey)
+      assertArrayEquals(user.rootPublicKey, restoredResponse.user!!.rootPublicKey)
+      assertArrayEquals(user.sessionPublicKey, restoredResponse.user!!.sessionPublicKey)
     })
   }
 
   @Test(expected = ResponseDeserializationException::class)
-  fun testResponseExceedEcPublicKeySize() {
+  fun testResponseExceedRootPublicKeySize() {
     val roomName = "test room"
-    val ecPublicKey = SecurityUtils.Generator.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray()
+    val rootPublicKey = SecurityUtils.Generator.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray()
 
-    val user = PublicUserInChat("test user", ecPublicKey)
+    val user = PublicUserInChat("test user", rootPublicKey, ByteArray(444) { 0x04.toByte() })
 
     testPayload(UserHasJoinedResponsePayload.success(roomName, user), { byteSink ->
       UserHasJoinedResponsePayload.fromByteSink(byteSink)
@@ -69,7 +71,26 @@ class UserHasJoinedResponsePayloadTest : BaseResponsePayloadTest() {
       assertEquals(Status.Ok, restoredResponse.status)
       assertEquals(roomName, restoredResponse.roomName)
       assertEquals(user.userName, restoredResponse.user!!.userName)
-      assertArrayEquals(user.ecPublicKey, restoredResponse.user!!.ecPublicKey)
+      assertArrayEquals(user.rootPublicKey, restoredResponse.user!!.rootPublicKey)
+      assertArrayEquals(user.sessionPublicKey, restoredResponse.user!!.sessionPublicKey)
+    })
+  }
+
+  @Test(expected = ResponseDeserializationException::class)
+  fun testResponseExceedSessionPublicKeySize() {
+    val roomName = "test room"
+    val sessionPublicKey = SecurityUtils.Generator.generateRandomString(Constants.maxEcPublicKeySize + 10).toByteArray()
+
+    val user = PublicUserInChat("test user", ByteArray(266) { 0xF0.toByte() }, sessionPublicKey)
+
+    testPayload(UserHasJoinedResponsePayload.success(roomName, user), { byteSink ->
+      UserHasJoinedResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(Status.Ok, restoredResponse.status)
+      assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(user.userName, restoredResponse.user!!.userName)
+      assertArrayEquals(user.rootPublicKey, restoredResponse.user!!.rootPublicKey)
+      assertArrayEquals(user.sessionPublicKey, restoredResponse.user!!.sessionPublicKey)
     })
   }
 }

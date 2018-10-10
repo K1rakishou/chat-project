@@ -7,6 +7,7 @@ import core.byte_sink.InMemoryByteSink
 import core.extensions.toHex
 import core.extensions.toHexSeparated
 import core.packet.BasePacket
+import core.packet.EncryptedPacket
 import core.packet.PacketBuilder
 import core.packet.UnencryptedPacket
 import extensions.readResponseInfo
@@ -22,6 +23,7 @@ import kotlinx.coroutines.experimental.io.close
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
+import store.MyKeyStore
 import java.io.File
 import java.io.IOException
 import java.net.InetSocketAddress
@@ -34,6 +36,9 @@ class NetworkManager {
   private val sendPacketsActor: SendChannel<BasePacket>
 
   val socketEventsQueue = BroadcastChannel<SocketEvent>(128)
+
+  private val packetBuilder = PacketBuilder()
+  private val keyStore = MyKeyStore()
 
   private lateinit var socket: Socket
   private lateinit var writeChannel: ByteWriteChannel
@@ -53,9 +58,17 @@ class NetworkManager {
 
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
       for (packet in channel) {
-        //TODO: make buildPacket method and move all this shit there
-        val resultPacket = PacketBuilder.buildUnencryptedPacket(packet as UnencryptedPacket, InMemoryByteSink.createWithInitialSize(1024))
+        val resultPacket = when (packet) {
+          is UnencryptedPacket -> packetBuilder.buildUnencryptedPacket(packet, InMemoryByteSink.createWithInitialSize(1024))
+          is EncryptedPacket -> {
+            //TODO: DESTROY PRIVATE KEY
+            packetBuilder.buildEncryptedPacket(keyStore.getPrivateKey(), keyStore.getSharedSecret(packet.receiverId), packet, InMemoryByteSink.createWithInitialSize(1024))
+          }
+          else -> throw IllegalStateException("Not implemented for ${packet::class}")
+        }
+
         if (resultPacket == null) {
+          println("Could not build packet ${packet::class}")
           continue
         }
 

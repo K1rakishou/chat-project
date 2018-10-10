@@ -7,7 +7,8 @@ import java.util.*
 
 class PublicUserInChatItem(
   userName: String,
-  val ecPublicKey: ByteArray
+  val rootPublicKey: ByteArray,
+  val sessionPublicKey: ByteArray
 ) {
   val id = UUID.randomUUID()
 

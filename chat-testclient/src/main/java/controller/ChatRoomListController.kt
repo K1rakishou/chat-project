@@ -21,7 +21,7 @@ import manager.NetworkManager
 import model.PublicChatRoomItem
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.TextChatMessageItem
-import store.KeyStore
+import store.MyKeyStore
 import store.Store
 import tornadofx.runLater
 import ui.chat_main_window.ChatRoomView
@@ -32,7 +32,7 @@ class ChatRoomListController : BaseController() {
 
   private val networkManager = (app as ChatApp).networkManager
   private val store: Store by inject()
-  private val keyStore: KeyStore by inject()
+  private val myKeyStore: MyKeyStore by inject()
   private var selectedRoomName: String? = null
 
   val scrollToBottomFlag = SimpleIntegerProperty(0)
@@ -76,7 +76,15 @@ class ChatRoomListController : BaseController() {
 
     launch {
       selectedRoomName = publicChatRoomItem.roomName
-      networkManager.sendPacket(JoinChatRoomPacket(keyStore.getMyPublicKeyEncoded(), store.getCurrentUserName(), publicChatRoomItem.roomName, null))
+
+      val packet = JoinChatRoomPacket(
+        myKeyStore.getRootPublicKeyEncoded(store.keyStorePasswordText),
+        myKeyStore.getSessionPublicKeyEncoded(store.keyStorePasswordText),
+        store.getCurrentUserName(),
+        publicChatRoomItem.roomName,
+        null)
+
+      networkManager.sendPacket(packet)
     }
   }
 
