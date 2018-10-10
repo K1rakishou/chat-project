@@ -32,7 +32,7 @@ class ConnectionManager(
             continue
           }
 
-          //TODO: probably should remove the connection from the connection map and also send to every group this user joined that user has disconnected
+          //TODO: probably should remove the connection from the connection map and also send to every room this user joined that user has disconnected
           writeToOutputChannel(connection, response.buildResponse())
           connection.writeChannel.flush()
 
@@ -118,6 +118,9 @@ class ConnectionManager(
       }
     }
 
-    println(" >>> SENDING BACK (${loggingSink.getWriterPosition()} bytes): ${loggingSink.getArray().toHexSeparated()}")
+    loggingSink.getStream().use { stream ->
+      //TODO: for debug only! may cause OOM when internal buffer is way too big!
+      println(" >>> SENDING (${loggingSink.getWriterPosition()} bytes): ${stream.readAllBytes().toHexSeparated()}")
+    }
   }
 }

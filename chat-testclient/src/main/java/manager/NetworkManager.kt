@@ -174,7 +174,10 @@ class NetworkManager {
       //
     }
 
-    println(" <<< SENDING (${sink.getWriterPosition()} bytes): ${sink.getArray().toHexSeparated()}")
+    sink.getStream().use { stream ->
+      //TODO: for debug only! may cause OOM when internal buffer is way too big!
+      println(" <<< SENDING  (${sink.getWriterPosition()} bytes): ${stream.readAllBytes().toHexSeparated()}")
+    }
   }
 
   private suspend fun readMagicNumber(): Boolean {
