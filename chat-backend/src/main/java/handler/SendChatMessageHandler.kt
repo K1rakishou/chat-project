@@ -16,7 +16,7 @@ class SendChatMessageHandler(
   private val chatRoomManager: ChatRoomManager
 ) : BasePacketHandler() {
 
-  override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
+  override suspend fun handle(byteSink: ByteSink, clientAddress: String) {
     val packet = try {
       SendChatMessagePacket.fromByteSink(byteSink)
     } catch (error: PacketDeserializationException) {
@@ -28,12 +28,12 @@ class SendChatMessageHandler(
     val packetVersion = SendChatMessagePacket.PacketVersion.fromShort(packet.packetVersion)
 
     when (packetVersion) {
-      SendChatMessagePacket.PacketVersion.V1 -> handleInternalV1(packet, packetId, clientAddress)
+      SendChatMessagePacket.PacketVersion.V1 -> handleInternalV1(packet, clientAddress)
       SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
   }
 
-  private suspend fun handleInternalV1(packet: SendChatMessagePacket, packetId: Long, clientAddress: String) {
+  private suspend fun handleInternalV1(packet: SendChatMessagePacket, clientAddress: String) {
     val messageId = packet.messageId
     val roomName = packet.roomName
     val userName = packet.userName

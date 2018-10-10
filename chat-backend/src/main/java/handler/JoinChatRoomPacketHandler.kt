@@ -18,7 +18,7 @@ class JoinChatRoomPacketHandler(
   private val chatRoomManager: ChatRoomManager
 ) : BasePacketHandler() {
 
-  override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
+  override suspend fun handle(byteSink: ByteSink, clientAddress: String) {
     val packet = try {
       JoinChatRoomPacket.fromByteSink(byteSink)
     } catch (error: PacketDeserializationException) {
@@ -30,12 +30,12 @@ class JoinChatRoomPacketHandler(
     val packetVersion = JoinChatRoomPacket.PacketVersion.fromShort(packet.packetVersion)
 
     when (packetVersion) {
-      JoinChatRoomPacket.PacketVersion.V1 -> handleInternalV1(packet, packetId, clientAddress)
+      JoinChatRoomPacket.PacketVersion.V1 -> handleInternalV1(packet, clientAddress)
       JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
   }
 
-  private suspend fun handleInternalV1(packet: JoinChatRoomPacket, packetId: Long, clientAddress: String) {
+  private suspend fun handleInternalV1(packet: JoinChatRoomPacket, clientAddress: String) {
     val ecPublicKey = packet.ecPublicKey
     val userName = packet.userName
     val roomName = packet.roomName

@@ -18,7 +18,7 @@ class GetPageOfPublicRoomsHandler(
   private val minimumRoomsPerPage = 10
   private val maximumRoomsPerPage = 50
 
-  override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
+  override suspend fun handle(byteSink: ByteSink, clientAddress: String) {
     val packet = try {
       GetPageOfPublicRoomsPacket.fromByteSink(byteSink)
     } catch (error: PacketDeserializationException) {

@@ -16,7 +16,7 @@ abstract class BaseResponse(
     return sizeof(packetType) + sizeof(status)
   }
 
-  fun buildResponse(id: Long, byteSink: ByteSink = InMemoryByteSink.createWithInitialSize(getPayloadSize())): Packet {
+  fun buildResponse(byteSink: ByteSink = InMemoryByteSink.createWithInitialSize(getPayloadSize())): Packet {
     val totalBodySize = (Packet.PACKET_BODY_SIZE + getPayloadSize())
     if (totalBodySize > Int.MAX_VALUE) {
       throw RuntimeException("bodySize exceeds Int.MAX_VALUE: $totalBodySize")
@@ -25,7 +25,6 @@ abstract class BaseResponse(
     toByteSink(byteSink)
 
     val packetBody = Packet.PacketBody(
-      id,
       packetType,
       byteSink
     )

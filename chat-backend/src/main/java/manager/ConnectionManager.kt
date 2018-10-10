@@ -33,7 +33,7 @@ class ConnectionManager(
           }
 
           //TODO: probably should remove the connection from the connection map and also send to every group this user joined that user has disconnected
-          writeToOutputChannel(connection, response.buildResponse(0L))
+          writeToOutputChannel(connection, response.buildResponse())
           connection.writeChannel.flush()
 
         } catch (error: Throwable) {
@@ -86,13 +86,11 @@ class ConnectionManager(
 
     connection.writeChannel.writeInt(packet.magicNumber)
     connection.writeChannel.writeInt(packet.bodySize)
-    connection.writeChannel.writeLong(packet.packetBody.id)
     connection.writeChannel.writeShort(packet.packetBody.type)
 
     //for logging
     loggingSink.writeInt(packet.magicNumber)
     loggingSink.writeInt(packet.bodySize)
-    loggingSink.writeLong(packet.packetBody.id)
     loggingSink.writeShort(packet.packetBody.type)
     //
 

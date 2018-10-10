@@ -17,13 +17,11 @@ suspend fun ByteReadChannel.readPacketInfo(byteSinkFileCachePath: String, bodySi
     return IoBuffer.Pool.autoRelease { buffer ->
       this.readFully(buffer, bodySize)
 
-      val packetId = buffer.readLong()
       val packetType = PacketType.fromShort(buffer.readShort())
-
       val packetPayloadRaw = ByteArray(buffer.readRemaining)
       buffer.readFully(packetPayloadRaw)
 
-      return@autoRelease PacketInfo(packetId, packetType, InMemoryByteSink.fromArray(packetPayloadRaw))
+      return@autoRelease PacketInfo(packetType, InMemoryByteSink.fromArray(packetPayloadRaw))
     }
   } else {
     val file = File("$byteSinkFileCachePath\\test_file-${TimeUtils.getCurrentTime()}.tmp")
@@ -45,9 +43,7 @@ suspend fun ByteReadChannel.readPacketInfo(byteSinkFileCachePath: String, bodySi
       sink.writeByteArrayRaw(offset, array)
     }
 
-    val packetId = sink.readLong()
     val packetType = PacketType.fromShort(sink.readShort())
-
-    return PacketInfo(packetId, packetType, sink)
+    return PacketInfo(packetType, sink)
   }
 }

@@ -53,7 +53,13 @@ class NetworkManager {
 
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
       for (packet in channel) {
-        writeToOutputChannel(PacketBuilder.buildPacket(packet))
+        //TODO: make buildPacket method and move all this shit there
+        val resultPacket = PacketBuilder.buildUnencryptedPacket(packet as UnencryptedPacket, InMemoryByteSink.createWithInitialSize(1024))
+        if (resultPacket == null) {
+          continue
+        }
+
+        writeToOutputChannel(resultPacket)
         writeChannel.flush()
       }
     }
@@ -145,13 +151,11 @@ class NetworkManager {
 
     writeChannel.writeInt(packet.magicNumber)
     writeChannel.writeInt(packet.bodySize)
-    writeChannel.writeLong(packet.packetBody.id)
     writeChannel.writeShort(packet.packetBody.type)
 
     //for logging
     sink.writeInt(packet.magicNumber)
     sink.writeInt(packet.bodySize)
-    sink.writeLong(packet.packetBody.id)
     sink.writeShort(packet.packetBody.type)
     //
 

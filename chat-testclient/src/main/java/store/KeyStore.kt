@@ -8,10 +8,11 @@ class KeyStore : Controller() {
   private var myKeys: MyKeys? = null
 
   fun generateKeys() {
-    val ecKeyPair = SecurityUtils.Exchange.generateECKeyPair()
-    val publicKeyEncoded = ecKeyPair.public.encoded
-
-    myKeys = MyKeys(ecKeyPair, publicKeyEncoded)
+    //TODO
+//    val ecKeyPair = SecurityUtils.Exchange.generateECKeyPair()
+//    val publicKeyEncoded = ecKeyPair.public
+//
+//    myKeys = MyKeys(ecKeyPair, publicKeyEncoded)
   }
 
   fun getMyPublicKeyEncoded(): ByteArray {

@@ -115,16 +115,16 @@ class Server(
       packetInfo.byteSink.use { byteSink ->
         when (packetInfo.packetType) {
           PacketType.CreateRoomPacketType -> {
-            createRoomPacketHandler.handle(packetInfo.packetId, byteSink, clientAddress)
+            createRoomPacketHandler.handle(byteSink, clientAddress)
           }
           PacketType.GetPageOfPublicRoomsPacketType -> {
-            getPageOfPublicChatRoomsHandler.handle(packetInfo.packetId, byteSink, clientAddress)
+            getPageOfPublicChatRoomsHandler.handle(byteSink, clientAddress)
           }
           PacketType.JoinRoomPacketType -> {
-            joinRoomPacketHandler.handle(packetInfo.packetId, byteSink, clientAddress)
+            joinRoomPacketHandler.handle(byteSink, clientAddress)
           }
           PacketType.SendChatMessagePacketType -> {
-            sendChatMessageHandler.handle(packetInfo.packetId, byteSink, clientAddress)
+            sendChatMessageHandler.handle(byteSink, clientAddress)
           }
         }
       }

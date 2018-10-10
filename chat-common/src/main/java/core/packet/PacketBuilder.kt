@@ -21,8 +21,6 @@ object PacketBuilder {
     packet.toByteSink(byteSink)
 
     val packetBody = Packet.PacketBody(
-      //TODO: REMOVE
-      -1L,
       packet.getPacketType().value,
       byteSink
     )
@@ -67,8 +65,6 @@ object PacketBuilder {
     encryptedByteSink.writeByteSink(byteSink)
 
     val packetBody = Packet.PacketBody(
-      //TODO: REMOVE
-      -1L,
       packet.getPacketType().value,
       encryptedByteSink
     )

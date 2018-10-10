@@ -15,7 +15,7 @@ class CreateRoomPacketHandler(
   private val chatRoomManager: ChatRoomManager
 ) : BasePacketHandler() {
 
-  override suspend fun handle(packetId: Long, byteSink: ByteSink, clientAddress: String) {
+  override suspend fun handle(byteSink: ByteSink, clientAddress: String) {
     val packet = try {
       CreateRoomPacket.fromByteSink(byteSink)
     } catch (error: PacketDeserializationException) {
