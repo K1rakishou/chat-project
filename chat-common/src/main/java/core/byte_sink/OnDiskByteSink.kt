@@ -20,6 +20,8 @@ class OnDiskByteSink private constructor(
   private val raf: RandomAccessFile
 
   init {
+    isByteSinkClosed = false
+
     if (file.isDirectory) {
       throw IllegalArgumentException("Input file ${file.absolutePath} can not be a directory!")
     }
@@ -32,6 +34,8 @@ class OnDiskByteSink private constructor(
     raf.setLength(defaultLen)
     raf.seek(0)
   }
+
+  override fun isClosed(): Boolean = isByteSinkClosed
 
   override fun resizeIfNeeded(dataToWriteSize: Int) {
     val fileLen = raf.length()
@@ -304,6 +308,10 @@ class OnDiskByteSink private constructor(
   }
 
   override fun close() {
+    if (isByteSinkClosed) {
+      return
+    }
+
     //rewrite file with junk bytes before deleting
     val array = ByteArray(raf.length().toInt()) { 0xFF.toByte() }
 
@@ -312,6 +320,7 @@ class OnDiskByteSink private constructor(
     raf.close()
 
     Files.deleteIfExists(file.toPath())
+    isByteSinkClosed = true
   }
 
   companion object {

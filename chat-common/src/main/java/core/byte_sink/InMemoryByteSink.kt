@@ -13,6 +13,10 @@ class InMemoryByteSink private constructor(
   private var array: ByteArray
 ) : ByteSink() {
 
+  init {
+    isByteSinkClosed = false
+  }
+
   override fun resizeIfNeeded(dataToWriteSize: Int) {
     if (writePosition.get() + dataToWriteSize > array.size) {
       val newArray = ByteArray((array.size * 1.5f).toInt() + dataToWriteSize)
@@ -21,6 +25,8 @@ class InMemoryByteSink private constructor(
       array = newArray
     }
   }
+
+  override fun isClosed(): Boolean = isByteSinkClosed
 
   override fun getReaderPosition() = readPosition.get()
   override fun setReaderPosition(position: Int) = readPosition.set(position)
@@ -290,8 +296,13 @@ class InMemoryByteSink private constructor(
   }
 
   override fun close() {
+    if (isByteSinkClosed) {
+      return
+    }
+
     //fill array with junk bytes before GCing
     array.fill(0xFF.toByte())
+    isByteSinkClosed = true
   }
 
   companion object {

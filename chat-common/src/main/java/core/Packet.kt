@@ -18,6 +18,7 @@ class Packet(
   }
 
   class PacketBody(
+    //TODO: Remove id
     val id: Long,             //8
     val type: Short,          //2
     val bodyByteSink: ByteSink

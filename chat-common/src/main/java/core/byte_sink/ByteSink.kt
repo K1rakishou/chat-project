@@ -13,8 +13,11 @@ abstract class ByteSink : AutoCloseable {
 
   protected val readPosition = AtomicInteger(0)
   protected val writePosition = AtomicInteger(0)
+  protected var isByteSinkClosed: Boolean = false
 
   protected abstract fun resizeIfNeeded(dataToWriteSize: Int)
+
+  abstract fun isClosed(): Boolean
 
   abstract fun getReaderPosition(): Int
   abstract fun setReaderPosition(position: Int)

@@ -10,6 +10,7 @@ import java.io.File
 import java.lang.IllegalStateException
 import java.lang.NullPointerException
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 open class BasePacketPayloadTest {
@@ -47,6 +48,12 @@ open class BasePacketPayloadTest {
 
   private fun <T> testUnencryptedPacket(basePacket: UnencryptedPacket, _byteSink: ByteSink, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
     val response = PacketBuilder.buildUnencryptedPacket(basePacket, _byteSink)
+
+    assertNotNull(response)
+    //TODO
+    //can't wait for kotlin's 1.3 contracts to get rid of this
+    response!!
+
     val bodySize = response.bodySize
 
     response.packetBody.bodyByteSink.use { byteSink ->
@@ -59,35 +66,49 @@ open class BasePacketPayloadTest {
       val restoredResponse = restoreFunction(byteSink)
       testFunction(restoredResponse)
     }
+
+    assertTrue(response.packetBody.bodyByteSink.isClosed())
   }
 
-  private fun <T> testEncryptedPacket(basePacket: EncryptedPacket, bs: ByteSink, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
-    val keys = SecurityUtils.Exchange.generateECKeyPair()
-    val sharedSecret = "11223344556677881122334455667788".toByteArray()
+  private fun <T> testEncryptedPacket(basePacket: EncryptedPacket, byteSink: ByteSink, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
+    byteSink.use { bs ->
+      val keys = SecurityUtils.Exchange.generateECKeyPair()
+      val sharedSecret = "11223344556677881122334455667788".toByteArray()
 
-    basePacket.toByteSink(bs)
-    val originalBytes = bs.getArray()
+      basePacket.toByteSink(bs)
+      val originalBytes = bs.getArray()
 
-    val response = PacketBuilder.buildEncryptedPacket(keys.private, sharedSecret, basePacket, bs)
-    val bodySize = response.bodySize
+      val response = PacketBuilder.buildEncryptedPacket(keys.private, sharedSecret, basePacket, bs)
 
-    response.packetBody.bodyByteSink.use { byteSink ->
-      val _randomBytes = byteSink.readByteArray(16) ?: throw NullPointerException("_randomBytes is null")
-      val _iv = byteSink.readByteArray(24) ?: throw NullPointerException("_iv is null")
-      val _signature = byteSink.readByteArray(75) ?: throw NullPointerException("_signature is null")
+      assertNotNull(response)
+      //TODO
+      //can't wait for kotlin's 1.3 contracts to get rid of this
+      response!!
 
-      val calculatedBodySize = byteSink.getWriterPosition() - byteSink.getReaderPosition()
-      val responseBytesHex = byteSink.readByteArrayRaw(byteSink.getReaderPosition(), calculatedBodySize)
+      val bodySize = response.bodySize
 
-      assertEquals(bodySize, calculatedBodySize)
-      assertEquals(calculatedBodySize, responseBytesHex.size)
-      assertTrue(SecurityUtils.Signing.verifySignature(keys.public, responseBytesHex, _signature))
+      response.packetBody.bodyByteSink.use { byteSink ->
+        val _randomBytes = byteSink.readByteArray(16) ?: throw NullPointerException("_randomBytes is null")
+        val _iv = byteSink.readByteArray(24) ?: throw NullPointerException("_iv is null")
+        val _signature = byteSink.readByteArray(75) ?: throw NullPointerException("_signature is null")
 
-      SecurityUtils.Encryption.xSalsa20Decrypt(sharedSecret, _iv, byteSink, byteSink.getReaderPosition() + calculatedBodySize, byteSink.getReaderPosition())
-      assertArrayEquals(originalBytes, byteSink.getArray(byteSink.getReaderPosition(), byteSink.getWriterPosition()))
+        val calculatedBodySize = byteSink.getWriterPosition() - byteSink.getReaderPosition()
+        val responseBytesHex = byteSink.readByteArrayRaw(byteSink.getReaderPosition(), calculatedBodySize)
 
-      val restoredResponse = restoreFunction(byteSink)
-      testFunction(restoredResponse)
+        assertEquals(bodySize, calculatedBodySize)
+        assertEquals(calculatedBodySize, responseBytesHex.size)
+        assertTrue(SecurityUtils.Signing.verifySignature(keys.public, responseBytesHex, _signature))
+
+        SecurityUtils.Encryption.xSalsa20Decrypt(sharedSecret, _iv, byteSink, byteSink.getReaderPosition() + calculatedBodySize, byteSink.getReaderPosition())
+        assertArrayEquals(originalBytes, byteSink.getArray(byteSink.getReaderPosition(), byteSink.getWriterPosition()))
+
+        val restoredResponse = restoreFunction(byteSink)
+        testFunction(restoredResponse)
+      }
+
+      assertTrue(response.packetBody.bodyByteSink.isClosed())
     }
+
+    assertTrue(byteSink.isClosed())
   }
 }
