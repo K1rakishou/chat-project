@@ -57,22 +57,8 @@ class OnDiskByteSink private constructor(
   }
 
   //Use only for tests! May cause OOM!!!
-  override fun getArray(from: Int, to: Int): ByteArray {
-    val start = if (from != -1) {
-      from
-    } else {
-      0
-    }
-
-    val end = if (to != -1) {
-      to
-    } else {
-      writePosition.get()
-    }
-
-    require(start < end) { "start ($start) >= end ($end)" }
-
-    val array = ByteArray(end - start)
+  override fun getArray(): ByteArray {
+    val array = ByteArray(writePosition.get())
     getStream().use { stream ->
       stream.read(array)
     }
@@ -234,6 +220,15 @@ class OnDiskByteSink private constructor(
     raf.read(array, 0, readAmount)
 
     return array
+  }
+
+  override fun writeByteSink(byteSink: ByteSink) {
+    resizeIfNeeded(byteSink.getWriterPosition())
+
+    raf.seek(getWriterPosition().toLong())
+    raf.write(byteSink.getArray(), 0, byteSink.getWriterPosition())
+
+    writePosition.getAndAdd(byteSink.getWriterPosition())
   }
 
   override fun readString(maxSize: Int): String? {

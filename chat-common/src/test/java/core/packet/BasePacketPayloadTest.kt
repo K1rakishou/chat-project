@@ -100,7 +100,7 @@ open class BasePacketPayloadTest {
         assertTrue(SecurityUtils.Signing.verifySignature(keys.public, responseBytesHex, _signature))
 
         SecurityUtils.Encryption.xSalsa20Decrypt(sharedSecret, _iv, byteSink, byteSink.getReaderPosition() + calculatedBodySize, byteSink.getReaderPosition())
-        assertArrayEquals(originalBytes, byteSink.getArray(byteSink.getReaderPosition(), byteSink.getWriterPosition()))
+        assertArrayEquals(originalBytes, byteSink.readByteArrayRaw(byteSink.getReaderPosition(), byteSink.getWriterPosition() - byteSink.getReaderPosition()))
 
         val restoredResponse = restoreFunction(byteSink)
         testFunction(restoredResponse)

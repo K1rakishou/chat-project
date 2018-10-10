@@ -65,12 +65,14 @@ object PacketBuilder {
     encryptedByteSink.writeByteArray(iv)
     encryptedByteSink.writeByteArray(signature)
 
-    //TODO: remove readByteArrayRaw, it may cause OOM
-    //TODO: implement byteSink.writeByteSink(), byteSink.appendByteSink()
-    encryptedByteSink.writeByteArrayRaw(
-      encryptedByteSink.getWriterPosition(),
-      byteSink.readByteArrayRaw(0, byteSink.getWriterPosition())
-    )
+//    //TODO: remove readByteArrayRaw, it may cause OOM
+//    //TODO: implement byteSink.writeByteSink(), byteSink.appendByteSink()
+//    encryptedByteSink.writeByteArrayRaw(
+//      encryptedByteSink.getWriterPosition(),
+//      byteSink.readByteArrayRaw(0, byteSink.getWriterPosition())
+//    )
+
+    encryptedByteSink.writeByteSink(byteSink)
 
     val packetBody = Packet.PacketBody(
       //TODO: REMOVE

@@ -170,6 +170,29 @@ class OnDiskByteSinkTest {
   }
 
   @Test
+  fun testWriteByteSink() {
+    val string = "345467d57 45uwr6jr6j r67j r6j"
+    val boolean = true
+    val long = 0x11223344556677
+
+    val newByteSink = InMemoryByteSink.createWithInitialSize(4)
+    newByteSink.writeString(string)
+    newByteSink.writeBoolean(boolean)
+    newByteSink.writeLong(long)
+
+    byteSink.writeByteSink(newByteSink)
+    byteSink.writeByteSink(newByteSink)
+    byteSink.writeByteSink(newByteSink)
+    byteSink.writeByteSink(newByteSink)
+
+    for (i in 0 until 4) {
+      assertEquals(string, byteSink.readString(string.length))
+      assertEquals(boolean, byteSink.readBoolean())
+      assertEquals(long, byteSink.readLong())
+    }
+  }
+
+  @Test
   fun testRawReadWrite() {
     val file = File.createTempFile("temp", "file")
     file.createNewFile()

@@ -26,7 +26,7 @@ abstract class ByteSink : AutoCloseable {
   abstract fun setWriterPosition(position: Int)
 
   abstract fun getStream(): DataInputStream
-  abstract fun getArray(from: Int = -1, to: Int = -1): ByteArray
+  abstract fun getArray(): ByteArray
 
   abstract fun readBoolean(): Boolean
   abstract fun writeBoolean(boolean: Boolean)
@@ -50,6 +50,8 @@ abstract class ByteSink : AutoCloseable {
   abstract fun writeByteArrayRaw(offset: Int, inArray: ByteArray)
   abstract fun rewriteByteArrayRaw(offset: Int, inArray: ByteArray)
   abstract fun readByteArrayRaw(offset: Int, readAmount: Int): ByteArray
+
+  abstract fun writeByteSink(byteSink: ByteSink)
 
   @Throws(ByteSinkBufferOverflowException::class, ReaderPositionExceededBufferSizeException::class)
   abstract fun readString(maxSize: Int): String?

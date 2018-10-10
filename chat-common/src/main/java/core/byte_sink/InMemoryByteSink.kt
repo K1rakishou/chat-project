@@ -38,20 +38,8 @@ class InMemoryByteSink private constructor(
     return DataInputStream(ByteArrayInputStream(array))
   }
 
-  override fun getArray(from: Int, to: Int): ByteArray {
-    val start = if (from != -1) {
-      from
-    } else {
-      0
-    }
-
-    val end = if (to != -1) {
-      to
-    } else {
-      writePosition.get()
-    }
-
-    return array.copyOfRange(start, end)
+  override fun getArray(): ByteArray {
+    return array.copyOfRange(0, writePosition.get())
   }
 
   override fun readBoolean(): Boolean {
@@ -185,7 +173,7 @@ class InMemoryByteSink private constructor(
         throw ReaderPositionExceededBufferSizeException(getReaderPosition(), arrayLen, array.size)
       }
 
-      return array.copyOfRange(readPosition.get(), readPosition.get() + arrayLen)
+      return array.copyOfRange(readPosition.get(), getReaderPosition() + arrayLen)
         .also { readPosition.getAndAdd(arrayLen) }
     }
   }
@@ -198,7 +186,7 @@ class InMemoryByteSink private constructor(
       writeInt(inArray.size)
 
       resizeIfNeeded(inArray.size)
-      System.arraycopy(inArray, 0, array, writePosition.get(), inArray.size)
+      System.arraycopy(inArray, 0, array, getWriterPosition(), inArray.size)
 
       writePosition.getAndAdd(inArray.size)
     }
@@ -212,12 +200,19 @@ class InMemoryByteSink private constructor(
   }
 
   override fun rewriteByteArrayRaw(offset: Int, inArray: ByteArray) {
-    require(offset + inArray.size <= writePosition.get())
+    require(offset + inArray.size <= getWriterPosition())
     System.arraycopy(inArray, 0, array, offset, inArray.size)
   }
 
   override fun readByteArrayRaw(offset: Int, readAmount: Int): ByteArray {
     return array.copyOfRange(offset, offset + readAmount)
+  }
+
+  override fun writeByteSink(byteSink: ByteSink) {
+    resizeIfNeeded(byteSink.getWriterPosition())
+    System.arraycopy(byteSink.getArray(), 0, array, getWriterPosition(), byteSink.getWriterPosition())
+
+    writePosition.getAndAdd(byteSink.getWriterPosition())
   }
 
   override fun readString(maxSize: Int): String? {
