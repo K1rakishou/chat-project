@@ -9,13 +9,18 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.lang.IllegalStateException
+import java.nio.file.Files
 import java.security.KeyStore
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
 
 
 class MyKeyStore : Controller() {
+  private val type = "BKS"
+  private val provider = "BC"
+
   private val keyStoreFile = File("D:\\projects\\data\\chat\\keystore")
+  private val keyStore by lazy { KeyStore.getInstance(type, provider) }
 
   private val PBKDF2WithHmacSHA256 = "PBKDF2WithHmacSHA256"
   private val rootPrivateKeyAlias = "root_private_key"
@@ -29,6 +34,7 @@ class MyKeyStore : Controller() {
     if (!keyStore.containsAlias(rootPrivateKeyAlias)) {
       val keyPair = generateEllipticCurveKeyPair()
 
+      //I wish I could just cast ByteArray to CharArray and vice versa
       storeKey(keyStorePassword, rootPrivateKeyAlias, String(keyPair.private.encoded()).toCharArray())
       storeKey(keyStorePassword, rootPrivateKeyAlias, String(keyPair.public.encoded()).toCharArray())
     }
@@ -41,69 +47,64 @@ class MyKeyStore : Controller() {
     }
   }
 
-  private fun getOrCreateKeyStore(keyStorePassword: String): KeyStore {
-    try {
-      val keyStore = KeyStore.getInstance("BKS", "BC")
-      if (hasKeyStoreWithKeys(keyStore)) {
-        keyStore.load(FileInputStream(keyStoreFile), keyStorePassword.toCharArray())
-      } else {
-        keyStore.load(null, null)
-        keyStore.store(FileOutputStream(keyStoreFile), keyStorePassword.toCharArray())
+  fun getOrCreateKeyStore(keyStorePassword: String): KeyStore {
+    val password = keyStorePassword.toCharArray()
+    keyStore.load(null, password)
+
+    if (keyStoreFile.exists()) {
+      FileInputStream(keyStoreFile).use { fis ->
+        keyStore.load(fis, password)
       }
+    } else {
+      keyStore.load(null, null)
 
-      return keyStore
-    } catch (error: Exception) {
-      throw IllegalStateException("Could not get or create keyStore: ${error.message ?: "No message"}")
-    }
-  }
-
-  private fun hasKeyStoreWithKeys(keyStore: KeyStore): Boolean {
-    if (!keyStoreFile.exists()) {
-      return false
+      FileOutputStream(keyStoreFile).use { fos ->
+        keyStore.store(fos, password)
+      }
     }
 
-    if (!keyStore.containsAlias(rootPrivateKeyAlias)) {
-      return false
-    }
-
-    if (!keyStore.containsAlias(rootPublicKeyAlias)) {
-      return false
-    }
-
-    return true
+    return keyStore
   }
 
   fun loadKey(keyStorePassword: String, keyAlias: String): ByteArray {
-    try {
-      val keyStore = getOrCreateKeyStore(keyStorePassword)
-      val protectionParameter = KeyStore.PasswordProtection(keyStorePassword.toCharArray())
+    val password = keyStorePassword.toCharArray()
+    keyStore.load(null, password)
 
-      val factory = SecretKeyFactory.getInstance(PBKDF2WithHmacSHA256)
-      val keyEntry = keyStore.getEntry(keyAlias, protectionParameter) as KeyStore.SecretKeyEntry
-      val keySpec = factory.getKeySpec(keyEntry.secretKey, PBEKeySpec::class.java) as PBEKeySpec
-
-      return String(keySpec.password).toByteArray()
-    } catch (error: Exception) {
-      throw IllegalStateException("Could not load key ${keyAlias} from the keyStore ${error.message ?: "No message"}")
+    FileInputStream(keyStoreFile).use { fis ->
+      keyStore.load(fis, password)
     }
+
+    if (!keyStore.containsAlias(keyAlias)) {
+      throw IllegalStateException("keyStore does not contain key with alias $keyAlias")
+    }
+
+    val keyEntry = keyStore.getEntry(
+      keyAlias,
+      KeyStore.PasswordProtection(password)
+    ) as KeyStore.SecretKeyEntry
+
+    val factory = SecretKeyFactory.getInstance(PBKDF2WithHmacSHA256)
+    val keySpec = factory.getKeySpec(keyEntry.secretKey, PBEKeySpec::class.java) as PBEKeySpec
+
+    return String(keySpec.password).toByteArray()
   }
 
   fun storeKey(keyStorePassword: String, keyAlias: String, key: CharArray) {
-    try {
-      val keyStore = getOrCreateKeyStore(keyStorePassword)
+    val password = keyStorePassword.toCharArray()
+    keyStore.load(null, password)
 
-      val factory = SecretKeyFactory.getInstance(PBKDF2WithHmacSHA256)
-      val generatedSecret = factory.generateSecret(PBEKeySpec(key))
+    val factory = SecretKeyFactory.getInstance(PBKDF2WithHmacSHA256)
+    val generatedSecret = factory.generateSecret(PBEKeySpec(key))
 
-      val protectionParameter = KeyStore.PasswordProtection(keyStorePassword.toCharArray())
-      keyStore.setEntry(keyAlias, KeyStore.SecretKeyEntry(generatedSecret), protectionParameter)
+    keyStore.setEntry(
+      keyAlias,
+      KeyStore.SecretKeyEntry(generatedSecret),
+      KeyStore.PasswordProtection(password)
+    )
 
-      FileOutputStream(keyStoreFile).use { fos ->
-        keyStore.store(fos, keyStorePassword.toCharArray())
-      }
-
-    } catch (error: Exception) {
-      throw IllegalStateException("Could not store key ${keyAlias} to the keyStore ${error.message ?: "No message"}")
+    FileOutputStream(keyStoreFile).use { fos ->
+      keyStore.store(fos, password)
+      fos.flush()
     }
   }
 
@@ -125,5 +126,9 @@ class MyKeyStore : Controller() {
 
   private fun generateEllipticCurveKeyPair(): AsymmetricCipherKeyPair {
     return SecurityUtils.Exchange.generateECKeyPair()
+  }
+
+  fun destroy() {
+    Files.deleteIfExists(keyStoreFile.toPath())
   }
 }
