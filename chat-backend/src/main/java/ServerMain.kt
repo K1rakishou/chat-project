@@ -56,11 +56,7 @@ class Server(
         .bind(InetSocketAddress("127.0.0.1", 2323))
 
       //test zone
-      chatRoomManager.createChatRoom(true).apply {
-        repeat(100) { index ->
-          addMessage(TextChatMessage(index, "test user", SecurityUtils.Generator.generateRandomString(512)))
-        }
-      }
+      chatRoomManager.createChatRoom(true)
       //test zone
 
       println("Started server at ${server.localAddress}")

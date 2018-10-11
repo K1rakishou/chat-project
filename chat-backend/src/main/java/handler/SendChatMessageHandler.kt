@@ -25,8 +25,7 @@ class SendChatMessageHandler(
       return
     }
 
-    val packetVersion = SendChatMessagePacket.PacketVersion.fromShort(packet.packetVersion)
-
+    val packetVersion = SendChatMessagePacket.PacketVersion.fromShort(packet.getPacketVersion())
     when (packetVersion) {
       SendChatMessagePacket.PacketVersion.V1 -> handleInternalV1(packet, clientAddress)
       SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)

@@ -11,11 +11,9 @@ class SendChatMessagePacket(
   val roomName: String,
   val userName: String,
   val message: String
-) : UnencryptedPacket() {
+) : BasePacket() {
 
-  override val packetVersion: Short
-    get() = CURRENT_PACKET_VERSION.value
-
+  override fun getPacketVersion(): Short = CURRENT_PACKET_VERSION.value
   override fun getPacketType(): PacketType = PacketType.SendChatMessagePacketType
 
   override fun getPayloadSize(): Int {
@@ -23,7 +21,8 @@ class SendChatMessagePacket(
   }
 
   override fun toByteSink(byteSink: ByteSink) {
-    byteSink.writeShort(packetVersion)
+    super.toByteSink(byteSink)
+
     when (CURRENT_PACKET_VERSION) {
       PacketVersion.V1 -> {
         byteSink.writeInt(messageId)
@@ -31,7 +30,7 @@ class SendChatMessagePacket(
         byteSink.writeString(userName)
         byteSink.writeString(message)
       }
-      SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
+      SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(getPacketVersion())
     }
   }
 

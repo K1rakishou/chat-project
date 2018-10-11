@@ -13,8 +13,8 @@ class ConnectionToServerWindow : View("Chat") {
   }
 
   override val root = vbox(alignment = Pos.CENTER) {
-    prefHeight = 720.0
-    prefWidth = 1280.0
+    prefHeight = 420.0
+    prefWidth = 720.0
 
     progressindicator {
       vboxConstraints {

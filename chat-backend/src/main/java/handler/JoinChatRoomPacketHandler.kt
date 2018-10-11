@@ -27,8 +27,7 @@ class JoinChatRoomPacketHandler(
       return
     }
 
-    val packetVersion = JoinChatRoomPacket.PacketVersion.fromShort(packet.packetVersion)
-
+    val packetVersion = JoinChatRoomPacket.PacketVersion.fromShort(packet.getPacketVersion())
     when (packetVersion) {
       JoinChatRoomPacket.PacketVersion.V1 -> handleInternalV1(packet, clientAddress)
       JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)

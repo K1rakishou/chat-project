@@ -18,24 +18,19 @@ open class BasePacketPayloadTest {
   private val testFilePath = File("D:\\projects\\data\\chat\\test_file")
 
   protected fun <T> testPayload(basePacket: BasePacket, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
-    when (basePacket) {
-      is UnencryptedPacket -> {
-        kotlin.run {
-          testUnencryptedPacket(basePacket, InMemoryByteSink.createWithInitialSize(basePacket.getPayloadSize()), restoreFunction, testFunction)
-        }
-        kotlin.run {
-          if (!testFilePath.exists()) {
-            testFilePath.createNewFile()
-          }
-
-          testUnencryptedPacket(basePacket, OnDiskByteSink.fromFile(testFilePath, basePacket.getPayloadSize()), restoreFunction, testFunction)
-        }
+    kotlin.run {
+      testPacket(basePacket, InMemoryByteSink.createWithInitialSize(basePacket.getPayloadSize()), restoreFunction, testFunction)
+    }
+    kotlin.run {
+      if (!testFilePath.exists()) {
+        testFilePath.createNewFile()
       }
-      else -> throw IllegalStateException("Not implemented for ${basePacket::class}")
+
+      testPacket(basePacket, OnDiskByteSink.fromFile(testFilePath, basePacket.getPayloadSize()), restoreFunction, testFunction)
     }
   }
 
-  private fun <T> testUnencryptedPacket(basePacket: UnencryptedPacket, _byteSink: ByteSink, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
+  private fun <T> testPacket(basePacket: BasePacket, _byteSink: ByteSink, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
     val response = packetBuilder.buildPacket(basePacket, _byteSink)
 
     assertNotNull(response)

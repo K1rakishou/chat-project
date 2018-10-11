@@ -5,11 +5,14 @@ import core.byte_sink.ByteSink
 import core.sizeof
 
 abstract class BasePacket {
-  abstract val packetVersion: Short
+  abstract fun getPacketVersion(): Short
   abstract fun getPacketType(): PacketType
-  abstract fun toByteSink(byteSink: ByteSink)
+
+  open fun toByteSink(byteSink: ByteSink) {
+    byteSink.writeShort(getPacketVersion())
+  }
 
   open fun getPayloadSize(): Int {
-    return sizeof(packetVersion)
+    return sizeof(getPacketVersion())
   }
 }

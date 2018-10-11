@@ -27,8 +27,7 @@ class GetPageOfPublicRoomsHandler(
       return
     }
 
-    val packetVersion = GetPageOfPublicRoomsPacket.PacketVersion.fromShort(packet.packetVersion)
-
+    val packetVersion = GetPageOfPublicRoomsPacket.PacketVersion.fromShort(packet.getPacketVersion())
     val response = when (packetVersion) {
       GetPageOfPublicRoomsPacket.PacketVersion.V1 -> handleInternalV1(packet)
       GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)

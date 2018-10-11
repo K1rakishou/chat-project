@@ -4,6 +4,7 @@ import core.Connection
 import core.Constants
 import core.Packet
 import core.byte_sink.InMemoryByteSink
+import core.extensions.forEachChunkAsync
 import core.extensions.toHexSeparated
 import core.response.BaseResponse
 import kotlinx.coroutines.experimental.channels.SendChannel
@@ -94,28 +95,14 @@ class ConnectionManager(
     loggingSink.writeShort(packet.packetBody.type)
     //
 
-    val readBuffer = ByteArray(Constants.maxInMemoryByteSinkSize)
     val streamSize = packet.packetBody.bodyByteSink.getWriterPosition()
 
-    packet.packetBody.bodyByteSink.getStream().use { bodyStream ->
-      for (offset in 0 until streamSize step Constants.maxInMemoryByteSinkSize) {
-        val chunk = if (streamSize - offset > Constants.maxInMemoryByteSinkSize) {
-          Constants.maxInMemoryByteSinkSize
-        } else {
-          streamSize - offset
-        }
+    packet.packetBody.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, streamSize) { chunk ->
+      connection.writeChannel.writeFully(chunk, 0, chunk.size)
 
-        val bytesReadCount = bodyStream.read(readBuffer, 0, chunk)
-        if (bytesReadCount == -1) {
-          break
-        }
-
-        connection.writeChannel.writeFully(readBuffer, 0, bytesReadCount)
-
-        //for logging
-        loggingSink.writeByteArray(readBuffer.copyOfRange(0, bytesReadCount))
-        //
-      }
+      //for logging
+      loggingSink.writeByteArray(chunk)
+      //
     }
 
     loggingSink.getStream().use { stream ->

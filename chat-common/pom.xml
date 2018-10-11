@@ -65,6 +65,7 @@
                 </executions>
                 <configuration>
                     <jvmTarget>1.8</jvmTarget>
+                    <experimentalCoroutines>enable</experimentalCoroutines>
                 </configuration>
             </plugin>
         </plugins>

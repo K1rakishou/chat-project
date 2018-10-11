@@ -10,11 +10,9 @@ class JoinChatRoomPacket(
   val userName: String,
   val roomName: String,
   val roomPasswordHash: String?
-) : UnencryptedPacket() {
+) : BasePacket() {
 
-  override val packetVersion: Short
-    get() = CURRENT_PACKET_VERSION.value
-
+  override fun getPacketVersion(): Short = CURRENT_PACKET_VERSION.value
   override fun getPacketType(): PacketType = PacketType.JoinRoomPacketType
 
   override fun getPayloadSize(): Int {
@@ -22,7 +20,7 @@ class JoinChatRoomPacket(
   }
 
   override fun toByteSink(byteSink: ByteSink) {
-    byteSink.writeShort(packetVersion)
+    super.toByteSink(byteSink)
 
     when (CURRENT_PACKET_VERSION) {
       JoinChatRoomPacket.PacketVersion.V1 -> {
@@ -30,7 +28,7 @@ class JoinChatRoomPacket(
         byteSink.writeString(roomName)
         byteSink.writeString(roomPasswordHash)
       }
-      JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
+      JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(getPacketVersion())
     }
   }
 

@@ -8,11 +8,9 @@ import core.sizeof
 class GetPageOfPublicRoomsPacket(
   val currentPage: Short,
   val roomsPerPage: Byte
-) : UnencryptedPacket() {
+) : BasePacket() {
 
-  override val packetVersion: Short
-    get() = CURRENT_PACKET_VERSION.value
-
+  override fun getPacketVersion(): Short = CURRENT_PACKET_VERSION.value
   override fun getPacketType(): PacketType = PacketType.GetPageOfPublicRoomsPacketType
 
   override fun getPayloadSize(): Int {
@@ -20,14 +18,14 @@ class GetPageOfPublicRoomsPacket(
   }
 
   override fun toByteSink(byteSink: ByteSink) {
-    byteSink.writeShort(packetVersion)
+    super.toByteSink(byteSink)
 
     when (CURRENT_PACKET_VERSION) {
       GetPageOfPublicRoomsPacket.PacketVersion.V1 -> {
         byteSink.writeShort(currentPage)
         byteSink.writeByte(roomsPerPage)
       }
-      GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion)
+      GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(getPacketVersion())
     }
   }
 

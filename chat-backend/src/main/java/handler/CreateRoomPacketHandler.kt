@@ -24,8 +24,7 @@ class CreateRoomPacketHandler(
       return
     }
 
-    val packetVersion = CreateRoomPacket.PacketVersion.fromShort(packet.packetVersion)
-
+    val packetVersion = CreateRoomPacket.PacketVersion.fromShort(packet.getPacketVersion())
     val response = when (packetVersion) {
       CreateRoomPacket.PacketVersion.V1 -> handleInternalV1(packet)
       CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)

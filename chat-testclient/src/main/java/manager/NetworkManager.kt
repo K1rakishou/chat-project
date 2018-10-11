@@ -4,11 +4,11 @@ import core.Constants
 import core.Packet
 import core.ResponseInfo
 import core.byte_sink.InMemoryByteSink
+import core.extensions.forEachChunkAsync
 import core.extensions.toHex
 import core.extensions.toHexSeparated
 import core.packet.BasePacket
 import core.packet.PacketBuilder
-import core.packet.UnencryptedPacket
 import extensions.readResponseInfo
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
@@ -55,11 +55,7 @@ class NetworkManager {
 
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
       for (packet in channel) {
-        val resultPacket = when (packet) {
-          is UnencryptedPacket -> packetBuilder.buildPacket(packet, InMemoryByteSink.createWithInitialSize(1024))
-          else -> throw IllegalStateException("Not implemented for ${packet::class}")
-        }
-
+        val resultPacket = packetBuilder.buildPacket(packet, InMemoryByteSink.createWithInitialSize(1024))
         if (resultPacket == null) {
           println("Could not build packet ${packet::class}")
           continue
@@ -165,18 +161,11 @@ class NetworkManager {
     sink.writeShort(packet.packetBody.type)
     //
 
-    val readBuffer = ByteArray(Constants.maxInMemoryByteSinkSize)
-
-    packet.packetBody.bodyByteSink.getStream().use { bodyStream ->
-      val bytesReadCount = bodyStream.read(readBuffer, 0, Constants.maxInMemoryByteSinkSize)
-      if (bytesReadCount == -1) {
-        return@use
-      }
-
-      writeChannel.writeFully(readBuffer, 0, bytesReadCount)
+    packet.packetBody.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, packet.bodySize) { chunk ->
+      writeChannel.writeFully(chunk, 0, chunk.size)
 
       //for logging
-      sink.writeByteArray(readBuffer.copyOfRange(0, bytesReadCount))
+      sink.writeByteArray(chunk)
       //
     }
 
