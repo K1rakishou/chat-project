@@ -1,38 +1,22 @@
 package core.response
 
-import core.byte_sink.InMemoryByteSink
+import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
-import core.Packet
 import core.sizeof
 
 abstract class BaseResponse(
   val status: Status
 ) {
-  abstract val packetType: Short
-  abstract fun toByteSink(byteSink: ByteSink)
 
-  open fun getPayloadSize(): Int {
-    return sizeof(packetType) + sizeof(status)
+  abstract fun getResponseType(): ResponseType
+  abstract fun getResponseVersion(): Short
+
+  open fun toByteSink(byteSink: ByteSink) {
+    byteSink.writeShort(getResponseVersion())
   }
 
-  fun buildResponse(byteSink: ByteSink = InMemoryByteSink.createWithInitialSize(getPayloadSize())): Packet {
-    val totalBodySize = (Packet.PACKET_BODY_SIZE + getPayloadSize())
-    if (totalBodySize > Int.MAX_VALUE) {
-      throw RuntimeException("bodySize exceeds Int.MAX_VALUE: $totalBodySize")
-    }
-
-    toByteSink(byteSink)
-
-    val packetBody = Packet.PacketBody(
-      packetType,
-      byteSink
-    )
-
-    return Packet(
-      Packet.MAGIC_NUMBER,
-      totalBodySize,
-      packetBody
-    )
+  open fun getPayloadSize(): Int {
+    return sizeof(getResponseVersion()) + sizeof(status)
   }
 }

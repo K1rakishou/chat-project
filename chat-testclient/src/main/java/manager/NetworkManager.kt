@@ -153,15 +153,15 @@ class NetworkManager {
 
     writeChannel.writeInt(packet.magicNumber)
     writeChannel.writeInt(packet.bodySize)
-    writeChannel.writeShort(packet.packetBody.type)
+    writeChannel.writeShort(packet.type)
 
     //for logging
     sink.writeInt(packet.magicNumber)
     sink.writeInt(packet.bodySize)
-    sink.writeShort(packet.packetBody.type)
+    sink.writeShort(packet.type)
     //
 
-    packet.packetBody.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, packet.bodySize) { chunk ->
+    packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, packet.bodySize) { chunk ->
       writeChannel.writeFully(chunk, 0, chunk.size)
 
       //for logging

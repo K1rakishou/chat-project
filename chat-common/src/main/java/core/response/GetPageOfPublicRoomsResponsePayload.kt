@@ -10,8 +10,8 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
   val publicChatRoomList: List<PublicChatRoom> = emptyList()
 ) : BaseResponse(status) {
 
-  override val packetType: Short
-    get() = ResponseType.GetPageOfPublicRoomsResponseType.value
+  override fun getResponseType(): ResponseType = ResponseType.GetPageOfPublicRoomsResponseType
+  override fun getResponseVersion(): Short = CURRENT_RESPONSE_VERSION.value
 
   override fun getPayloadSize(): Int {
     return super.getPayloadSize() + when (status) {
@@ -21,7 +21,7 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
   }
 
   override fun toByteSink(byteSink: ByteSink) {
-    byteSink.writeShort(CURRENT_RESPONSE_VERSION.value)
+    super.toByteSink(byteSink)
 
     when (CURRENT_RESPONSE_VERSION) {
       GetPageOfPublicRoomsResponsePayload.ResponseVersion.V1 -> {

@@ -5,27 +5,9 @@ import core.byte_sink.ByteSink
 class Packet(
   val magicNumber: Int,       //4
   val bodySize: Int,          //4
-
-  val packetBody: PacketBody
+  val type: Short,            //2
+  val bodyByteSink: ByteSink
 ) {
-
-  fun getPacketMagicNumberSize(): Int {
-    return sizeof(magicNumber)
-  }
-
-  fun getPacketFullSize(): Int {
-    return getPacketMagicNumberSize() + sizeof(bodySize) + packetBody.getSize()
-  }
-
-  class PacketBody(
-    val type: Short,          //2
-    val bodyByteSink: ByteSink
-  ) {
-
-    fun getSize(): Int {
-      return PACKET_BODY_SIZE + bodyByteSink.getWriterPosition()
-    }
-  }
 
   companion object {
     val MAGIC_NUMBER_BYTES = arrayOf<Byte>(0x44, 0x45, 0x53, 0x55)

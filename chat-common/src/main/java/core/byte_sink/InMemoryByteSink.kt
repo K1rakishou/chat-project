@@ -309,7 +309,7 @@ class InMemoryByteSink private constructor(
       return InMemoryByteSink(array)
     }
 
-    fun createWithInitialSize(size: Int): InMemoryByteSink {
+    fun createWithInitialSize(size: Int = 1024): InMemoryByteSink {
       return InMemoryByteSink(ByteArray(size))
     }
   }

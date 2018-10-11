@@ -4,8 +4,7 @@ import core.PacketType
 import core.extensions.readPacketInfo
 import core.extensions.toHex
 import core.extensions.toHexSeparated
-import core.model.drainable.chat_message.TextChatMessage
-import core.security.SecurityUtils
+import core.response.ResponseBuilder
 import handler.CreateRoomPacketHandler
 import handler.GetPageOfPublicRoomsHandler
 import handler.JoinChatRoomPacketHandler
@@ -41,8 +40,9 @@ fun main(args: Array<String>) {
 class Server(
   private val byteSinkFileCachePath: String
 ) {
+  private val responseBuilder = ResponseBuilder()
   private val chatRoomManager = ChatRoomManager()
-  private val connectionManager = ConnectionManager(chatRoomManager)
+  private val connectionManager = ConnectionManager(chatRoomManager, responseBuilder)
 
   private val createRoomPacketHandler = CreateRoomPacketHandler(connectionManager, chatRoomManager)
   private val getPageOfPublicChatRoomsHandler = GetPageOfPublicRoomsHandler(connectionManager, chatRoomManager)

@@ -1,19 +1,17 @@
-package core.packet
+package core.response
 
 import core.Packet
 import core.byte_sink.ByteSink
-import java.lang.RuntimeException
 
-class PacketBuilder {
+class ResponseBuilder {
 
-  fun buildPacket(packet: BasePacket, byteSink: ByteSink): Packet? {
-    val payloadSize = packet.getPayloadSize()
+  fun buildResponse(response: BaseResponse, byteSink: ByteSink): Packet {
+    val payloadSize = response.getPayloadSize()
     if (payloadSize > Int.MAX_VALUE) {
-      println("payloadSize exceeds Int.MAX_VALUE: $payloadSize")
-      return null
+      throw RuntimeException("payloadSize exceeds Int.MAX_VALUE: $payloadSize")
     }
 
-    packet.toByteSink(byteSink)
+    response.toByteSink(byteSink)
 
     if (payloadSize != byteSink.getWriterPosition()) {
       throw RuntimeException("payloadSize ($payloadSize) != byteSink.getWriterPosition() (${byteSink.getWriterPosition()})")
@@ -22,7 +20,7 @@ class PacketBuilder {
     return Packet(
       Packet.MAGIC_NUMBER,
       payloadSize,
-      packet.getPacketType().value,
+      response.getResponseType().value,
       byteSink
     )
   }

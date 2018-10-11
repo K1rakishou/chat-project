@@ -9,15 +9,15 @@ class SendChatMessageResponsePayload private constructor(
   status: Status
 ) : BaseResponse(status) {
 
-  override val packetType: Short
-    get() = ResponseType.SendChatMessageResponseType.value
+  override fun getResponseType(): ResponseType = ResponseType.SendChatMessageResponseType
+  override fun getResponseVersion(): Short = CURRENT_RESPONSE_VERSION.value
 
   override fun getPayloadSize(): Int {
     return super.getPayloadSize()
   }
 
   override fun toByteSink(byteSink: ByteSink) {
-    byteSink.writeShort(CURRENT_RESPONSE_VERSION.value)
+    super.toByteSink(byteSink)
 
     when (CURRENT_RESPONSE_VERSION) {
       SendChatMessageResponsePayload.ResponseVersion.V1 -> {

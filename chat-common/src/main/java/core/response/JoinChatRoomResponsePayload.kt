@@ -13,8 +13,8 @@ class JoinChatRoomResponsePayload private constructor(
   val users: List<PublicUserInChat> = emptyList()
 ) : BaseResponse(status) {
 
-  override val packetType: Short
-    get() = ResponseType.JoinChatRoomResponseType.value
+  override fun getResponseType(): ResponseType = ResponseType.JoinChatRoomResponseType
+  override fun getResponseVersion(): Short = CURRENT_RESPONSE_VERSION.value
 
   override fun getPayloadSize(): Int {
     return super.getPayloadSize() + when (status) {
@@ -24,7 +24,7 @@ class JoinChatRoomResponsePayload private constructor(
   }
 
   override fun toByteSink(byteSink: ByteSink) {
-    byteSink.writeShort(CURRENT_RESPONSE_VERSION.value)
+    super.toByteSink(byteSink)
 
     when (CURRENT_RESPONSE_VERSION) {
       JoinChatRoomResponsePayload.ResponseVersion.V1 -> {

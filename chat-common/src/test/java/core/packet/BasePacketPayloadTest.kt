@@ -1,14 +1,9 @@
 package core.packet
 
-import core.Packet
 import core.byte_sink.ByteSink
 import core.byte_sink.InMemoryByteSink
 import core.byte_sink.OnDiskByteSink
-import core.security.SecurityUtils
-import org.junit.Assert.assertArrayEquals
 import java.io.File
-import java.lang.IllegalStateException
-import java.lang.NullPointerException
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -40,17 +35,17 @@ open class BasePacketPayloadTest {
 
     val bodySize = response.bodySize
 
-    response.packetBody.bodyByteSink.use { byteSink ->
+    response.bodyByteSink.use { byteSink ->
       val calculatedBodySize = byteSink.getWriterPosition()
       val responseBytesHex = byteSink.getArray()
 
-      assertEquals(bodySize - Packet.PACKET_BODY_SIZE, calculatedBodySize)
+      assertEquals(bodySize, calculatedBodySize)
       assertEquals(calculatedBodySize, responseBytesHex.size)
 
       val restoredResponse = restoreFunction(byteSink)
       testFunction(restoredResponse)
     }
 
-    assertTrue(response.packetBody.bodyByteSink.isClosed())
+    assertTrue(response.bodyByteSink.isClosed())
   }
 }
