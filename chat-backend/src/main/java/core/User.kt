@@ -2,9 +2,7 @@ package core
 
 class User(
   val userName: String,
-  val clientAddress: String,
-  val rootPublicKey: ByteArray,
-  val sessionPublicKey: ByteArray
+  val clientAddress: String
 ) {
 
   override fun equals(other: Any?): Boolean {

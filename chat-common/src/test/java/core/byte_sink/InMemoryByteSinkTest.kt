@@ -144,10 +144,10 @@ class InMemoryByteSinkTest {
   @Test(expected = MaxListSizeExceededException::class)
   fun testExceedListSize() {
     val list = listOf(
-      PublicUserInChat("123", ByteArray(10) { 0xBB.toByte() }, ByteArray(10) { 0xEE.toByte() }),
-      PublicUserInChat("234", ByteArray(10) { 0xAA.toByte() }, ByteArray(10) { 0xFF.toByte() }),
-      PublicUserInChat("345", ByteArray(10) { 0xCC.toByte() }, ByteArray(10) { 0x12.toByte() }),
-      PublicUserInChat("456", ByteArray(10) { 0xDD.toByte() }, ByteArray(10) { 0x43.toByte() })
+      PublicUserInChat("123"),
+      PublicUserInChat("234"),
+      PublicUserInChat("345"),
+      PublicUserInChat("456")
     )
 
     byteSink.writeList(list)
@@ -207,14 +207,12 @@ class InMemoryByteSinkTest {
 
   @Test
   fun testReadWriteDrainable() {
-    val expectedDrainable = PublicUserInChat("test user", ByteArray(255) { 0x44.toByte() }, ByteArray(522) { 0x22.toByte() })
+    val expectedDrainable = PublicUserInChat("test user")
 
     byteSink.writeDrainable(expectedDrainable)
     val actualDrainable = byteSink.readDrainable<PublicUserInChat>(PublicUserInChat::class)
 
     assertEquals(expectedDrainable.userName, actualDrainable!!.userName)
-    assertArrayEquals(expectedDrainable.rootPublicKey, actualDrainable!!.rootPublicKey)
-    assertArrayEquals(expectedDrainable.sessionPublicKey, actualDrainable!!.sessionPublicKey)
   }
 
   @Test

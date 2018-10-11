@@ -56,7 +56,7 @@ class Store : Controller() {
 
   fun setChatRoomUserList(roomName: String, userList: List<PublicUserInChat>) {
     val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
-    val convertedUserList = userList.map { user -> PublicUserInChatItem(user.userName, user.rootPublicKey, user.sessionPublicKey) }
+    val convertedUserList = userList.map { user -> PublicUserInChatItem(user.userName) }
 
     chatRoom.userListProperty().get().clear()
     chatRoom.userListProperty().get().addAll(convertedUserList)

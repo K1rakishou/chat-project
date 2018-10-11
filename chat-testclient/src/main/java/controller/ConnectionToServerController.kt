@@ -11,7 +11,6 @@ import javafx.beans.property.SimpleStringProperty
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
-import store.MyKeyStore
 import store.Store
 import tornadofx.runLater
 import ui.chat_main_window.ChatMainWindow
@@ -23,7 +22,6 @@ class ConnectionToServerController : BaseController() {
   private var delayTime = AtomicInteger(3000)
   private val maxDelayTime: Int = 15000
 
-  val myKeyStore: MyKeyStore by inject()
   val store: Store by inject()
   val connectionStatus = SimpleStringProperty("")
 
@@ -34,8 +32,6 @@ class ConnectionToServerController : BaseController() {
 
   fun startConnectionToServer(firstTime: Boolean = false) {
     launch {
-      myKeyStore.init(store.keyStorePasswordText)
-
       if (!firstTime) {
         delay(increaseDelayAndGet())
       }

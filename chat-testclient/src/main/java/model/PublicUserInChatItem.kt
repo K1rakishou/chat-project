@@ -6,9 +6,7 @@ import tornadofx.ItemViewModel
 import java.util.*
 
 class PublicUserInChatItem(
-  userName: String,
-  val rootPublicKey: ByteArray,
-  val sessionPublicKey: ByteArray
+  userName: String
 ) {
   val id = UUID.randomUUID()
 
