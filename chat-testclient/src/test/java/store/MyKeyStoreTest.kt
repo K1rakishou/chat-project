@@ -29,6 +29,7 @@ class MyKeyStoreTest {
 
   @Test
   fun testStoreLoadKey() {
+    //FIXME: does not work!!!
     val keyStore = myKeyStore.getOrCreateKeyStore(keyStorePassword)
     myKeyStore.storeKey(keyStorePassword, keyAlias, key)
 

@@ -33,6 +33,12 @@
             <artifactId>bcprov-jdk15on</artifactId>
             <version>1.60</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.whispersystems/signal-protocol-java -->
+        <dependency>
+            <groupId>org.whispersystems</groupId>
+            <artifactId>signal-protocol-java</artifactId>
+            <version>2.6.2</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
