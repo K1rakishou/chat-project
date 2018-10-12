@@ -27,12 +27,11 @@ import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
 
 class ChatRoomListController : BaseController() {
-  private val delayBeforeAddFirstChatRoomMessage = 250.0
-
-  private val networkManager = (app as ChatApp).networkManager
+  private val networkManager = ChatApp.networkManager
   private val store: Store by inject()
   private var selectedRoomName: String? = null
 
+  private val delayBeforeAddFirstChatRoomMessage = 250.0
   val scrollToBottomFlag = SimpleIntegerProperty(0)
 
   init {

@@ -13,34 +13,38 @@ import extensions.readResponseInfo
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
 import io.ktor.network.util.ioCoroutineDispatcher
+import kotlinx.coroutines.experimental.*
 import kotlinx.coroutines.experimental.channels.BroadcastChannel
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
 import kotlinx.coroutines.experimental.io.ByteReadChannel
 import kotlinx.coroutines.experimental.io.ByteWriteChannel
 import kotlinx.coroutines.experimental.io.close
-import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 import java.io.File
 import java.io.IOException
 import java.net.InetSocketAddress
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.experimental.CoroutineContext
 
 class NetworkManager {
-  private val isConnected = AtomicBoolean(false)
+  private val connectionState = AtomicReference<ConnectionState>()
   private val mutex = Mutex()
   private val sendActorChannelCapacity = 128
-  private val sendPacketsActor: SendChannel<BasePacket>
+  private val packetBuilder = PacketBuilder()
+  private val reconnectionAttempt = AtomicInteger(0)
+  private var cachedHostInfo: HostInfo? = null
+  private var reconnectionActor: SendChannel<Unit>? = null
+  private var sendPacketsActor: SendChannel<BasePacket>? = null
 
   val socketEventsQueue = BroadcastChannel<SocketEvent>(128)
 
-  private val packetBuilder = PacketBuilder()
+  private var socket: Socket? = null
+  private var writeChannel: ByteWriteChannel? = null
 
-  private lateinit var socket: Socket
-  private lateinit var writeChannel: ByteWriteChannel
   private lateinit var readChannel: ByteReadChannel
-
   private lateinit var byteSinkFileCachePath: String
 
   init {
@@ -52,7 +56,128 @@ class NetworkManager {
     }
 
     byteSinkFileCachePath = byteSinkCachePathFile.absolutePath
+    connectionState.set(ConnectionState.Disconnected)
 
+    reconnectionActor = actor(capacity = 1) {
+      for (event in channel) {
+        val delayTime = 5000
+        println("Trying to reconnect in $delayTime ms...")
+
+        delay(delayTime)
+        println("Reconnecting")
+
+        cachedHostInfo?.let { connect(it.host, it.port, true) }
+      }
+    }
+  }
+
+  fun connect(host: String, port: Int, shouldReconnect: Boolean) {
+    println("Trying to connect to the server")
+
+    if (!connectionState.compareAndSet(ConnectionState.Disconnected, ConnectionState.Connecting)) {
+      println("Already connected or in connecting state")
+      return
+    }
+
+    launch {
+      try {
+        mutex.withLock {
+          val newSocket = aSocket(ActorSelectorManager(ioCoroutineDispatcher))
+            .tcp()
+            .connect(InetSocketAddress(host, port))
+
+          if (!connectionState.compareAndSet(ConnectionState.Connecting, ConnectionState.Connected)) {
+            println("Connected to server")
+
+            initActors()
+
+            cachedHostInfo = HostInfo(host, port)
+            reconnectionAttempt.set(0)
+
+            socket = newSocket
+            readChannel = newSocket.openReadChannel()
+            writeChannel = newSocket.openWriteChannel(autoFlush = false)
+
+            launch { listenServer(isActive) }
+            socketEventsQueue.send(SocketEvent.ConnectedToServer())
+          } else {
+            println("Connection canceled while trying to connect")
+
+            if (!newSocket.isClosed) {
+              newSocket.close()
+            }
+
+            disconnect(shouldReconnect)
+          }
+        }
+      } catch (error: Throwable) {
+        error.printStackTrace()
+        connectionState.set(ConnectionState.Disconnected)
+
+        socketEventsQueue.send(SocketEvent.ErrorWhileConnecting(error))
+      }
+    }
+  }
+
+  fun disconnect(shouldReconnect: Boolean) {
+    println("Trying to disconnect from the server")
+
+    if (!connectionState.compareAndSet(ConnectionState.Connecting, ConnectionState.Disconnected) &&
+      !connectionState.compareAndSet(ConnectionState.Connected, ConnectionState.Disconnected)) {
+      println("Already disconnected")
+      return
+    }
+
+    launch {
+      try {
+        mutex.withLock {
+          writeChannel?.let { wc ->
+            if (!wc.isClosedForWrite) {
+              wc.close()
+            }
+          }
+
+          socket?.let { sckt ->
+            if (!sckt.isClosed) {
+              sckt.close()
+            }
+          }
+
+          socketEventsQueue.send(SocketEvent.DisconnectedFromServer())
+
+          sendPacketsActor?.close()
+          sendPacketsActor = null
+
+          if (shouldReconnect) {
+            if (!reconnectionActor!!.offer(Unit)) {
+              println("Already in reconnection state")
+            } else {
+              println("Disconnected, trying to reconnect")
+            }
+          }
+
+          println("Disconnected")
+        }
+      } catch (error: Throwable) {
+        error.printStackTrace()
+      }
+    }
+  }
+
+  suspend fun sendPacket(packet: BasePacket) {
+    launch {
+      writeChannel?.let { wc ->
+        if (connectionState.get() != ConnectionState.Connected || wc.isClosedForWrite) {
+          disconnect(true)
+          return@let
+        }
+
+        sendPacketsActor?.send(packet)
+      }
+    }
+  }
+
+  private fun initActors() {
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
       for (packet in channel) {
         try {
@@ -66,79 +191,30 @@ class NetworkManager {
         } catch (error: Throwable) {
           println("Disconnected from the server")
 
-          disconnect()
+          disconnect(true)
         }
       }
     }
   }
 
   private suspend fun writeToOutputChannel(packet: Packet) {
-    writeChannel.writeInt(packet.magicNumber)
-    writeChannel.writeInt(packet.bodySize)
-    writeChannel.writeShort(packet.type)
+    writeChannel?.let { wc ->
+      wc.writeInt(packet.magicNumber)
+      wc.writeInt(packet.bodySize)
+      wc.writeShort(packet.type)
 
-    packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, packet.bodySize) { chunk ->
-      writeChannel.writeFully(chunk, 0, chunk.size)
-      writeChannel.flush()
-    }
-  }
-
-  suspend fun sendPacket(packet: BasePacket) {
-    if (!isConnected.get() || writeChannel.isClosedForWrite) {
-      disconnect()
-      return
-    }
-
-    sendPacketsActor.send(packet)
-  }
-
-  suspend fun connect() {
-    try {
-      mutex.withLock {
-        if (isConnected.get()) {
-          return
-        }
-
-        aSocket(ActorSelectorManager(ioCoroutineDispatcher))
-          .tcp()
-          .connect(InetSocketAddress("127.0.0.1", 2323))
-          .let { newSocket ->
-            socket = newSocket
-            readChannel = newSocket.openReadChannel()
-            writeChannel = newSocket.openWriteChannel(autoFlush = false)
-            launch { listenServer(isActive) }
-
-            isConnected.set(true)
-            socketEventsQueue.send(SocketEvent.ConnectedToServer())
-          }
+      packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, packet.bodySize) { chunk ->
+        wc.writeFully(chunk, 0, chunk.size)
+        wc.flush()
       }
-    } catch (error: Throwable) {
-      socketEventsQueue.send(SocketEvent.ErrorWhileConnecting(error))
-    }
-  }
-
-  suspend fun disconnect() {
-    mutex.withLock {
-      if (!isConnected.get()) {
-        return
-      }
-
-      if (!writeChannel.isClosedForWrite) {
-        writeChannel.close()
-      }
-
-      if (!socket.isClosed) {
-        socket.close()
-      }
-
-      isConnected.set(false)
-      socketEventsQueue.send(SocketEvent.DisconnectedFromServer())
     }
   }
 
   private suspend fun listenServer(isActive: Boolean) {
+    println("Listening to the server...")
+
     try {
-      while (isActive && !readChannel.isClosedForRead) {
+      while (isActive && !readChannel.isClosedForRead && connectionState.get() == ConnectionState.Connected) {
         if (!readMagicNumber()) {
           continue
         }
@@ -154,9 +230,10 @@ class NetworkManager {
         socketEventsQueue.send(SocketEvent.ResponseReceived(responseInfo))
       }
     } catch (error: IOException) {
+      println("Remote server dropped the connection")
       socketEventsQueue.send(SocketEvent.DisconnectedFromServer())
     } finally {
-      disconnect()
+      disconnect(true)
     }
   }
 
@@ -188,10 +265,21 @@ class NetworkManager {
     return true
   }
 
+  enum class ConnectionState {
+    Disconnected,
+    Connecting,
+    Connected
+  }
+
   sealed class SocketEvent {
     class ConnectedToServer : SocketEvent()
     class ErrorWhileConnecting(val throwable: Throwable) : SocketEvent()
     class DisconnectedFromServer : SocketEvent()
     class ResponseReceived(val responseInfo: ResponseInfo) : SocketEvent()
   }
+
+  data class HostInfo(
+    val host: String,
+    val port: Int
+  )
 }
