@@ -55,15 +55,31 @@ class NetworkManager {
 
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
       for (packet in channel) {
-        val resultPacket = packetBuilder.buildPacket(packet, InMemoryByteSink.createWithInitialSize(1024))
-        if (resultPacket == null) {
-          println("Could not build packet ${packet::class}")
-          continue
-        }
+        try {
+          val resultPacket = packetBuilder.buildPacket(packet, InMemoryByteSink.createWithInitialSize(1024))
+          if (resultPacket == null) {
+            println("Could not build packet ${packet::class}")
+            continue
+          }
 
-        writeToOutputChannel(resultPacket)
-        writeChannel.flush()
+          writeToOutputChannel(resultPacket)
+        } catch (error: Throwable) {
+          println("Disconnected from the server")
+
+          disconnect()
+        }
       }
+    }
+  }
+
+  private suspend fun writeToOutputChannel(packet: Packet) {
+    writeChannel.writeInt(packet.magicNumber)
+    writeChannel.writeInt(packet.bodySize)
+    writeChannel.writeShort(packet.type)
+
+    packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, packet.bodySize) { chunk ->
+      writeChannel.writeFully(chunk, 0, chunk.size)
+      writeChannel.flush()
     }
   }
 
@@ -74,10 +90,6 @@ class NetworkManager {
     }
 
     sendPacketsActor.send(packet)
-  }
-
-  fun isConnected(): Boolean {
-    return isConnected.get()
   }
 
   suspend fun connect() {
@@ -145,33 +157,6 @@ class NetworkManager {
       socketEventsQueue.send(SocketEvent.DisconnectedFromServer())
     } finally {
       disconnect()
-    }
-  }
-
-  private suspend fun writeToOutputChannel(packet: Packet) {
-    val sink = InMemoryByteSink.createWithInitialSize(1024)
-
-    writeChannel.writeInt(packet.magicNumber)
-    writeChannel.writeInt(packet.bodySize)
-    writeChannel.writeShort(packet.type)
-
-    //for logging
-    sink.writeInt(packet.magicNumber)
-    sink.writeInt(packet.bodySize)
-    sink.writeShort(packet.type)
-    //
-
-    packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, packet.bodySize) { chunk ->
-      writeChannel.writeFully(chunk, 0, chunk.size)
-
-      //for logging
-      sink.writeByteArray(chunk)
-      //
-    }
-
-    sink.getStream().use { stream ->
-      //TODO: for debug only! may cause OOM when internal buffer is way too big!
-      println(" <<< SENDING  (${sink.getWriterPosition()} bytes): ${stream.readAllBytes().toHexSeparated()}")
     }
   }
 

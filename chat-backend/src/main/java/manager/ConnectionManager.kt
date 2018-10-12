@@ -48,6 +48,19 @@ class ConnectionManager(
     }
   }
 
+  private suspend fun writeToOutputChannel(connection: Connection, packet: Packet) {
+    connection.writeChannel.writeInt(packet.magicNumber)
+    connection.writeChannel.writeInt(packet.bodySize)
+    connection.writeChannel.writeShort(packet.type)
+
+    val streamSize = packet.bodyByteSink.getWriterPosition()
+
+    packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, streamSize) { chunk ->
+      connection.writeChannel.writeFully(chunk, 0, chunk.size)
+      connection.writeChannel.flush()
+    }
+  }
+
   suspend fun sendResponse(clientAddress: String, response: BaseResponse) {
     val connection = mutex.withLock { connections.getOrDefault(clientAddress, null) }
     if (connection == null) {
@@ -73,45 +86,16 @@ class ConnectionManager(
 
   suspend fun removeConnection(clientAddress: String) {
     mutex.withLock {
+      if (!connections.containsKey(clientAddress)) {
+        return@withLock
+      }
+
       try {
-        connections[clientAddress]?.let {
-          if (!it.writeChannel.isClosedForWrite) {
-            it.writeChannel.close()
-          }
-        }
+        connections[clientAddress]?.dispose()
       } finally {
         connections.remove(clientAddress)
       }
     }
     println("Removed connection for client $clientAddress")
-  }
-
-  private suspend fun writeToOutputChannel(connection: Connection, packet: Packet) {
-    val loggingSink = InMemoryByteSink.createWithInitialSize(loggingSinkInitialSize)
-
-    connection.writeChannel.writeInt(packet.magicNumber)
-    connection.writeChannel.writeInt(packet.bodySize)
-    connection.writeChannel.writeShort(packet.type)
-
-    //for logging
-    loggingSink.writeInt(packet.magicNumber)
-    loggingSink.writeInt(packet.bodySize)
-    loggingSink.writeShort(packet.type)
-    //
-
-    val streamSize = packet.bodyByteSink.getWriterPosition()
-
-    packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, streamSize) { chunk ->
-      connection.writeChannel.writeFully(chunk, 0, chunk.size)
-
-      //for logging
-      loggingSink.writeByteArray(chunk)
-      //
-    }
-
-    loggingSink.getStream().use { stream ->
-      //TODO: for debug only! may cause OOM when internal buffer is way too big!
-      println(" >>> SENDING (${loggingSink.getWriterPosition()} bytes): ${stream.readAllBytes().toHexSeparated()}")
-    }
   }
 }

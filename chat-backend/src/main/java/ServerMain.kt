@@ -67,16 +67,15 @@ class Server(
         launch {
           clientSocket.use { socket ->
             val clientAddress = socket.remoteAddress.toString()
-            val readChannel = socket.openReadChannel()
+            val connection = Connection(clientAddress, socket)
 
             try {
-              connectionManager.addConnection(clientAddress, Connection(clientAddress, socket.openWriteChannel(autoFlush = false)))
-              listenClient(isActive, readChannel, clientAddress)
+              connectionManager.addConnection(clientAddress, connection)
+              listenClient(isActive, connection, clientAddress)
             } catch (error: Throwable) {
               printException(error, clientAddress)
             } finally {
               connectionManager.removeConnection(clientAddress)
-              socket.dispose()
             }
           }
         }
@@ -94,14 +93,14 @@ class Server(
     }
   }
 
-  private suspend fun listenClient(isActive: Boolean, readChannel: ByteReadChannel, clientAddress: String) {
-    while (isActive && !readChannel.isClosedForRead && !readChannel.isClosedForWrite) {
-      if (!readMagicNumber(readChannel)) {
+  private suspend fun listenClient(isActive: Boolean, connection: Connection, clientAddress: String) {
+    while (isActive && !connection.isDisposed) {
+      if (!readMagicNumber(connection.readChannel)) {
         continue
       }
 
-      val bodySize = readChannel.readInt()
-      val packetInfo = readChannel.readPacketInfo(byteSinkFileCachePath, bodySize)
+      val bodySize = connection.readChannel.readInt()
+      val packetInfo = connection.readChannel.readPacketInfo(byteSinkFileCachePath, bodySize)
 
       packetInfo.byteSink.getStream().use { stream ->
         //TODO: for debug only! may cause OOM when internal buffer is way too big!
