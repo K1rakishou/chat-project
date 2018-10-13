@@ -3,7 +3,7 @@ package ui.connection_window
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import tornadofx.*
-import ui.loading_window.ConnectionToServerWindow
+import ui.loading_window.LoadingWindow
 import model.viewmodel.HostInfoViewModel
 
 class ConnectionWindow : View("Connection parameters") {
@@ -20,12 +20,16 @@ class ConnectionWindow : View("Connection parameters") {
     fieldset {
       field("Host address") {
         textfield(model.host) {
+          text = "127.0.0.1"
           required()
           whenDocked { requestFocus() }
         }
       }
       field("Port") {
-        textfield(model.port).required()
+        textfield(model.port){
+          text = "2323"
+          required()
+        }
       }
     }
 
@@ -50,7 +54,7 @@ class ConnectionWindow : View("Connection parameters") {
     val newScope = Scope()
     setInScope(HostInfoViewModel(model.host.value, model.port.value), newScope)
 
-    find<ConnectionToServerWindow>(newScope).openModal()
+    find<LoadingWindow>(newScope).openModal(resizable = false)
   }
 
 }

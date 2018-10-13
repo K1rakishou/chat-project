@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class InMemoryByteSinkTest {
   lateinit var byteSink: InMemoryByteSink
@@ -84,6 +85,15 @@ class InMemoryByteSinkTest {
 
     assertEquals(1, byteSink.getWriterPosition())
     assertEquals(null, byteSink.readString(1))
+    assertEquals(1, byteSink.getReaderPosition())
+  }
+
+  @Test
+  fun testReadWriteEmptyString() {
+    byteSink.writeString("")
+
+    assertEquals(1, byteSink.getWriterPosition())
+    assertTrue(byteSink.readString(1)!!.isEmpty())
     assertEquals(1, byteSink.getReaderPosition())
   }
 

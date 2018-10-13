@@ -18,13 +18,8 @@ open class BaseResponsePayloadTest {
 
   private fun <T> testWithInMemoryByteSink(baseResponse: BaseResponse, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
     val response = responseBuilder.buildResponse(baseResponse, InMemoryByteSink.createWithInitialSize(baseResponse.getPayloadSize()))
-
-    assertNotNull(response)
-    //TODO
-    //can't wait for kotlin's 1.3 contracts to get rid of this
-    response
-
     val bodySize = response.bodySize
+
     (response.bodyByteSink as InMemoryByteSink).use { byteSink ->
       val calculatedBodySize = byteSink.getWriterPosition()
       val responseBytesHex = byteSink.getArray()

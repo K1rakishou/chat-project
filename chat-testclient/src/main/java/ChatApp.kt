@@ -1,9 +1,17 @@
+import javafx.stage.Stage
 import manager.NetworkManager
 import tornadofx.App
+import tornadofx.NoPrimaryViewSpecified
+import tornadofx.find
 import ui.connection_window.ConnectionWindow
-import ui.loading_window.ConnectionToServerWindow
 
-class ChatApp : App(ConnectionWindow::class, Styles::class) {
+class ChatApp : App(NoPrimaryViewSpecified::class, Styles::class) {
+
+  override fun start(stage: Stage) {
+    super.start(stage)
+
+    find<ConnectionWindow>().openModal(resizable = false)
+  }
 
   companion object {
     val networkManager = NetworkManager()

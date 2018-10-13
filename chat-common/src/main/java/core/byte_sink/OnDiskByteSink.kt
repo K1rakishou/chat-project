@@ -167,29 +167,33 @@ class OnDiskByteSink private constructor(
   }
 
   override fun readByteArray(maxSize: Int): ByteArray? {
-    return if (readByte() == NO_VALUE) {
-      null
-    } else {
-      val arrayLen = readInt()
-      if (arrayLen > maxSize) {
-        throw ByteSinkBufferOverflowException(arrayLen, maxSize)
+    return when (readByte()) {
+      NO_VALUE -> null
+      EMPTY_ARRAY -> ByteArray(0)
+      else -> {
+        val arrayLen = readInt()
+        if (arrayLen > maxSize) {
+          throw ByteSinkBufferOverflowException(arrayLen, maxSize)
+        }
+
+        if (getReaderPosition() + arrayLen > raf.length()) {
+          throw ReaderPositionExceededBufferSizeException(getReaderPosition(), arrayLen, raf.length())
+        }
+
+        val array = ByteArray(arrayLen)
+        raf.read(array)
+        readPosition.getAndAdd(arrayLen)
+
+        array
       }
-
-      if (getReaderPosition() + arrayLen > raf.length()) {
-        throw ReaderPositionExceededBufferSizeException(getReaderPosition(), arrayLen, raf.length())
-      }
-
-      val array = ByteArray(arrayLen)
-      raf.read(array)
-      readPosition.getAndAdd(arrayLen)
-
-      array
     }
   }
 
   override fun writeByteArray(inArray: ByteArray?) {
     if (inArray == null) {
       writeByte(NO_VALUE)
+    } else if (inArray.isEmpty()) {
+      writeByte(EMPTY_ARRAY)
     } else {
       writeByte(HAS_VALUE)
       writeInt(inArray.size)

@@ -1,6 +1,6 @@
 package ui.chat_main_window
 
-import controller.ChatRoomListController
+import controller.ChatMainWindowController
 import store.Store
 import javafx.scene.Node
 import javafx.scene.Parent
@@ -17,8 +17,16 @@ import tornadofx.listview
 import tornadofx.paddingRight
 
 class ChatRoomListFragment : Fragment() {
-  val chatRoomListController: ChatRoomListController by inject()
+  val chatMainWindowController: ChatMainWindowController by inject()
   val store: Store by inject()
+
+  override fun onDock() {
+    chatMainWindowController.createController()
+  }
+
+  override fun onUndock() {
+    chatMainWindowController.destroyController()
+  }
 
   override val root = listview(store.getPublicChatRoomList()) {
     setCellFactory { _ -> cellFactory() }
@@ -52,7 +60,7 @@ class ChatRoomListFragment : Fragment() {
       if (event.button == MouseButton.PRIMARY && event.clickCount == 1 && target.id == componentId) {
         val item = (target as? ListCell<PublicChatRoomItem>)?.item
         if (item != null) {
-          chatRoomListController.joinChatRoom(item)
+          chatMainWindowController.joinChatRoom(item)
         }
       }
     }

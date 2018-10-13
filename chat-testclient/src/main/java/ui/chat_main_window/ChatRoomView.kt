@@ -1,7 +1,7 @@
 package ui.chat_main_window
 
 import Styles
-import controller.ChatRoomListController
+import controller.ChatMainWindowController
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
 import javafx.scene.text.Text
@@ -20,11 +20,11 @@ class ChatRoomView : View() {
   private lateinit var textFlow: TextFlow
   private lateinit var scrollPane: ScrollPane
 
-  private val chatRoomListController: ChatRoomListController by inject()
+  private val chatMainWindowController: ChatMainWindowController by inject()
   private val store: Store by inject()
 
   init {
-    chatRoomListController.scrollToBottomFlag.addListener { _, _, _ ->
+    chatMainWindowController.scrollToBottomFlag.addListener { _, _, _ ->
       scrollToBottom()
     }
   }
@@ -35,7 +35,7 @@ class ChatRoomView : View() {
       vbarPolicy = ScrollPane.ScrollBarPolicy.ALWAYS
 
       textFlow = textflow {
-        bindChildren(chatRoomListController.getCurrentChatRoomMessageHistory()) { baseChatMessage ->
+        bindChildren(chatMainWindowController.getCurrentChatRoomMessageHistory()) { baseChatMessage ->
           return@bindChildren when (baseChatMessage) {
             is TextChatMessageItem -> createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
             else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
@@ -56,7 +56,7 @@ class ChatRoomView : View() {
           return@setOnAction
         }
 
-        chatRoomListController.sendMessage(text)
+        chatMainWindowController.sendMessage(text)
 
         clear()
         requestFocus()

@@ -13,24 +13,34 @@ import extensions.readResponseInfo
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
 import io.ktor.network.util.ioCoroutineDispatcher
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.BroadcastChannel
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Flowable
+import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
+import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.io.ByteReadChannel
 import kotlinx.coroutines.experimental.io.ByteWriteChannel
 import kotlinx.coroutines.experimental.io.close
+import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 import java.io.File
 import java.io.IOException
 import java.net.InetSocketAddress
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.experimental.CoroutineContext
 
 class NetworkManager {
-  private val connectionState = AtomicReference<ConnectionState>()
+  private val TAG = NetworkManager::class.simpleName
+
+  @Volatile
+  private var connectionState: ConnectionState
+
+  private val shouldReconnectToServer = AtomicBoolean(false)
   private val mutex = Mutex()
   private val sendActorChannelCapacity = 128
   private val packetBuilder = PacketBuilder()
@@ -39,10 +49,17 @@ class NetworkManager {
   private var reconnectionActor: SendChannel<Unit>? = null
   private var sendPacketsActor: SendChannel<BasePacket>? = null
 
-  val socketEventsQueue = BroadcastChannel<SocketEvent>(128)
+  val connectionStateObservable = BehaviorSubject.createDefault<ConnectionState>(ConnectionState.Uninitialized)
+    .toSerialized()
+
+  private val responsesQueue = PublishSubject.create<ResponseInfo>()
+    .toSerialized()
+  val responsesFlowable: Flowable<ResponseInfo>
+    get() = responsesQueue.toFlowable(BackpressureStrategy.BUFFER)
 
   private var socket: Socket? = null
   private var writeChannel: ByteWriteChannel? = null
+  private var connectionJob: Job? = null
 
   private lateinit var readChannel: ByteReadChannel
   private lateinit var byteSinkFileCachePath: String
@@ -56,8 +73,10 @@ class NetworkManager {
     }
 
     byteSinkFileCachePath = byteSinkCachePathFile.absolutePath
-    connectionState.set(ConnectionState.Disconnected)
+    connectionState = ConnectionState.Disconnected
 
+    //actor for reconnection
+    //it will wait delayTime milliseconds and the try to connect to the server again
     reconnectionActor = actor(capacity = 1) {
       for (event in channel) {
         val delayTime = 5000
@@ -66,29 +85,45 @@ class NetworkManager {
         delay(delayTime)
         println("Reconnecting")
 
-        cachedHostInfo?.let { connect(it.host, it.port, true) }
+        cachedHostInfo?.let { connect(it.host, it.port) }
       }
     }
   }
 
-  fun connect(host: String, port: Int, shouldReconnect: Boolean) {
-    println("Trying to connect to the server")
+  fun connect(host: String, port: Int) {
+    connectionStateObservable.onNext(ConnectionState.Uninitialized)
 
-    if (!connectionState.compareAndSet(ConnectionState.Disconnected, ConnectionState.Connecting)) {
-      println("Already connected or in connecting state")
-      return
-    }
-
-    launch {
+    connectionJob = launch {
       try {
         mutex.withLock {
+          println("Trying to connect to the server")
+
+          //if an error has occurred while we were trying to connect to the server the state will be ErrorWhileTryingToConnect
+          //so we need to manually reset the state to Disconnected only when it is ErrorWhileTryingToConnect
+          if (connectionState is ConnectionState.ErrorWhileTryingToConnect) {
+            connectionState = ConnectionState.Disconnected
+          }
+
+          //if we are not disconnected - do no try to connect
+          if (connectionState !is ConnectionState.Disconnected) {
+            println("Already connected or in connecting state")
+            return@withLock
+          }
+
+          connectionState = ConnectionState.Connecting
+          connectionStateObservable.onNext(ConnectionState.Connecting)
+
+          delay(1, TimeUnit.SECONDS)
+
           val newSocket = aSocket(ActorSelectorManager(ioCoroutineDispatcher))
             .tcp()
             .connect(InetSocketAddress(host, port))
 
-          if (!connectionState.compareAndSet(ConnectionState.Connecting, ConnectionState.Connected)) {
+          //check whether the user has canceled the connection
+          if (connectionState is ConnectionState.Connecting) {
             println("Connected to server")
 
+            connectionState = ConnectionState.Connected
             initActors()
 
             cachedHostInfo = HostInfo(host, port)
@@ -99,76 +134,92 @@ class NetworkManager {
             writeChannel = newSocket.openWriteChannel(autoFlush = false)
 
             launch { listenServer(isActive) }
-            socketEventsQueue.send(SocketEvent.ConnectedToServer())
+            connectionStateObservable.onNext(ConnectionState.Connected)
           } else {
+            //if we are not in connecting state that means the connection has been canceled
             println("Connection canceled while trying to connect")
 
             if (!newSocket.isClosed) {
               newSocket.close()
             }
 
-            disconnect(shouldReconnect)
+            disconnect()
           }
         }
       } catch (error: Throwable) {
-        error.printStackTrace()
-        connectionState.set(ConnectionState.Disconnected)
+        println("Error while trying to connect to the server: ${error.message ?: "no error message"}")
 
-        socketEventsQueue.send(SocketEvent.ErrorWhileConnecting(error))
+        connectionState = ConnectionState.Disconnected
+        connectionStateObservable.onNext(ConnectionState.ErrorWhileTryingToConnect(error))
+      } finally {
+        connectionJob = null
       }
     }
   }
 
-  fun disconnect(shouldReconnect: Boolean) {
-    println("Trying to disconnect from the server")
-
-    if (!connectionState.compareAndSet(ConnectionState.Connecting, ConnectionState.Disconnected) &&
-      !connectionState.compareAndSet(ConnectionState.Connected, ConnectionState.Disconnected)) {
-      println("Already disconnected")
-      return
-    }
-
+  fun disconnect() {
     launch {
       try {
         mutex.withLock {
+          println("Trying to disconnect from the server, shouldReconnect = ${shouldReconnectToServer.get()}")
+
+          //if we are not connected - do nothing
+          if (connectionState !is ConnectionState.Connecting && connectionState !is ConnectionState.Connected) {
+            println("Already disconnected")
+            return@withLock
+          }
+
+          //cancel any active connection jobs
+          connectionJob?.let {
+            it.cancel()
+            connectionJob = null
+          }
+
+          //close channels
           writeChannel?.let { wc ->
             if (!wc.isClosedForWrite) {
               wc.close()
             }
           }
 
+          //sockets
           socket?.let { sckt ->
             if (!sckt.isClosed) {
               sckt.close()
             }
           }
 
-          socketEventsQueue.send(SocketEvent.DisconnectedFromServer())
-
+          //and actors
           sendPacketsActor?.close()
           sendPacketsActor = null
 
-          if (shouldReconnect) {
+          //if shouldReconnectToServer is true - start reconnection coroutine
+          if (shouldReconnectToServer.get()) {
             if (!reconnectionActor!!.offer(Unit)) {
-              println("Already in reconnection state")
+              println("Already trying to reconnect")
             } else {
               println("Disconnected, trying to reconnect")
             }
           }
 
+          //set state as disconnected
+          connectionState = ConnectionState.Disconnected
+          connectionStateObservable.onNext(ConnectionState.Disconnected)
+
           println("Disconnected")
         }
       } catch (error: Throwable) {
-        error.printStackTrace()
+        println("Error while disconnecting: ${error.message ?: "no error message"}")
       }
     }
   }
 
-  suspend fun sendPacket(packet: BasePacket) {
+  fun sendPacket(packet: BasePacket) {
     launch {
       writeChannel?.let { wc ->
-        if (connectionState.get() != ConnectionState.Connected || wc.isClosedForWrite) {
-          disconnect(true)
+        //disconnect if we are not connected or the channel is closed
+        if (connectionState !is ConnectionState.Connected || wc.isClosedForWrite) {
+          disconnect()
           return@let
         }
 
@@ -178,6 +229,7 @@ class NetworkManager {
   }
 
   private fun initActors() {
+    //an actor to send outgoing packets to the server
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
       for (packet in channel) {
         try {
@@ -191,7 +243,7 @@ class NetworkManager {
         } catch (error: Throwable) {
           println("Disconnected from the server")
 
-          disconnect(true)
+          disconnect()
         }
       }
     }
@@ -214,11 +266,14 @@ class NetworkManager {
     println("Listening to the server...")
 
     try {
-      while (isActive && !readChannel.isClosedForRead && connectionState.get() == ConnectionState.Connected) {
+      //while read channel is not closed and state is connected
+      while (isActive && !readChannel.isClosedForRead && connectionState is ConnectionState.Connected) {
+        //skip everything that's not started with 4 magic bytes
         if (!readMagicNumber()) {
           continue
         }
 
+        //read packet
         val bodySize = readChannel.readInt()
         val responseInfo = readChannel.readResponseInfo(byteSinkFileCachePath, bodySize)
 
@@ -227,13 +282,14 @@ class NetworkManager {
           println(" >>> RECEIVING (${bodySize} bytes): ${stream.readAllBytes().toHexSeparated()}")
         }
 
-        socketEventsQueue.send(SocketEvent.ResponseReceived(responseInfo))
+        //send to recipients
+        responsesQueue.onNext(responseInfo)
       }
     } catch (error: IOException) {
       println("Remote server dropped the connection")
-      socketEventsQueue.send(SocketEvent.DisconnectedFromServer())
+      connectionStateObservable.onNext(ConnectionState.Disconnected)
     } finally {
-      disconnect(true)
+      disconnect()
     }
   }
 
@@ -265,17 +321,12 @@ class NetworkManager {
     return true
   }
 
-  enum class ConnectionState {
-    Disconnected,
-    Connecting,
-    Connected
-  }
-
-  sealed class SocketEvent {
-    class ConnectedToServer : SocketEvent()
-    class ErrorWhileConnecting(val throwable: Throwable) : SocketEvent()
-    class DisconnectedFromServer : SocketEvent()
-    class ResponseReceived(val responseInfo: ResponseInfo) : SocketEvent()
+  sealed class ConnectionState {
+    object Uninitialized : ConnectionState()
+    object Disconnected : ConnectionState()
+    object Connecting  : ConnectionState()
+    class ErrorWhileTryingToConnect(val error: Throwable?) : ConnectionState()
+    object Connected : ConnectionState()
   }
 
   data class HostInfo(

@@ -163,34 +163,38 @@ class InMemoryByteSink private constructor(
   }
 
   override fun readByteArray(maxSize: Int): ByteArray? {
-    return if (readByte() == NO_VALUE) {
-      null
-    } else {
-      val arrayLen = readInt()
-      if (arrayLen > maxSize) {
-        throw ByteSinkBufferOverflowException(arrayLen, maxSize)
-      }
+    return when (readByte()) {
+      NO_VALUE -> null
+      EMPTY_ARRAY -> ByteArray(0)
+      else -> {
+        val arrayLen = readInt()
+        if (arrayLen > maxSize) {
+          throw ByteSinkBufferOverflowException(arrayLen, maxSize)
+        }
 
-      if (getReaderPosition() + arrayLen > array.size) {
-        throw ReaderPositionExceededBufferSizeException(getReaderPosition(), arrayLen, array.size)
-      }
+        if (getReaderPosition() + arrayLen > array.size) {
+          throw ReaderPositionExceededBufferSizeException(getReaderPosition(), arrayLen, array.size)
+        }
 
-      return array.copyOfRange(readPosition.get(), getReaderPosition() + arrayLen)
-        .also { readPosition.getAndAdd(arrayLen) }
+        return array.copyOfRange(readPosition.get(), getReaderPosition() + arrayLen)
+          .also { readPosition.getAndAdd(arrayLen) }
+      }
     }
   }
 
   override fun writeByteArray(inArray: ByteArray?) {
-    if (inArray == null) {
-      writeByte(NO_VALUE)
-    } else {
-      writeByte(HAS_VALUE)
-      writeInt(inArray.size)
+    when {
+      inArray == null -> writeByte(NO_VALUE)
+      inArray.isEmpty() -> writeByte(EMPTY_ARRAY)
+      else -> {
+        writeByte(HAS_VALUE)
+        writeInt(inArray.size)
 
-      resizeIfNeeded(inArray.size)
-      System.arraycopy(inArray, 0, array, getWriterPosition(), inArray.size)
+        resizeIfNeeded(inArray.size)
+        System.arraycopy(inArray, 0, array, getWriterPosition(), inArray.size)
 
-      writePosition.getAndAdd(inArray.size)
+        writePosition.getAndAdd(inArray.size)
+      }
     }
   }
 

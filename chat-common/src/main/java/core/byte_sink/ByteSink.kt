@@ -10,6 +10,7 @@ import kotlin.reflect.KClass
 abstract class ByteSink : AutoCloseable {
   protected val NO_VALUE = 0.toByte()
   protected val HAS_VALUE = 1.toByte()
+  protected val EMPTY_ARRAY = 2.toByte()
 
   protected val readPosition = AtomicInteger(0)
   protected val writePosition = AtomicInteger(0)

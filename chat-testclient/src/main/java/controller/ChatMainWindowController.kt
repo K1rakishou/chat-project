@@ -7,12 +7,14 @@ import core.Status
 import core.exception.ResponseDeserializationException
 import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
+import core.packet.GetPageOfPublicRoomsPacket
 import core.packet.JoinChatRoomPacket
 import core.packet.SendChatMessagePacket
-import core.response.JoinChatRoomResponsePayload
-import core.response.NewChatMessageResponsePayload
-import core.response.SendChatMessageResponsePayload
-import core.response.UserHasJoinedResponsePayload
+import core.response.*
+import io.reactivex.BackpressureStrategy
+import io.reactivex.rxkotlin.combineLatest
+import io.reactivex.rxkotlin.plusAssign
+import io.reactivex.rxkotlin.subscribeBy
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.collections.ObservableList
 import javafx.util.Duration
@@ -26,7 +28,7 @@ import tornadofx.runLater
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
 
-class ChatRoomListController : BaseController() {
+class ChatMainWindowController : BaseController() {
   private val networkManager = ChatApp.networkManager
   private val store: Store by inject()
   private var selectedRoomName: String? = null
@@ -34,8 +36,17 @@ class ChatRoomListController : BaseController() {
   private val delayBeforeAddFirstChatRoomMessage = 250.0
   val scrollToBottomFlag = SimpleIntegerProperty(0)
 
-  init {
-    launch { startListeningToPackets() }
+  override fun createController() {
+    super.createController()
+
+    startListeningToPackets()
+    networkManager.sendPacket(GetPageOfPublicRoomsPacket(0, 20))
+  }
+
+  override fun destroyController() {
+    selectedRoomName = null
+
+    super.destroyController()
   }
 
   fun getCurrentChatRoomMessageHistory(): ObservableList<BaseChatMessageItem> {
@@ -83,25 +94,58 @@ class ChatRoomListController : BaseController() {
     }
   }
 
-  private suspend fun startListeningToPackets() {
-    for (socketEvent in networkManager.socketEventsQueue.openSubscription()) {
-      when (socketEvent) {
-        is NetworkManager.SocketEvent.ConnectedToServer -> {
+  private fun startListeningToPackets() {
+    val connectedObservable = networkManager.connectionStateObservable
+      .filter { connectionState -> connectionState == NetworkManager.ConnectionState.Connected }
+      .toFlowable(BackpressureStrategy.LATEST)
+      .publish()
+
+    networkManager.responsesFlowable
+      .combineLatest(connectedObservable)
+      .map { it.first }
+      .subscribe(this::handleIncomingResponses, { it.printStackTrace() })
+
+    compositeDisposable += connectedObservable.connect()
+
+    compositeDisposable += networkManager.connectionStateObservable
+      .filter { connectionState -> connectionState != NetworkManager.ConnectionState.Connected }
+      .subscribeBy(onNext = { connectionState ->
+        when (connectionState) {
+          is NetworkManager.ConnectionState.Connecting -> {
+          }
+          is NetworkManager.ConnectionState.Disconnected -> {
+            onDisconnected()
+          }
+          is NetworkManager.ConnectionState.ErrorWhileTryingToConnect -> {
+          }
+          is NetworkManager.ConnectionState.Connected -> {
+          }
+          is NetworkManager.ConnectionState.Uninitialized -> {
+            //Default state
+          }
         }
-        is NetworkManager.SocketEvent.ErrorWhileConnecting -> {
-        }
-        is NetworkManager.SocketEvent.DisconnectedFromServer -> {
-          onDisconnected()
-        }
-        is NetworkManager.SocketEvent.ResponseReceived -> {
-          handleIncomingResponses(socketEvent.responseInfo)
-        }
-      }
-    }
+      })
   }
 
   private fun handleIncomingResponses(responseInfo: ResponseInfo) {
     when (responseInfo.responseType) {
+      ResponseType.GetPageOfPublicRoomsResponseType -> {
+        val response = try {
+          GetPageOfPublicRoomsResponsePayload.fromByteSink(responseInfo.byteSink)
+        } catch (error: ResponseDeserializationException) {
+          showErrorAlert("Could not deserialize packet GetPageOfPublicRoomsResponse, error: ${error.message}")
+          return
+        }
+
+        if (response.status != Status.Ok) {
+          showErrorAlert("UserHasJoinedResponsePayload with non ok status ${response.status}")
+          return
+        }
+
+        runLater {
+          store.setPublicChatRoomList(response.publicChatRoomList)
+        }
+      }
       ResponseType.JoinChatRoomResponseType -> {
         println("JoinChatRoomResponseType response received")
 

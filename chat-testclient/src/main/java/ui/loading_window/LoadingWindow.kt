@@ -1,6 +1,6 @@
 package ui.loading_window
 
-import controller.ConnectionToServerController
+import controller.LoadingWindowController
 import javafx.geometry.Pos
 import javafx.scene.control.Alert
 import javafx.scene.text.TextAlignment
@@ -8,32 +8,31 @@ import model.viewmodel.HostInfoViewModel
 import tornadofx.*
 import ui.connection_window.ConnectionWindow
 
-class ConnectionToServerWindow : View("Chat") {
-  private val connectionToServerController: ConnectionToServerController by inject()
+class LoadingWindow : View("Chat") {
+  private val loadingWindowController: LoadingWindowController by inject()
   private val hostInfoViewModel: HostInfoViewModel by inject()
 
   override fun onDock() {
-    connectionToServerController.createController()
+    loadingWindowController.createController()
 
     if (hostInfoViewModel.isEmpty()) {
-      find<ConnectionToServerWindow>().replaceWith<ConnectionWindow>()
+      find<LoadingWindow>().replaceWith<ConnectionWindow>()
       return
     }
 
-    connectionToServerController.connectionError.addListener { _, _, newValue ->
+    loadingWindowController.connectionError.addListener { _, _, newValue ->
       if (newValue == null) {
         return@addListener
       }
 
       alert(Alert.AlertType.ERROR, header = "Connection error", content = newValue)
-      connectionToServerController.goBackToConnectionWindow()
     }
 
-    connectionToServerController.startConnectionToServer(hostInfoViewModel.host, hostInfoViewModel.port)
+    loadingWindowController.startConnectionToServer(hostInfoViewModel.host, hostInfoViewModel.port)
   }
 
   override fun onUndock() {
-    connectionToServerController.destroyController()
+    loadingWindowController.destroyController()
   }
 
   override val root = vbox(alignment = Pos.CENTER) {
@@ -42,7 +41,7 @@ class ConnectionToServerWindow : View("Chat") {
 
     progressindicator {
     }
-    label(observable = connectionToServerController.connectionStatus) {
+    label(observable = loadingWindowController.connectionStatus) {
       textAlignment = TextAlignment.CENTER
       wrapTextProperty().set(true)
     }
@@ -51,7 +50,7 @@ class ConnectionToServerWindow : View("Chat") {
 
     button("Cancel") {
       action {
-        connectionToServerController.stopConnectionToServer()
+        loadingWindowController.stopConnectionToServer()
       }
     }
   }

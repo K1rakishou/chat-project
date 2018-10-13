@@ -11,9 +11,8 @@ import handler.JoinChatRoomPacketHandler
 import handler.SendChatMessageHandler
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
 import io.ktor.network.util.ioCoroutineDispatcher
+import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.experimental.io.ByteReadChannel
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
@@ -86,6 +85,9 @@ class Server(
   private fun printException(error: Throwable, clientAddress: String) {
     //TODO: probably should log it somewhere
     when (error) {
+      is ClosedReceiveChannelException -> {
+        println("ReceiveChannel has been closed for client ${clientAddress} ")
+      }
       is IOException -> {
         println("Client: ${clientAddress} forcibly closed the connection")
       }

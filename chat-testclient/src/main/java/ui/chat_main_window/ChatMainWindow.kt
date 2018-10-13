@@ -7,6 +7,13 @@ import tornadofx.*
 
 class ChatMainWindow : View("Chat") {
 
+  override fun onDock() {
+    primaryStage.width = 960.0
+    primaryStage.height = 400.0
+    primaryStage.minWidth = 960.0
+    primaryStage.minHeight = 400.0
+  }
+
   override val root = vbox {
     splitpane {
       orientation = Orientation.HORIZONTAL

@@ -3,11 +3,13 @@ package core
 import core.interfaces.CanMeasureSizeOfFields
 import core.model.drainable.PublicChatRoom
 import core.model.drainable.PublicUserInChat
+import core.model.drainable.chat_message.TextChatMessage
 
 inline fun <reified T> sizeof(obj: T? = null): Int {
   return when (T::class) {
     PublicUserInChat::class -> (obj as? PublicUserInChat)?.getSize()?.plus(1) ?: 1
     PublicChatRoom::class -> (obj as? PublicChatRoom)?.getSize()?.plus(1) ?: 1
+    TextChatMessage::class -> (obj as? TextChatMessage)?.getSize()?.plus(1) ?: 1
     Status::class -> 2
     Boolean::class -> 1
     Byte::class -> 1
@@ -17,7 +19,7 @@ inline fun <reified T> sizeof(obj: T? = null): Int {
     Float::class -> 4
     Double::class -> 8
     String::class -> {
-      if (obj == null) {
+      if (obj == null || (obj as String).isEmpty()) {
         1 //1 byte -> NO_VALUE flag
       } else {
         //1 byte -> HAS_VALUE flag
@@ -28,7 +30,7 @@ inline fun <reified T> sizeof(obj: T? = null): Int {
       }
     }
     ByteArray::class -> {
-      if (obj == null) {
+      if (obj == null || (obj as ByteArray).isEmpty()) {
         1 //1 byte -> NO_VALUE flag
       } else {
         //1 byte -> HAS_VALUE flag
@@ -46,6 +48,6 @@ inline fun <reified T : CanMeasureSizeOfFields> sizeofList(objList: List<T>?): I
   if (objList == null || objList.isEmpty()) {
     return 1  //NO_VALUE flag
   } else {
-    return objList.asSequence().map { it.getSize() }.reduce { acc, i -> acc + i } + 2 + 1//two bytes for list size + one byte HAS_VALUE flag
+    return objList.asSequence().map { it.getSize() }.reduce { acc, i -> acc + i } + 2 + 1 //two bytes for list size + one byte HAS_VALUE flag
   }
 }

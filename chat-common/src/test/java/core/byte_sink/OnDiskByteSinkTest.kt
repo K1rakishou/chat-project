@@ -96,6 +96,15 @@ class OnDiskByteSinkTest {
   }
 
   @Test
+  fun testReadWriteEmptyString() {
+    byteSink.writeString("")
+
+    assertEquals(1, byteSink.getWriterPosition())
+    assertTrue(byteSink.readString(1)!!.isEmpty())
+    assertEquals(1, byteSink.getReaderPosition())
+  }
+
+  @Test
   fun testResizing() {
     val string = "1234567890123456789012345678901234567890123456789012345678901234567890"
     byteSink.writeString(string)
