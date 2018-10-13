@@ -6,11 +6,10 @@ import java.lang.RuntimeException
 
 class PacketBuilder {
 
-  fun buildPacket(packet: BasePacket, byteSink: ByteSink): Packet? {
+  fun buildPacket(packet: BasePacket, byteSink: ByteSink): Packet {
     val payloadSize = packet.getPayloadSize()
     if (payloadSize > Int.MAX_VALUE) {
-      println("payloadSize exceeds Int.MAX_VALUE: $payloadSize")
-      return null
+      throw RuntimeException("payloadSize exceeds Int.MAX_VALUE: $payloadSize")
     }
 
     packet.toByteSink(byteSink)

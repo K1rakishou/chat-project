@@ -5,6 +5,7 @@ import core.exception.MaxListSizeExceededException
 import core.model.drainable.PublicChatRoom
 import core.model.drainable.PublicUserInChat
 import core.security.SecurityUtils
+import core.sizeofList
 import org.junit.After
 import org.junit.Assert
 import org.junit.Assert.*
@@ -243,6 +244,26 @@ class OnDiskByteSinkTest {
 
   @Test
   fun testReadWriteListOfDrainables() {
+    val expectedListOfDrainables = listOf(
+      PublicChatRoom("1", 22)
+    )
+
+    byteSink.writeList(expectedListOfDrainables)
+
+    assertEquals(11, sizeofList(expectedListOfDrainables))
+    assertEquals(11, byteSink.getWriterPosition())
+
+    val actualListOfDrainables = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, expectedListOfDrainables.size)
+    assertEquals(11, byteSink.getReaderPosition())
+
+    for (i in 0 until expectedListOfDrainables.size) {
+      assertEquals(expectedListOfDrainables[i].chatRoomName, actualListOfDrainables[i].chatRoomName)
+      assertEquals(expectedListOfDrainables[i].usersCount, actualListOfDrainables[i].usersCount)
+    }
+  }
+
+  @Test
+  fun testReadWriteListOfDrainables2() {
     val expectedListOfDrainables = listOf(
       PublicChatRoom("s5sdhe6e46je46j", 22),
       PublicChatRoom("a35h35jw35kk56k", 51),

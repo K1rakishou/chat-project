@@ -5,12 +5,11 @@ import core.Constants
 import core.Packet
 import core.byte_sink.InMemoryByteSink
 import core.extensions.forEachChunkAsync
-import core.extensions.toHexSeparated
 import core.response.BaseResponse
 import core.response.ResponseBuilder
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
-import kotlinx.coroutines.experimental.io.close
+import kotlinx.coroutines.experimental.io.ByteWriteChannel
 import kotlinx.coroutines.experimental.sync.Mutex
 import kotlinx.coroutines.experimental.sync.withLock
 
@@ -36,8 +35,11 @@ class ConnectionManager(
           }
 
           //TODO: probably should remove the connection from the connection map and also send to every room this user joined that user has disconnected
-          writeToOutputChannel(connection, responseBuilder.buildResponse(response, InMemoryByteSink.createWithInitialSize()))
-          connection.writeChannel.flush()
+
+          connection.writeChannel.let { wc ->
+            writeToOutputChannel(wc, responseBuilder.buildResponse(response, InMemoryByteSink.createWithInitialSize()))
+            wc.flush()
+          }
 
         } catch (error: Throwable) {
           println("Client's connection was closed while trying to write data to it")
@@ -48,16 +50,15 @@ class ConnectionManager(
     }
   }
 
-  private suspend fun writeToOutputChannel(connection: Connection, packet: Packet) {
-    connection.writeChannel.writeInt(packet.magicNumber)
-    connection.writeChannel.writeInt(packet.bodySize)
-    connection.writeChannel.writeShort(packet.type)
+  private suspend fun writeToOutputChannel(writeChannel: ByteWriteChannel, packet: Packet) {
+    writeChannel.writeInt(packet.magicNumber)
+    writeChannel.writeInt(packet.bodySize)
+    writeChannel.writeShort(packet.type)
 
     val streamSize = packet.bodyByteSink.getWriterPosition()
 
     packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, streamSize) { chunk ->
-      connection.writeChannel.writeFully(chunk, 0, chunk.size)
-      connection.writeChannel.flush()
+      writeChannel.writeFully(chunk, 0, chunk.size)
     }
   }
 

@@ -233,13 +233,11 @@ class NetworkManager {
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
       for (packet in channel) {
         try {
-          val resultPacket = packetBuilder.buildPacket(packet, InMemoryByteSink.createWithInitialSize(1024))
-          if (resultPacket == null) {
-            println("Could not build packet ${packet::class}")
-            continue
+          writeChannel?.let { wc ->
+            writeToOutputChannel(wc, packetBuilder.buildPacket(packet, InMemoryByteSink.createWithInitialSize(1024)))
+            wc.flush()
           }
 
-          writeToOutputChannel(resultPacket)
         } catch (error: Throwable) {
           println("Disconnected from the server")
 
@@ -249,16 +247,13 @@ class NetworkManager {
     }
   }
 
-  private suspend fun writeToOutputChannel(packet: Packet) {
-    writeChannel?.let { wc ->
-      wc.writeInt(packet.magicNumber)
-      wc.writeInt(packet.bodySize)
-      wc.writeShort(packet.type)
+  private suspend fun writeToOutputChannel(writeChannel: ByteWriteChannel, packet: Packet) {
+    writeChannel.writeInt(packet.magicNumber)
+    writeChannel.writeInt(packet.bodySize)
+    writeChannel.writeShort(packet.type)
 
-      packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, packet.bodySize) { chunk ->
-        wc.writeFully(chunk, 0, chunk.size)
-        wc.flush()
-      }
+    packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, packet.bodySize) { chunk ->
+      writeChannel.writeFully(chunk, 0, chunk.size)
     }
   }
 

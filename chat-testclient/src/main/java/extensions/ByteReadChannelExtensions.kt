@@ -14,15 +14,14 @@ import java.io.File
 
 suspend fun ByteReadChannel.readResponseInfo(byteSinkFileCachePath: String, bodySize: Int): ResponseInfo {
   if (bodySize <= Constants.maxInMemoryByteSinkSize) {
-    return IoBuffer.Pool.autoRelease { buffer ->
-      this.readFully(buffer, bodySize)
+    val packetType = ResponseType.fromShort(readShort())
+    val sink = InMemoryByteSink.createWithInitialSize(Constants.maxInMemoryByteSinkSize)
+    val array = ByteArray(bodySize)
 
-      val packetType = ResponseType.fromShort(buffer.readShort())
-      val packetPayloadRaw = ByteArray(buffer.readRemaining)
-      buffer.readFully(packetPayloadRaw)
+    readFully(array)
+    sink.writeByteArrayRaw(0, array)
 
-      return@autoRelease ResponseInfo(packetType, InMemoryByteSink.fromArray(packetPayloadRaw))
-    }
+    return ResponseInfo(packetType, sink)
   } else {
     val file = File("$byteSinkFileCachePath\\test_file-${TimeUtils.getCurrentTime()}.tmp")
     if (!file.exists()) {
