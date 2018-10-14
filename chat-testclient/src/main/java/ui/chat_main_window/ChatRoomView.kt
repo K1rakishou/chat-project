@@ -17,7 +17,6 @@ class ChatRoomView : View() {
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val childIndex = AtomicInteger(0)
 
-  private lateinit var textFlow: TextFlow
   private lateinit var scrollPane: ScrollPane
 
   private val chatMainWindowController: ChatMainWindowController by inject()
@@ -30,11 +29,16 @@ class ChatRoomView : View() {
   }
 
   override val root = vbox {
+    vboxConstraints { vGrow = Priority.ALWAYS }
+
     scrollPane = scrollpane {
       hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
       vbarPolicy = ScrollPane.ScrollBarPolicy.ALWAYS
+      vboxConstraints { vGrow = Priority.ALWAYS }
 
-      textFlow = textflow {
+      textflow {
+        vboxConstraints { vGrow = Priority.ALWAYS }
+
         bindChildren(chatMainWindowController.currentChatRoomMessageHistory) { baseChatMessage ->
           return@bindChildren when (baseChatMessage) {
             is TextChatMessageItem -> createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
@@ -44,8 +48,6 @@ class ChatRoomView : View() {
 
         addClass(Styles.chatRoomTextArea)
       }
-
-      vboxConstraints { vGrow = Priority.ALWAYS }
     }
     textfield {
       addClass(Styles.chatRoomTextField)

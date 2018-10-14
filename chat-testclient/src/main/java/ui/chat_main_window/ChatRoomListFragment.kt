@@ -11,16 +11,14 @@ import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
 import javafx.scene.layout.Priority
 import model.PublicChatRoomItem
-import tornadofx.Fragment
-import tornadofx.hgrow
-import tornadofx.listview
-import tornadofx.paddingRight
+import tornadofx.*
 
 class ChatRoomListFragment : Fragment() {
   val chatMainWindowController: ChatMainWindowController by inject()
   val store: Store by inject()
 
   override val root = listview(store.getPublicChatRoomList()) {
+    vboxConstraints { vGrow = Priority.ALWAYS }
     setCellFactory { _ -> cellFactory() }
   }
 
@@ -62,7 +60,7 @@ class ChatRoomListFragment : Fragment() {
 
   private fun createCellItem(item: PublicChatRoomItem): Node {
     return HBox().apply {
-      prefHeight = 96.0
+      prefHeight = 64.0
 
       add(Label(item.usersCount.toString()))
       add(Pane().apply {

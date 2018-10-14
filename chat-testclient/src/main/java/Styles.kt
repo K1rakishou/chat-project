@@ -1,17 +1,9 @@
-import tornadofx.*
+import tornadofx.Stylesheet
+import tornadofx.cssclass
+import tornadofx.px
 
 class Styles : Stylesheet() {
   init {
-//    title {
-//      fontSize = 3.em
-//      textFill = c(175, 47, 47, 0.5)
-//    }
-//    header {
-//      alignment = Pos.CENTER
-//      star {
-//        alignment = Pos.CENTER_LEFT
-//      }
-//    }
     chatRoomTextArea {
       fontSize = 18.px
     }
@@ -24,8 +16,6 @@ class Styles : Stylesheet() {
   }
 
   companion object {
-//    val title by cssid()
-//    val header by cssclass()
     val chatRoomTextArea by cssclass()
     val chatRoomTextField by cssclass()
     val chatRoomViewEmptyLabel by cssclass()
