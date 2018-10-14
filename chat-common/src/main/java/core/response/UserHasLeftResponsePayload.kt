@@ -1,22 +1,24 @@
 package core.response
 
-import core.*
-import core.model.drainable.PublicUserInChat
+import core.Constants
+import core.ResponseType
+import core.Status
 import core.byte_sink.ByteSink
 import core.exception.*
+import core.sizeof
 
-class UserHasJoinedResponsePayload private constructor(
+class UserHasLeftResponsePayload private constructor(
   status: Status,
   val roomName: String? = null,
-  val user: PublicUserInChat? = null
+  val userName: String? = null
 ) : BaseResponse(status) {
 
-  override fun getResponseType(): ResponseType = ResponseType.UserHasJoinedResponseType
+  override fun getResponseType(): ResponseType = ResponseType.UserHasLeftResponseType
   override fun getResponseVersion(): Short = CURRENT_RESPONSE_VERSION.value
 
   override fun getPayloadSize(): Int {
     return super.getPayloadSize() + when (status) {
-      Status.Ok -> sizeof(roomName) + sizeof(user)
+      Status.Ok -> sizeof(roomName) + sizeof(userName)
       else -> 0
     }
   }
@@ -30,7 +32,7 @@ class UserHasJoinedResponsePayload private constructor(
 
         if (status == Status.Ok) {
           byteSink.writeString(roomName)
-          byteSink.writeDrainable(user)
+          byteSink.writeString(userName)
         }
       }
       ResponseVersion.Unknown -> throw UnknownPacketVersionException(CURRENT_RESPONSE_VERSION.value )
@@ -51,16 +53,16 @@ class UserHasJoinedResponsePayload private constructor(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
-    fun success(roomName: String, user: PublicUserInChat): UserHasJoinedResponsePayload {
-      return UserHasJoinedResponsePayload(Status.Ok, roomName, user)
+    fun success(roomName: String, userName: String): UserHasLeftResponsePayload {
+      return UserHasLeftResponsePayload(Status.Ok, roomName, userName)
     }
 
-    fun fail(status: Status): UserHasJoinedResponsePayload {
-      return UserHasJoinedResponsePayload(status)
+    fun fail(status: Status): UserHasLeftResponsePayload {
+      return UserHasLeftResponsePayload(status)
     }
 
     @Throws(ResponseDeserializationException::class)
-    fun fromByteSink(byteSink: ByteSink): UserHasJoinedResponsePayload {
+    fun fromByteSink(byteSink: ByteSink): UserHasLeftResponsePayload {
       try {
         val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
         when (responseVersion) {
@@ -70,12 +72,12 @@ class UserHasJoinedResponsePayload private constructor(
               return fail(status)
             }
 
-            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
-              ?: throw ResponseDeserializationException("Could not read chatRoomName")
-            val user = byteSink.readDrainable<PublicUserInChat>(PublicUserInChat::class)
-              ?: throw ResponseDeserializationException("Could not read user")
+            val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
+              ?: throw ResponseDeserializationException("Could not read roomName")
+            val userName = byteSink.readString(Constants.maxUserNameLen)
+              ?: throw ResponseDeserializationException("Could not read userName")
 
-            return UserHasJoinedResponsePayload(status, chatRoomName, user)
+            return UserHasLeftResponsePayload(status, roomName, userName)
           }
           ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
         }

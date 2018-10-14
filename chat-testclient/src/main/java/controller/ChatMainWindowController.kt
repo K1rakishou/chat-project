@@ -222,6 +222,23 @@ class ChatMainWindowController : BaseController() {
 
         addChatMessage(response.roomName!!, TextChatMessageItem(response.userName!!, response.message!!))
       }
+      ResponseType.UserHasLeftResponseType -> {
+        println("UserHasLeftResponseType response received")
+
+        val response = try {
+          UserHasLeftResponsePayload.fromByteSink(responseInfo.byteSink)
+        } catch (error: ResponseDeserializationException) {
+          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet UserHasLeftResponsePayload, error: ${error.message}"))
+          return
+        }
+
+        if (response.status != Status.Ok) {
+          showErrorAlert("UserHasLeftResponsePayload with non ok status ${response.status}")
+          return
+        }
+
+        addChatMessage(response.roomName!!, TextChatMessageItem.systemMessage("User \"${response.userName!!}\" has left the room"))
+      }
       else -> {
         //Do nothing
       }

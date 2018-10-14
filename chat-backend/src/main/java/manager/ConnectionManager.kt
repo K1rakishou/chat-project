@@ -7,6 +7,7 @@ import core.byte_sink.InMemoryByteSink
 import core.extensions.forEachChunkAsync
 import core.response.BaseResponse
 import core.response.ResponseBuilder
+import core.response.UserHasLeftResponsePayload
 import kotlinx.coroutines.experimental.channels.SendChannel
 import kotlinx.coroutines.experimental.channels.actor
 import kotlinx.coroutines.experimental.io.ByteWriteChannel
@@ -19,7 +20,6 @@ class ConnectionManager(
 ) {
   private val connections = mutableMapOf<String, Connection>()
   private val mutex = Mutex()
-  private val loggingSinkInitialSize = 1024
   private val sendActorChannelCapacity = 2048
   private val sendPacketsActor: SendChannel<Pair<Connection, BaseResponse>>
 
@@ -35,7 +35,6 @@ class ConnectionManager(
           }
 
           //TODO: probably should remove the connection from the connection map and also send to every room this user joined that user has disconnected
-
           connection.writeChannel.let { wc ->
             writeToOutputChannel(wc, responseBuilder.buildResponse(response, InMemoryByteSink.createWithInitialSize()))
             wc.flush()
@@ -92,6 +91,22 @@ class ConnectionManager(
       }
 
       try {
+        val roomsWithUserNames = chatRoomManager.leaveAllRooms(clientAddress)
+        println("roomsWithUserNames = $roomsWithUserNames")
+
+        roomsWithUserNames.forEach { (roomName, userName) ->
+          val room = chatRoomManager.getChatRoom(roomName)
+          println("room = $room")
+
+          if (room != null) {
+            for (userInRoom in room.getEveryone()) {
+              println("userInRoom = $userInRoom, roomName = $roomName, userName = $userName")
+
+              sendResponse(userInRoom.user.clientAddress, UserHasLeftResponsePayload.success(roomName, userName))
+            }
+          }
+        }
+
         connections[clientAddress]?.dispose()
       } finally {
         connections.remove(clientAddress)

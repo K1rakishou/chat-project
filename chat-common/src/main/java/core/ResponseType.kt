@@ -8,7 +8,8 @@ enum class ResponseType(val value: Short) {
   JoinChatRoomResponseType(2),
   UserHasJoinedResponseType(3),
   SendChatMessageResponseType(4),
-  NewChatMessageResponseType(5);
+  NewChatMessageResponseType(5),
+  UserHasLeftResponseType(6);
 
   companion object {
     fun fromShort(type: Short): ResponseType {

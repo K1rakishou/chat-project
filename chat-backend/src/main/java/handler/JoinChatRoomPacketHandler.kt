@@ -98,7 +98,7 @@ class JoinChatRoomPacketHandler(
     }
 
     val newUser = User(userName, clientAddress)
-    val chatRoom = chatRoomManager.joinRoom(roomName, newUser)
+    val chatRoom = chatRoomManager.joinRoom(clientAddress, roomName, newUser)
 
     if (chatRoom == null) {
       println("Could not join the room (${roomName}) by user (${newUser.clientAddress}, ${newUser.userName})")

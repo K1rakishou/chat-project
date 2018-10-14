@@ -10,13 +10,13 @@ data class ChatRoom(
   val roomPasswordHash: String?,
   val isPublic: Boolean,
   val createdOn: Long,
-  val userList: MutableList<UserInRoom> = mutableListOf(),
+  val userList: MutableSet<UserInRoom> = mutableSetOf(),
   val messageHistory: RingBuffer<BaseChatMessage> = RingBuffer(Constants.maxRoomHistoryMessagesCount)
 ) {
   private val mutex = Mutex()
 
-  suspend fun addUser(userInRoom: UserInRoom) {
-    mutex.withLock { userList.add(userInRoom) }
+  suspend fun addUser(userInRoom: UserInRoom): Boolean {
+    return mutex.withLock { userList.add(userInRoom) }
   }
 
   suspend fun removeUser(userName: String) {
@@ -39,6 +39,10 @@ data class ChatRoom(
     return mutex.withLock {
       return@withLock userList.firstOrNull { it.user.userName == userName }
     }
+  }
+
+  suspend fun getEveryone(): List<UserInRoom> {
+    return mutex.withLock { userList.toMutableList() }
   }
 
   suspend fun getEveryoneExcept(userName: String): List<UserInRoom> {
@@ -79,6 +83,6 @@ data class ChatRoom(
   }
 
   fun copy(): ChatRoom {
-    return ChatRoom(chatRoomName, roomPasswordHash, isPublic, createdOn, userList.toMutableList(), messageHistory.clone())
+    return ChatRoom(chatRoomName, roomPasswordHash, isPublic, createdOn, userList.toMutableSet(), messageHistory.clone())
   }
 }
