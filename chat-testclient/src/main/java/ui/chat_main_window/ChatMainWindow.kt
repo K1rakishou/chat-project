@@ -2,6 +2,7 @@ package ui.chat_main_window
 
 import controller.ChatMainWindowController
 import javafx.geometry.Orientation
+import javafx.scene.control.SplitPane
 import javafx.scene.layout.Border
 import javafx.scene.layout.Priority
 import tornadofx.View
@@ -30,8 +31,9 @@ class ChatMainWindow : View("Chat") {
       vboxConstraints { vGrow = Priority.ALWAYS }
 
       vbox {
+        SplitPane.setResizableWithParent(this, false)
+
         minWidth = 156.0
-        maxWidth = 156.0
         border = Border.EMPTY
 
         add(ChatRoomListFragment::class)
