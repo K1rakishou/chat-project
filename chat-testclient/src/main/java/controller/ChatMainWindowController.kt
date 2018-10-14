@@ -11,12 +11,10 @@ import core.packet.GetPageOfPublicRoomsPacket
 import core.packet.JoinChatRoomPacket
 import core.packet.SendChatMessagePacket
 import core.response.*
-import io.reactivex.BackpressureStrategy
-import io.reactivex.rxkotlin.combineLatest
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import javafx.beans.property.SimpleIntegerProperty
-import javafx.collections.ObservableList
+import javafx.collections.FXCollections
 import javafx.util.Duration
 import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
@@ -31,15 +29,20 @@ import ui.chat_main_window.ChatRoomViewEmpty
 class ChatMainWindowController : BaseController() {
   private val networkManager = ChatApp.networkManager
   private val store: Store by inject()
+  private val delayBeforeAddFirstChatRoomMessage = 250.0
   private var selectedRoomName: String? = null
 
-  private val delayBeforeAddFirstChatRoomMessage = 250.0
-  val scrollToBottomFlag = SimpleIntegerProperty(0)
+  lateinit var scrollToBottomFlag: SimpleIntegerProperty
+
+  val currentChatRoomMessageHistory = FXCollections.observableArrayList<BaseChatMessageItem>()
 
   override fun createController() {
     super.createController()
 
+    scrollToBottomFlag = SimpleIntegerProperty(0)
+
     startListeningToPackets()
+    networkManager.shouldReconnectOnDisconnect(true)
     networkManager.sendPacket(GetPageOfPublicRoomsPacket(0, 20))
   }
 
@@ -49,12 +52,17 @@ class ChatMainWindowController : BaseController() {
     super.destroyController()
   }
 
-  fun getCurrentChatRoomMessageHistory(): ObservableList<BaseChatMessageItem> {
-    val roomName = requireNotNull(selectedRoomName)
-    return store.getChatRoomMessageHistory(roomName)
-  }
-
   fun sendMessage(messageText: String) {
+    if (!networkManager.isConnected) {
+      println("Not connected")
+
+      selectedRoomName?.let { roomName ->
+        addChatMessage(roomName, TextChatMessageItem.systemMessage("Not connected to the server"))
+      }
+
+      return
+    }
+
     if (selectedRoomName == null) {
       println("Cannot send a message since no room is selected")
       return
@@ -73,18 +81,24 @@ class ChatMainWindowController : BaseController() {
   }
 
   fun joinChatRoom(publicChatRoomItem: PublicChatRoomItem) {
-    if (selectedRoomName != null && selectedRoomName == publicChatRoomItem.roomName) {
+    selectedRoomName = publicChatRoomItem.roomName
+
+    if (store.isUserInRoom(publicChatRoomItem.roomName)) {
+      setRoomMessageHistory(publicChatRoomItem.roomName)
       return
     }
 
-    if (store.isUserInRoom(publicChatRoomItem.roomName)) {
-      //TODO: update current room
+    if (!networkManager.isConnected) {
+      println("Not connected")
+
+//      selectedRoomName?.let { roomName ->
+//        val chatRoom = store.getPublicChatRoom(roomName)
+//      }
+
       return
     }
 
     launch {
-      selectedRoomName = publicChatRoomItem.roomName
-
       val packet = JoinChatRoomPacket(
         store.getCurrentUserName(),
         publicChatRoomItem.roomName,
@@ -95,17 +109,9 @@ class ChatMainWindowController : BaseController() {
   }
 
   private fun startListeningToPackets() {
-    val connectedObservable = networkManager.connectionStateObservable
-      .filter { connectionState -> connectionState == NetworkManager.ConnectionState.Connected }
-      .toFlowable(BackpressureStrategy.LATEST)
-      .publish()
-
-    networkManager.responsesFlowable
-      .combineLatest(connectedObservable)
-      .map { it.first }
+    compositeDisposable += networkManager.responsesFlowable
+      .filter { networkManager.isConnected }
       .subscribe(this::handleIncomingResponses, { it.printStackTrace() })
-
-    compositeDisposable += connectedObservable.connect()
 
     compositeDisposable += networkManager.connectionStateObservable
       .filter { connectionState -> connectionState != NetworkManager.ConnectionState.Connected }
@@ -117,6 +123,7 @@ class ChatMainWindowController : BaseController() {
             onDisconnected()
           }
           is NetworkManager.ConnectionState.ErrorWhileTryingToConnect -> {
+            onErrorWhileTryingToConnect(connectionState.error)
           }
           is NetworkManager.ConnectionState.Connected -> {
           }
@@ -222,9 +229,13 @@ class ChatMainWindowController : BaseController() {
   }
 
   private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem) {
-    runLater {
-      store.addChatRoomMessage(roomName, chatMessage)
+    if (!store.addChatRoomMessage(roomName, chatMessage)) {
+      //TODO: add to an inner queue and re-send upon reconnection
+      return
+    }
 
+    runLater {
+      currentChatRoomMessageHistory.add(chatMessage)
       scrollChatToBottom()
     }
   }
@@ -232,6 +243,13 @@ class ChatMainWindowController : BaseController() {
   private fun addChatMessageToAllRooms(chatMessage: TextChatMessageItem) {
     store.getJoinedRoomsList().forEach { joinedRoomName ->
       addChatMessage(joinedRoomName, chatMessage)
+    }
+  }
+
+  private fun setRoomMessageHistory(roomName: String) {
+    runLater {
+      currentChatRoomMessageHistory.clear()
+      currentChatRoomMessageHistory.addAll(store.getChatRoomMessageHistory(roomName))
     }
   }
 
@@ -247,6 +265,7 @@ class ChatMainWindowController : BaseController() {
         store.setChatRoomUserList(roomName, users)
         store.setChatRoomMessageList(roomName, messageHistory)
 
+        setRoomMessageHistory(roomName)
         scrollChatToBottom()
       }
     }
@@ -260,7 +279,17 @@ class ChatMainWindowController : BaseController() {
 
   private fun onDisconnected() {
     runLater {
-      store.clearPublicChatRoomList()
+      selectedRoomName?.let { roomName ->
+        addChatMessage(roomName, TextChatMessageItem.systemMessage("Disconnected from the server"))
+      }
+    }
+  }
+
+  private fun onErrorWhileTryingToConnect(error: Throwable?) {
+    runLater {
+      selectedRoomName?.let { roomName ->
+        addChatMessage(roomName, TextChatMessageItem.systemMessage("Error while trying to reconnect: ${error?.message ?: "No error message"}"))
+      }
     }
   }
 }

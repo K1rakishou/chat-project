@@ -6,7 +6,6 @@ import core.ResponseInfo
 import core.byte_sink.InMemoryByteSink
 import core.extensions.forEachChunkAsync
 import core.extensions.toHex
-import core.extensions.toHexSeparated
 import core.packet.BasePacket
 import core.packet.PacketBuilder
 import extensions.readResponseInfo
@@ -50,7 +49,8 @@ class NetworkManager {
   private var sendPacketsActor: SendChannel<BasePacket>? = null
 
   val connectionStateObservable = BehaviorSubject.createDefault<ConnectionState>(ConnectionState.Uninitialized)
-    .toSerialized()
+  val isConnected: Boolean
+    get() = connectionStateObservable.value == ConnectionState.Connected
 
   private val responsesQueue = PublishSubject.create<ResponseInfo>()
     .toSerialized()
@@ -88,6 +88,10 @@ class NetworkManager {
         cachedHostInfo?.let { connect(it.host, it.port) }
       }
     }
+  }
+
+  fun shouldReconnectOnDisconnect(value: Boolean) {
+    shouldReconnectToServer.set(value)
   }
 
   fun connect(host: String, port: Int) {
@@ -151,6 +155,8 @@ class NetworkManager {
 
         connectionState = ConnectionState.Disconnected
         connectionStateObservable.onNext(ConnectionState.ErrorWhileTryingToConnect(error))
+
+        startReconnectingIfCan()
       } finally {
         connectionJob = null
       }
@@ -193,23 +199,26 @@ class NetworkManager {
           sendPacketsActor?.close()
           sendPacketsActor = null
 
-          //if shouldReconnectToServer is true - start reconnection coroutine
-          if (shouldReconnectToServer.get()) {
-            if (!reconnectionActor!!.offer(Unit)) {
-              println("Already trying to reconnect")
-            } else {
-              println("Disconnected, trying to reconnect")
-            }
-          }
-
           //set state as disconnected
           connectionState = ConnectionState.Disconnected
           connectionStateObservable.onNext(ConnectionState.Disconnected)
 
           println("Disconnected")
+          startReconnectingIfCan()
         }
       } catch (error: Throwable) {
         println("Error while disconnecting: ${error.message ?: "no error message"}")
+      }
+    }
+  }
+
+  private fun startReconnectingIfCan() {
+    //if shouldReconnectToServer is true - start reconnection coroutine
+    if (shouldReconnectToServer.get()) {
+      if (!reconnectionActor!!.offer(Unit)) {
+        println("Already trying to reconnect")
+      } else {
+        println("Disconnected, trying to reconnect")
       }
     }
   }
@@ -271,11 +280,6 @@ class NetworkManager {
         //read packet
         val bodySize = readChannel.readInt()
         val responseInfo = readChannel.readResponseInfo(byteSinkFileCachePath, bodySize)
-
-        responseInfo.byteSink.getStream().use { stream ->
-          //TODO: for debug only! may cause OOM when internal buffer is way too big!
-          println(" >>> RECEIVING (${bodySize} bytes): ${stream.readAllBytes().toHexSeparated()}")
-        }
 
         //send to recipients
         responsesQueue.onNext(responseInfo)

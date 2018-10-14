@@ -3,7 +3,7 @@ import core.Packet
 import core.PacketType
 import core.extensions.readPacketInfo
 import core.extensions.toHex
-import core.extensions.toHexSeparated
+import core.model.drainable.chat_message.TextChatMessage
 import core.response.ResponseBuilder
 import handler.CreateRoomPacketHandler
 import handler.GetPageOfPublicRoomsHandler
@@ -55,7 +55,16 @@ class Server(
         .bind(InetSocketAddress("127.0.0.1", 2323))
 
       //test zone
-      chatRoomManager.createChatRoom(true)
+      chatRoomManager.createChatRoom(true, chatRoomName = "chatroom1").apply {
+        addMessage(TextChatMessage(0, "test", "test message 1"))
+        addMessage(TextChatMessage(1, "test", "test message 2"))
+        addMessage(TextChatMessage(2, "test", "test message 3"))
+      }
+      chatRoomManager.createChatRoom(true, chatRoomName = "chatroom2").apply {
+        addMessage(TextChatMessage(0, "test", "test message 4"))
+        addMessage(TextChatMessage(1, "test", "test message 5"))
+        addMessage(TextChatMessage(2, "test", "test message 6"))
+      }
       //test zone
 
       println("Started server at ${server.localAddress}")
@@ -103,11 +112,6 @@ class Server(
 
       val bodySize = connection.readChannel.readInt()
       val packetInfo = connection.readChannel.readPacketInfo(byteSinkFileCachePath, bodySize)
-
-      packetInfo.byteSink.getStream().use { stream ->
-        //TODO: for debug only! may cause OOM when internal buffer is way too big!
-        println(" <<< RECEIVING ($bodySize bytes): ${stream.readAllBytes().toHexSeparated()}")
-      }
 
       packetInfo.byteSink.use { byteSink ->
         when (packetInfo.packetType) {

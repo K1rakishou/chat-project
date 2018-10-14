@@ -20,14 +20,6 @@ class ChatRoomListFragment : Fragment() {
   val chatMainWindowController: ChatMainWindowController by inject()
   val store: Store by inject()
 
-  override fun onDock() {
-    chatMainWindowController.createController()
-  }
-
-  override fun onUndock() {
-    chatMainWindowController.destroyController()
-  }
-
   override val root = listview(store.getPublicChatRoomList()) {
     setCellFactory { _ -> cellFactory() }
   }

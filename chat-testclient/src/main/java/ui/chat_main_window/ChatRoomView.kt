@@ -35,7 +35,7 @@ class ChatRoomView : View() {
       vbarPolicy = ScrollPane.ScrollBarPolicy.ALWAYS
 
       textFlow = textflow {
-        bindChildren(chatMainWindowController.getCurrentChatRoomMessageHistory()) { baseChatMessage ->
+        bindChildren(chatMainWindowController.currentChatRoomMessageHistory) { baseChatMessage ->
           return@bindChildren when (baseChatMessage) {
             is TextChatMessageItem -> createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
             else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
