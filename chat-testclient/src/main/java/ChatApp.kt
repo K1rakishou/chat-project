@@ -10,10 +10,11 @@ class ChatApp : App(NoPrimaryViewSpecified::class, Styles::class) {
   override fun start(stage: Stage) {
     super.start(stage)
 
-    find<ConnectionWindow>().openModal(resizable = false)
+    find<ConnectionWindow>().openWindow(resizable = false)
   }
 
   companion object {
+    //singleton dependencies
     val networkManager = NetworkManager()
   }
 }

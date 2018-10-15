@@ -6,7 +6,6 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.experimental.io.ByteReadChannel
 import kotlinx.coroutines.experimental.io.ByteWriteChannel
-import kotlinx.coroutines.experimental.io.close
 import java.util.concurrent.atomic.AtomicBoolean
 
 class Connection(
@@ -22,15 +21,8 @@ class Connection(
   fun dispose() {
     if (!disposed.compareAndSet(false, true)) {
       //already disposed
+      println("Already disposed")
       return
-    }
-
-    try {
-      if (!writeChannel.isClosedForWrite) {
-        writeChannel.close()
-      }
-    } catch (error: Throwable) {
-      //ignore
     }
 
     try {
@@ -38,6 +30,7 @@ class Connection(
         socket.close()
       }
     } catch (error: Throwable) {
+      error.printStackTrace()
       //ignore
     }
   }
