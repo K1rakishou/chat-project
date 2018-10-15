@@ -8,7 +8,7 @@ import manager.NetworkManager
 import store.Store
 import tornadofx.runLater
 import ui.chat_main_window.ChatMainWindow
-import ui.connection_window.ConnectionWindow
+import ui.events.CloseConnectionWindowEvent
 import ui.loading_window.LoadingWindow
 
 class LoadingWindowController : BaseController() {
@@ -94,7 +94,7 @@ class LoadingWindowController : BaseController() {
       find<ChatMainWindow>().openWindow(resizable = true)
 
       find<LoadingWindow>().close()
-      find<ConnectionWindow>().close()
+      fire(CloseConnectionWindowEvent)
     }
   }
 }
