@@ -5,10 +5,8 @@ import controller.ChatMainWindowController
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
 import javafx.scene.text.Text
-import javafx.scene.text.TextFlow
 import javafx.util.Duration
 import model.chat_message.TextChatMessageItem
-import store.Store
 import tornadofx.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -16,11 +14,9 @@ import java.util.concurrent.atomic.AtomicInteger
 class ChatRoomView : View() {
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val childIndex = AtomicInteger(0)
+  private val chatMainWindowController: ChatMainWindowController by inject()
 
   private lateinit var scrollPane: ScrollPane
-
-  private val chatMainWindowController: ChatMainWindowController by inject()
-  private val store: Store by inject()
 
   init {
     chatMainWindowController.scrollToBottomFlag.addListener { _, _, _ ->
@@ -39,7 +35,7 @@ class ChatRoomView : View() {
       textflow {
         vboxConstraints { vGrow = Priority.ALWAYS }
 
-        bindChildren(chatMainWindowController.currentChatRoomMessageHistory) { baseChatMessage ->
+        bindChildren(chatMainWindowController.currentChatRoomMessageList) { baseChatMessage ->
           return@bindChildren when (baseChatMessage) {
             is TextChatMessageItem -> createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
             else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")

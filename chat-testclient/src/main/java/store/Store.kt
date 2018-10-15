@@ -59,8 +59,8 @@ class Store : Controller() {
     val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
     val convertedUserList = userList.map { user -> PublicUserInChatItem(user.userName) }
 
-    chatRoom.userListProperty().get().clear()
-    chatRoom.userListProperty().get().addAll(convertedUserList)
+    chatRoom.userListProperty().clear()
+    chatRoom.userListProperty().addAll(convertedUserList)
   }
 
   fun setChatRoomMessageList(roomName: String, messageHistory: List<BaseChatMessage>) {
@@ -75,8 +75,8 @@ class Store : Controller() {
       }
     }
 
-    chatRoom.roomMessagesProperty().get().clear()
-    chatRoom.roomMessagesProperty().get().addAll(convertedMessageList)
+    chatRoom.roomMessagesProperty().clear()
+    chatRoom.roomMessagesProperty().addAll(convertedMessageList)
   }
 
   fun addChatRoomMessage(roomName: String, message: BaseChatMessageItem): Boolean {

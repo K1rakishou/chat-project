@@ -35,7 +35,7 @@ class ChatMainWindowController : BaseController() {
   lateinit var scrollToBottomFlag: SimpleIntegerProperty
 
   val publicChatRoomList = FXCollections.observableArrayList<PublicChatRoomItem>()
-  val currentChatRoomMessageHistory = FXCollections.observableArrayList<BaseChatMessageItem>()
+  val currentChatRoomMessageList = FXCollections.observableArrayList<BaseChatMessageItem>()
 
   override fun createController() {
     super.createController()
@@ -65,12 +65,12 @@ class ChatMainWindowController : BaseController() {
     }
 
     if (selectedRoomName == null) {
-      println("Cannot send a message since no room is selected")
+      println("Cannot send a message because no room is selected")
       return
     }
 
     if (!store.isUserInRoom(selectedRoomName!!)) {
-      println("Cannot send a message since user is not in the room")
+      println("Cannot send a message because user does not exist in the room")
       return
     }
 
@@ -85,17 +85,12 @@ class ChatMainWindowController : BaseController() {
     selectedRoomName = publicChatRoomItem.roomName
 
     if (store.isUserInRoom(publicChatRoomItem.roomName)) {
-      setRoomMessageHistory(publicChatRoomItem.roomName)
+      replaceRoomMessageHistory(publicChatRoomItem.roomName)
       return
     }
 
     if (!networkManager.isConnected) {
       println("Not connected")
-
-//      selectedRoomName?.let { roomName ->
-//        val chatRoom = store.getPublicChatRoom(roomName)
-//      }
-
       return
     }
 
@@ -163,7 +158,7 @@ class ChatMainWindowController : BaseController() {
         val response = try {
           JoinChatRoomResponsePayload.fromByteSink(responseInfo.byteSink)
         } catch (error: ResponseDeserializationException) {
-          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet JoinChatRoomResponse, error: ${error.message}"))
+          showErrorAlert("Could not deserialize packet JoinChatRoomResponse, error: ${error.message}")
           return
         }
 
@@ -184,7 +179,7 @@ class ChatMainWindowController : BaseController() {
         val response = try {
           UserHasJoinedResponsePayload.fromByteSink(responseInfo.byteSink)
         } catch (error: ResponseDeserializationException) {
-          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet UserHasJoinedResponse, error: ${error.message}"))
+          showErrorAlert("Could not deserialize packet UserHasJoinedResponse, error: ${error.message}")
           return
         }
         if (response.status != Status.Ok) {
@@ -200,7 +195,7 @@ class ChatMainWindowController : BaseController() {
         val response = try {
           SendChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
         } catch (error: ResponseDeserializationException) {
-          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet SendChatMessageResponse, error: ${error.message}"))
+          showErrorAlert("Could not deserialize packet SendChatMessageResponse, error: ${error.message}")
           return
         }
 
@@ -215,7 +210,7 @@ class ChatMainWindowController : BaseController() {
         val response = try {
           NewChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
         } catch (error: ResponseDeserializationException) {
-          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet NewChatMessageResponse, error: ${error.message}"))
+          showErrorAlert("Could not deserialize packet NewChatMessageResponse, error: ${error.message}")
           return
         }
 
@@ -232,7 +227,7 @@ class ChatMainWindowController : BaseController() {
         val response = try {
           UserHasLeftResponsePayload.fromByteSink(responseInfo.byteSink)
         } catch (error: ResponseDeserializationException) {
-          addChatMessageToAllRooms(TextChatMessageItem.systemMessage("Could not deserialize packet UserHasLeftResponsePayload, error: ${error.message}"))
+          showErrorAlert("Could not deserialize packet UserHasLeftResponsePayload, error: ${error.message}")
           return
         }
 
@@ -251,27 +246,20 @@ class ChatMainWindowController : BaseController() {
 
   private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem) {
     if (!store.addChatRoomMessage(roomName, chatMessage)) {
-      //TODO: add to an inner queue and re-send upon reconnection
+      println("Could not add chat room message to room with name $roomName")
       return
     }
 
     runLater {
-      currentChatRoomMessageHistory.add(chatMessage)
-      store.addChatRoomMessage(roomName, chatMessage)
+      currentChatRoomMessageList.add(chatMessage)
       scrollChatToBottom()
     }
   }
 
-  private fun addChatMessageToAllRooms(chatMessage: TextChatMessageItem) {
-    store.getJoinedRoomsList().forEach { joinedRoomName ->
-      addChatMessage(joinedRoomName, chatMessage)
-    }
-  }
-
-  private fun setRoomMessageHistory(roomName: String) {
+  private fun replaceRoomMessageHistory(roomName: String) {
     runLater {
-      currentChatRoomMessageHistory.clear()
-      currentChatRoomMessageHistory.addAll(store.getChatRoomMessageHistory(roomName))
+      currentChatRoomMessageList.clear()
+      currentChatRoomMessageList.addAll(store.getChatRoomMessageHistory(roomName))
     }
   }
 
@@ -281,18 +269,19 @@ class ChatMainWindowController : BaseController() {
 
       //Wait some time before ChatRoomView shows up
       runLater(Duration.millis(delayBeforeAddFirstChatRoomMessage)) {
-        store.addChatRoomMessage(roomName, TextChatMessageItem.systemMessage("You've joined the chat room"))
-
         store.addJoinedRoom(roomName)
         store.setChatRoomUserList(roomName, users)
         store.setChatRoomMessageList(roomName, messageHistory)
 
-        setRoomMessageHistory(roomName)
+        replaceRoomMessageHistory(roomName)
+        addChatMessage(roomName, TextChatMessageItem.systemMessage("You've joined the chat room"))
+
         scrollChatToBottom()
       }
     }
   }
 
+  //TODO: change to eventbus
   private fun scrollChatToBottom() {
     //To make the listener receive the new value we need it to be different from the last value.
     //Otherwise it doesn't work
