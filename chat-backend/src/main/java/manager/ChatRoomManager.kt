@@ -2,13 +2,13 @@ package manager
 
 import core.ChatRoom
 import core.Constants
-import core.model.drainable.PublicChatRoom
 import core.User
 import core.UserInRoom
+import core.extensions.myWithLock
+import core.model.drainable.PublicChatRoom
 import core.security.SecurityUtils
 import core.utils.TimeUtils
 import kotlinx.coroutines.experimental.sync.Mutex
-import kotlinx.coroutines.experimental.sync.withLock
 
 class ChatRoomManager {
   private val mutex = Mutex()
@@ -29,7 +29,7 @@ class ChatRoomManager {
     val roomName = (chatRoomName ?: SecurityUtils.Generator.generateRandomString(defaultChatRoomLength))
     val chatRoom = ChatRoom(roomName, chatRoomPasswordHash, isPublic, TimeUtils.getCurrentTime())
 
-    mutex.withLock {
+    mutex.myWithLock {
       require(chatRooms.size < Constants.maxUsersInRoomCount)
       require(!chatRooms.containsKey(roomName))
 
@@ -44,24 +44,24 @@ class ChatRoomManager {
     chatRoomName: String,
     user: User
   ): ChatRoom? {
-    return mutex.withLock {
+    return mutex.myWithLock {
       if (!chatRooms.containsKey(chatRoomName)) {
-        return@withLock null
+        return@myWithLock null
       }
 
       val chatRoom = chatRooms[chatRoomName]!!
       if (chatRoom.containsUser(user.userName)) {
-        return@withLock null
+        return@myWithLock null
       }
 
       if (!chatRoom.addUser(UserInRoom(user))) {
-        return@withLock null
+        return@myWithLock null
       }
 
       clientAddressToRoomNameCache.putIfAbsent(clientAddress, mutableListOf())
       clientAddressToRoomNameCache[clientAddress]!!.add(RoomNameUserNamePair(chatRoomName, user.userName))
 
-      return@withLock chatRoom
+      return@myWithLock chatRoom
     }
   }
 
@@ -70,14 +70,14 @@ class ChatRoomManager {
     chatRoomName: String,
     user: User
   ): Boolean {
-    return mutex.withLock {
+    return mutex.myWithLock {
       if (!chatRooms.containsKey(chatRoomName)) {
-        return@withLock false
+        return@myWithLock false
       }
 
       val chatRoom = chatRooms[chatRoomName]!!
       if (!chatRoom.containsUser(user.userName)) {
-        return@withLock false
+        return@myWithLock false
       }
 
       clientAddressToRoomNameCache[clientAddress]!!.remove(RoomNameUserNamePair(chatRoomName, user.userName))
@@ -86,21 +86,21 @@ class ChatRoomManager {
       }
 
       chatRoom.removeUser(user.userName)
-      return@withLock true
+      return@myWithLock true
     }
   }
 
   suspend fun leaveAllRooms(clientAddress: String): List<RoomNameUserNamePair> {
-    return mutex.withLock {
+    return mutex.myWithLock {
       val list = mutableListOf<RoomNameUserNamePair>()
 
       if (clientAddressToRoomNameCache[clientAddress] == null) {
-        return@withLock list
+        return@myWithLock list
       }
 
       if (clientAddressToRoomNameCache[clientAddress]!!.isEmpty()) {
         clientAddressToRoomNameCache.remove(clientAddress)
-        return@withLock list
+        return@myWithLock list
       }
 
       for ((roomName, userName) in clientAddressToRoomNameCache[clientAddress]!!) {
@@ -109,35 +109,35 @@ class ChatRoomManager {
       }
 
       clientAddressToRoomNameCache.remove(clientAddress)
-      return@withLock list
+      return@myWithLock list
     }
   }
 
   suspend fun alreadyJoined(chatRoomName: String, userName: String): Boolean {
-    return mutex.withLock {
+    return mutex.myWithLock {
       require(chatRooms.containsKey(chatRoomName))
 
-      return@withLock chatRooms[chatRoomName]!!.containsUser(userName)
+      return@myWithLock chatRooms[chatRoomName]!!.containsUser(userName)
     }
   }
 
   suspend fun exists(chatRoomName: String? = null): Boolean {
     requireNotNull(chatRoomName)
 
-    return mutex.withLock { chatRooms.containsKey(chatRoomName) }
+    return mutex.myWithLock { chatRooms.containsKey(chatRoomName) }
   }
 
   suspend fun hasPassword(chatRoomName: String): Boolean {
-    return mutex.withLock {
+    return mutex.myWithLock {
       require(chatRooms.containsKey(chatRoomName))
 
-      return@withLock chatRooms[chatRoomName]!!.hasPassword()
+      return@myWithLock chatRooms[chatRoomName]!!.hasPassword()
     }
   }
 
   suspend fun getAllPublicRooms(): List<PublicChatRoom> {
-    return mutex.withLock {
-      return@withLock chatRooms.values
+    return mutex.myWithLock {
+      return@myWithLock chatRooms.values
         .filter { chatRoom -> chatRoom.isPublic }
         .map { chatRoom ->
           val copy = chatRoom.copy()
@@ -147,22 +147,22 @@ class ChatRoomManager {
   }
 
   suspend fun passwordsMatch(chatRoomName: String, chatRoomPassword: String): Boolean {
-    return mutex.withLock {
+    return mutex.myWithLock {
       require(chatRooms.containsKey(chatRoomName))
 
-      return@withLock chatRooms[chatRoomName]!!.passwordsMatch(chatRoomPassword)
+      return@myWithLock chatRooms[chatRoomName]!!.passwordsMatch(chatRoomPassword)
     }
   }
 
   suspend fun getChatRoom(roomName: String): ChatRoom? {
-    return mutex.withLock {
-      return@withLock chatRooms[roomName]
+    return mutex.myWithLock {
+      return@myWithLock chatRooms[roomName]
     }
   }
 
   suspend fun getUser(roomName: String, userName: String): UserInRoom? {
-    return mutex.withLock {
-      return@withLock chatRooms[roomName]?.getUser(userName)
+    return mutex.myWithLock {
+      return@myWithLock chatRooms[roomName]?.getUser(userName)
     }
   }
 

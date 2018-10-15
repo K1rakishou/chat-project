@@ -1,4 +1,4 @@
-package core.extensions
+package extensions
 
 import kotlinx.coroutines.experimental.sync.Mutex
 import java.lang.IllegalStateException
@@ -7,26 +7,25 @@ import java.lang.IllegalStateException
  * If mutex is already locked - do not attempt to lock it again
  * */
 suspend fun <T> Mutex.tryWithLock(block: suspend () -> T): T {
-  if (!tryLock()) {
+  if (isLocked) {
     return block()
   }
 
   try {
+    lock()
     return block()
   } finally {
     unlock()
   }
 }
 
-/**
- * If mutex is already locked - throw an exception that we got deadlocked
- * */
 suspend fun <T> Mutex.myWithLock(block: suspend () -> T): T {
-  if (!tryLock()) {
+  if (isLocked) {
     throw IllegalStateException("DEADLOCK")
   }
 
   try {
+    lock()
     return block()
   } finally {
     unlock()

@@ -2,12 +2,13 @@ package ui.connection_window
 
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
+import model.viewmodel.HostInfoViewModel
 import tornadofx.*
 import ui.events.CloseConnectionWindowEvent
 import ui.loading_window.LoadingWindow
-import model.viewmodel.HostInfoViewModel
 
 class ConnectionWindow : View("Connection parameters") {
+
   private val model = object : ViewModel() {
     val host = bind { SimpleStringProperty() }
     val port = bind { SimpleStringProperty() }

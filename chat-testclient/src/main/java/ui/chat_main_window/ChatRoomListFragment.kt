@@ -15,11 +15,10 @@ import tornadofx.*
 
 class ChatRoomListFragment : Fragment() {
   val chatMainWindowController: ChatMainWindowController by inject()
-  val store: Store by inject()
 
-  override val root = listview(store.getPublicChatRoomList()) {
+  override val root = listview(chatMainWindowController.publicChatRoomList) {
     vboxConstraints { vGrow = Priority.ALWAYS }
-    setCellFactory { _ -> cellFactory() }
+    setCellFactory { cellFactory() }
   }
 
   private fun cellFactory(): ListCell<PublicChatRoomItem> {

@@ -1,9 +1,9 @@
 package core
 
 import core.collections.RingBuffer
+import core.extensions.myWithLock
 import core.model.drainable.chat_message.BaseChatMessage
 import kotlinx.coroutines.experimental.sync.Mutex
-import kotlinx.coroutines.experimental.sync.withLock
 
 data class ChatRoom(
   val chatRoomName: String,
@@ -16,38 +16,38 @@ data class ChatRoom(
   private val mutex = Mutex()
 
   suspend fun addUser(userInRoom: UserInRoom): Boolean {
-    return mutex.withLock { userList.add(userInRoom) }
+    return mutex.myWithLock { userList.add(userInRoom) }
   }
 
   suspend fun removeUser(userName: String) {
-    mutex.withLock { userList.removeIf { it.user.userName == userName } }
+    mutex.myWithLock { userList.removeIf { it.user.userName == userName } }
   }
 
   suspend fun addMessage(chatMessage: BaseChatMessage) {
-    mutex.withLock { messageHistory.add(chatMessage) }
+    mutex.myWithLock { messageHistory.add(chatMessage) }
   }
 
   suspend fun containsUser(userName: String): Boolean {
-    return mutex.withLock {
-      return@withLock userList
+    return mutex.myWithLock {
+      return@myWithLock userList
         .firstOrNull { it.user.userName == userName }
         ?.let { true } ?: false
     }
   }
 
   suspend fun getUser(userName: String): UserInRoom? {
-    return mutex.withLock {
-      return@withLock userList.firstOrNull { it.user.userName == userName }
+    return mutex.myWithLock {
+      return@myWithLock userList.firstOrNull { it.user.userName == userName }
     }
   }
 
   suspend fun getEveryone(): List<UserInRoom> {
-    return mutex.withLock { userList.toMutableList() }
+    return mutex.myWithLock { userList.toMutableList() }
   }
 
   suspend fun getEveryoneExcept(userName: String): List<UserInRoom> {
-    return mutex.withLock {
-      return@withLock mutableListOf<UserInRoom>()
+    return mutex.myWithLock {
+      return@myWithLock mutableListOf<UserInRoom>()
         .apply {
           addAll(userList.filter { it.user.userName != userName })
         }
@@ -55,26 +55,26 @@ data class ChatRoom(
   }
 
   suspend fun countUsers(): Int {
-    return mutex.withLock {
-      return@withLock userList.size
+    return mutex.myWithLock {
+      return@myWithLock userList.size
     }
   }
 
   suspend fun hasPassword(): Boolean {
-    return mutex.withLock {
-      return@withLock roomPasswordHash != null
+    return mutex.myWithLock {
+      return@myWithLock roomPasswordHash != null
     }
   }
 
   suspend fun passwordsMatch(chatRoomPassword: String): Boolean {
-    return mutex.withLock {
-      return@withLock roomPasswordHash == chatRoomPassword
+    return mutex.myWithLock {
+      return@myWithLock roomPasswordHash == chatRoomPassword
     }
   }
 
   suspend fun getMessageHistory(): List<BaseChatMessage> {
-    return mutex.withLock {
-      return@withLock messageHistory.getAll()
+    return mutex.myWithLock {
+      return@myWithLock messageHistory.getAll()
     }
   }
 

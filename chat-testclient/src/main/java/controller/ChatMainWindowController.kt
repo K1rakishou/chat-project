@@ -34,6 +34,7 @@ class ChatMainWindowController : BaseController() {
 
   lateinit var scrollToBottomFlag: SimpleIntegerProperty
 
+  val publicChatRoomList = FXCollections.observableArrayList<PublicChatRoomItem>()
   val currentChatRoomMessageHistory = FXCollections.observableArrayList<BaseChatMessageItem>()
 
   override fun createController() {
@@ -151,6 +152,9 @@ class ChatMainWindowController : BaseController() {
 
         runLater {
           store.setPublicChatRoomList(response.publicChatRoomList)
+
+          publicChatRoomList.clear()
+          publicChatRoomList.addAll(store.getPublicChatRoomList())
         }
       }
       ResponseType.JoinChatRoomResponseType -> {
@@ -253,6 +257,7 @@ class ChatMainWindowController : BaseController() {
 
     runLater {
       currentChatRoomMessageHistory.add(chatMessage)
+      store.addChatRoomMessage(roomName, chatMessage)
       scrollChatToBottom()
     }
   }

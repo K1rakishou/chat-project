@@ -20,14 +20,11 @@ class LoadingWindowController : BaseController() {
   override fun createController() {
     super.createController()
 
-    store.clearPublicChatRoomList()
     connectionError.set(null)
     connectionStatus.set("")
   }
 
   override fun destroyController() {
-    store.clearPublicChatRoomList()
-
     super.destroyController()
   }
 

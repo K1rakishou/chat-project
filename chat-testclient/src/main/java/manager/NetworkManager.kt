@@ -8,6 +8,7 @@ import core.extensions.forEachChunkAsync
 import core.extensions.toHex
 import core.packet.BasePacket
 import core.packet.PacketBuilder
+import extensions.myWithLock
 import extensions.readResponseInfo
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
@@ -99,7 +100,7 @@ class NetworkManager {
 
     connectionJob = launch {
       try {
-        mutex.withLock {
+        mutex.myWithLock {
           println("Trying to connect to the server")
 
           //if an error has occurred while we were trying to connect to the server the state will be ErrorWhileTryingToConnect
@@ -111,7 +112,7 @@ class NetworkManager {
           //if we are not disconnected - do no try to connect
           if (connectionState !is ConnectionState.Disconnected) {
             println("Already connected or in connecting state")
-            return@withLock
+            return@myWithLock
           }
 
           connectionState = ConnectionState.Connecting
@@ -166,13 +167,13 @@ class NetworkManager {
   fun disconnect() {
     launch {
       try {
-        mutex.withLock {
+        mutex.myWithLock {
           println("Trying to disconnect from the server, shouldReconnect = ${shouldReconnectToServer.get()}")
 
           //if we are not connected - do nothing
           if (connectionState !is ConnectionState.Connecting && connectionState !is ConnectionState.Connected) {
             println("Already disconnected")
-            return@withLock
+            return@myWithLock
           }
 
           //cancel any active connection jobs
