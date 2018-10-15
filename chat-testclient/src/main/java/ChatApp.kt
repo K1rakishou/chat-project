@@ -14,6 +14,7 @@ class ChatApp : App(NoPrimaryViewSpecified::class, Styles::class) {
   }
 
   companion object {
+    //singleton dependencies
     val networkManager = NetworkManager()
   }
 }

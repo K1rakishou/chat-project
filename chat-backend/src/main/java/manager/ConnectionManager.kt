@@ -5,6 +5,7 @@ import core.Constants
 import core.Packet
 import core.byte_sink.InMemoryByteSink
 import core.extensions.forEachChunkAsync
+import core.extensions.tryWithLock
 import core.response.BaseResponse
 import core.response.ResponseBuilder
 import core.response.UserHasLeftResponsePayload
@@ -34,15 +35,13 @@ class ConnectionManager(
             continue
           }
 
-          //TODO: probably should remove the connection from the connection map and also send to every room this user joined that user has disconnected
           connection.writeChannel.let { wc ->
             writeToOutputChannel(wc, responseBuilder.buildResponse(response, InMemoryByteSink.createWithInitialSize()))
             wc.flush()
           }
 
         } catch (error: Throwable) {
-          println("Client's connection was closed while trying to write data to it")
-
+          println("Client's connection was closed while trying to write data into it")
           removeConnection(connection.clientAddress)
         }
       }
@@ -62,7 +61,7 @@ class ConnectionManager(
   }
 
   suspend fun sendResponse(clientAddress: String, response: BaseResponse) {
-    val connection = mutex.withLock { connections.getOrDefault(clientAddress, null) }
+    val connection = mutex.tryWithLock { connections.getOrDefault(clientAddress, null) }
     if (connection == null) {
       println("Could not send response because connection with clientAddress: $clientAddress does not exist")
       return
@@ -74,6 +73,7 @@ class ConnectionManager(
   suspend fun addConnection(clientAddress: String, connection: Connection): Boolean {
     return mutex.withLock {
       if (connections.containsKey(clientAddress)) {
+        println("Already contains clientAddress: $clientAddress")
         return@withLock false
       }
 
@@ -85,8 +85,11 @@ class ConnectionManager(
   }
 
   suspend fun removeConnection(clientAddress: String) {
+    println("Removing connection for client ${clientAddress}")
+
     mutex.withLock {
       if (!connections.containsKey(clientAddress)) {
+        println("Does not contain clientAddress: $clientAddress")
         return@withLock
       }
 
@@ -106,9 +109,8 @@ class ConnectionManager(
             }
           }
         }
-
-        connections[clientAddress]?.dispose()
       } finally {
+        connections[clientAddress]?.dispose()
         connections.remove(clientAddress)
       }
     }

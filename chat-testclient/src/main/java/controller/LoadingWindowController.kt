@@ -91,10 +91,10 @@ class LoadingWindowController : BaseController() {
 
   private fun goToChatMainWindow() {
     runLater {
+      find<ChatMainWindow>().openWindow(resizable = true)
+
       find<LoadingWindow>().close()
       find<ConnectionWindow>().close()
-
-      find<ChatMainWindow>().openWindow(resizable = true)
     }
   }
 }

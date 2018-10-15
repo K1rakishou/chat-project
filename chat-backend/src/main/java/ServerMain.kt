@@ -78,8 +78,9 @@ class Server(
             val connection = Connection(clientAddress, socket)
 
             try {
-              connectionManager.addConnection(clientAddress, connection)
-              listenClient(isActive, connection, clientAddress)
+              if (connectionManager.addConnection(clientAddress, connection)) {
+                listenClient(isActive, connection, clientAddress)
+              }
             } catch (error: Throwable) {
               printException(error, clientAddress)
             } finally {
@@ -105,6 +106,8 @@ class Server(
   }
 
   private suspend fun listenClient(isActive: Boolean, connection: Connection, clientAddress: String) {
+    println("Start listening to the client ${clientAddress}")
+
     while (isActive && !connection.isDisposed) {
       if (!readMagicNumber(connection.readChannel)) {
         continue
@@ -130,6 +133,8 @@ class Server(
         }
       }
     }
+
+    println("Stop listening to the client ${clientAddress}")
   }
 
   private suspend fun readMagicNumber(readChannel: ByteReadChannel): Boolean {

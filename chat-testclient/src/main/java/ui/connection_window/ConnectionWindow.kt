@@ -26,7 +26,7 @@ class ConnectionWindow : View("Connection parameters") {
         }
       }
       field("Port") {
-        textfield(model.port){
+        textfield(model.port) {
           text = "2323"
           required()
         }
