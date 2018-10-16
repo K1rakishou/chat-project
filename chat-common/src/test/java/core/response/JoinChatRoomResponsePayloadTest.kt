@@ -15,6 +15,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test
   fun testResponseSuccess() {
     val roomName = "121314"
+    val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
       TextChatMessage(1, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
@@ -25,11 +26,12 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       PublicUserInChat("test1")
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
         val expectedMessage = messageHistory[i] as TextChatMessage
@@ -60,14 +62,16 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test
   fun testResponseEmpty() {
     val roomName = "test"
+    val userName = "test"
     val messageHistory = emptyList<BaseChatMessage>()
     val usersInChatRoom = emptyList<PublicUserInChat>()
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
         val expectedMessage = messageHistory[i] as TextChatMessage
@@ -87,6 +91,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ResponseDeserializationException::class)
   fun testResponseExceedTextMessageSenderName() {
     val roomName = "121314"
+    val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(0, SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10), "wwwwwwwwwwwwwwwwwwwwww")
     )
@@ -94,11 +99,12 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       PublicUserInChat("test1")
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
         val expectedMessage = messageHistory[i] as TextChatMessage
@@ -118,6 +124,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ResponseDeserializationException::class)
   fun testResponseExceedTextMessageMessage() {
     val roomName = "121314"
+    val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(0, "e5we6s76", SecurityUtils.Generator.generateRandomString(Constants.maxTextMessageLen + 10))
     )
@@ -125,11 +132,12 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       PublicUserInChat("test1")
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
         val expectedMessage = messageHistory[i] as TextChatMessage
@@ -149,6 +157,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ResponseDeserializationException::class)
   fun testResponseExceedUserInChatUserName() {
     val roomName = "121314"
+    val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(0, "e5we6s76", "45346347")
     )
@@ -156,11 +165,48 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       PublicUserInChat(SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10))
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(userName, restoredResponse.userName)
+
+      for (i in 0 until messageHistory.size) {
+        val expectedMessage = messageHistory[i] as TextChatMessage
+        val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
+
+        assertEquals(expectedMessage.messageId, actualMessage.messageId)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
+        assertEquals(expectedMessage.message, actualMessage.message)
+      }
+
+      for (i in 0 until usersInChatRoom.size) {
+        assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
+      }
+    })
+  }
+
+  @Test(expected = ResponseDeserializationException::class)
+  fun testResponseExceedUserName() {
+    val roomName = "121314"
+    val userName = SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10)
+    val messageHistory = listOf<BaseChatMessage>(
+      TextChatMessage(0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(1, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(2, "6ase46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(3, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
+    )
+    val usersInChatRoom = listOf(
+      PublicUserInChat("test1")
+    )
+
+    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
+      JoinChatRoomResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(Status.Ok.value, restoredResponse.status.value)
+      assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
         val expectedMessage = messageHistory[i] as TextChatMessage
@@ -180,6 +226,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test
   fun testResponseWithBigMessageHistory() {
     val roomName = "121314"
+    val userName = "test"
     val messageHistory = mutableListOf<BaseChatMessage>()
     val usersInChatRoom = listOf(
       PublicUserInChat("test1")
@@ -190,11 +237,12 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       messageHistory += TextChatMessage(i, "test sender", message)
     }
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
         val expectedMessage = messageHistory[i] as TextChatMessage

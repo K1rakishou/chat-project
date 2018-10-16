@@ -6,11 +6,8 @@ import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
 import core.model.drainable.chat_message.ChatMessageType
 import core.model.drainable.chat_message.TextChatMessage
-import core.security.SecurityUtils
-import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
-import model.CurrentUser
 import model.PublicChatRoomItem
 import model.PublicUserInChatItem
 import model.chat_message.BaseChatMessageItem
@@ -18,12 +15,25 @@ import model.chat_message.TextChatMessageItem
 import tornadofx.Controller
 
 class Store : Controller() {
-  private val currentUser: SimpleObjectProperty<CurrentUser> = SimpleObjectProperty(CurrentUser("test user ${SecurityUtils.Generator.generateRandomString(6)}"))
+  private val userNameByRoomName = hashMapOf<String, String>()
   private val publicChatRoomList: ObservableList<PublicChatRoomItem> = FXCollections.observableArrayList()
   private val joinedRooms: ObservableList<String> = FXCollections.observableArrayList()
 
-  fun getCurrentUserName(): String {
-    return currentUser.get().userName
+  fun getUserName(roomName: String?): String {
+    if (roomName == null) {
+      throw IllegalStateException("User has not joined the room $roomName")
+    }
+
+    return userNameByRoomName[roomName]
+      ?: throw IllegalStateException("User has not joined the room $roomName")
+  }
+
+  fun hasUserNameByRoomName(roomName: String): Boolean {
+    return userNameByRoomName.containsKey(roomName)
+  }
+
+  fun addUserToRoom(roomName: String, userName: String) {
+    userNameByRoomName[roomName] = userName
   }
 
   fun getPublicChatRoomList(): ObservableList<PublicChatRoomItem> {

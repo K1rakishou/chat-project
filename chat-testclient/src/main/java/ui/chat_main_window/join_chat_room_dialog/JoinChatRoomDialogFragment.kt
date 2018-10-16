@@ -1,11 +1,13 @@
 package ui.chat_main_window.join_chat_room_dialog
 
+import events.JoinChatRoomInfoEvent
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.layout.Priority
 import tornadofx.*
 
 class JoinChatRoomDialogFragment : Fragment("Join Chat Room") {
+  private val roomNameItem: RoomNameItem by inject()
 
   private val model = object : ViewModel() {
     val userName = bind { SimpleStringProperty(null) }
@@ -43,7 +45,10 @@ class JoinChatRoomDialogFragment : Fragment("Join Chat Room") {
         enableWhen { model.valid }
 
         action {
-          println("Join")
+          model.commit {
+            fire(JoinChatRoomInfoEvent(false, roomNameItem.roomName, model.userName.value, model.roomPassword.value))
+            close()
+          }
         }
       }
       label {
@@ -53,9 +58,12 @@ class JoinChatRoomDialogFragment : Fragment("Join Chat Room") {
         minWidth = 64.0
 
         action {
+          fire(JoinChatRoomInfoEvent(true, "", "", null))
           close()
         }
       }
     }
   }
+
+  class RoomNameItem(val roomName: String) : ItemViewModel<String>()
 }

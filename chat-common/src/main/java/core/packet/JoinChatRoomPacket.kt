@@ -9,7 +9,7 @@ import core.sizeof
 class JoinChatRoomPacket(
   val userName: String,
   val roomName: String,
-  val roomPasswordHash: String?
+  val roomPasswordHash: ByteArray?
 ) : BasePacket() {
 
   override fun getPacketVersion(): Short = CURRENT_PACKET_VERSION.value
@@ -26,7 +26,7 @@ class JoinChatRoomPacket(
       JoinChatRoomPacket.PacketVersion.V1 -> {
         byteSink.writeString(userName)
         byteSink.writeString(roomName)
-        byteSink.writeString(roomPasswordHash)
+        byteSink.writeByteArray(roomPasswordHash)
       }
       JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(getPacketVersion())
     }
@@ -56,7 +56,7 @@ class JoinChatRoomPacket(
               ?: throw PacketDeserializationException("Could not read userName")
             val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
               ?: throw PacketDeserializationException("Could not read chatRoomName")
-            val roomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHash)
+            val roomPasswordHash = byteSink.readByteArray(Constants.maxChatRoomPasswordHash)
 
             return JoinChatRoomPacket(userName, roomName, roomPasswordHash)
           }

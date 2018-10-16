@@ -11,6 +11,7 @@ import core.packet.GetPageOfPublicRoomsPacket
 import core.packet.JoinChatRoomPacket
 import core.packet.SendChatMessagePacket
 import core.response.*
+import core.security.SecurityUtils
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import javafx.beans.property.SimpleIntegerProperty
@@ -26,7 +27,6 @@ import store.Store
 import tornadofx.runLater
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
-import events.ShowJoinChatRoomDialog
 
 class ChatMainWindowController : BaseController() {
   private val networkManager = ChatApp.networkManager
@@ -76,39 +76,49 @@ class ChatMainWindowController : BaseController() {
       return
     }
 
-    addChatMessage(selectedRoomName!!, TextChatMessageItem(store.getCurrentUserName(), messageText))
+    addChatMessage(selectedRoomName!!, TextChatMessageItem(store.getUserName(selectedRoomName), messageText))
 
     launch {
-      networkManager.sendPacket(SendChatMessagePacket(0, selectedRoomName!!, store.getCurrentUserName(), messageText))
+      networkManager.sendPacket(SendChatMessagePacket(0, selectedRoomName!!, store.getUserName(selectedRoomName), messageText))
     }
   }
 
-  fun joinChatRoom(publicChatRoomItem: PublicChatRoomItem) {
-    selectedRoomName = publicChatRoomItem.roomName
+  fun joinChatRoom(chatRoomName: String, userName: String? = null, roomPassword: String? = null) {
+    selectedRoomName = chatRoomName
 
-    if (!store.isUserInRoom(publicChatRoomItem.roomName)) {
-      //if user has not joined this room yet - show a JoinChatRoomDialogFragment
-      fire(ShowJoinChatRoomDialog)
-      return
-    }
+    selectedRoomName?.let { roomName ->
+      if (store.isUserInRoom(roomName)) {
+        replaceRoomMessageHistory(roomName)
+        return
+      }
 
-    if (store.isUserInRoom(publicChatRoomItem.roomName)) {
-      replaceRoomMessageHistory(publicChatRoomItem.roomName)
-      return
-    }
+      if (!networkManager.isConnected) {
+        println("Not connected")
+        return
+      }
 
-    if (!networkManager.isConnected) {
-      println("Not connected")
-      return
-    }
+      val userNameToSend = when {
+        userName != null -> userName
+        store.hasUserNameByRoomName(chatRoomName) -> store.getUserName(chatRoomName)
+        else -> null
+      }
 
-    launch {
-      val packet = JoinChatRoomPacket(
-        store.getCurrentUserName(),
-        publicChatRoomItem.roomName,
-        null)
+      userNameToSend?.let { name ->
+        val hashedPassword = if (roomPassword != null) {
+          SecurityUtils.Hashing.sha3(roomPassword.toByteArray())
+        } else {
+          null
+        }
 
-      networkManager.sendPacket(packet)
+        launch {
+          val packet = JoinChatRoomPacket(
+            name,
+            roomName,
+            hashedPassword)
+
+          networkManager.sendPacket(packet)
+        }
+      }
     }
   }
 
@@ -176,10 +186,11 @@ class ChatMainWindowController : BaseController() {
         }
 
         val roomName = response.roomName!!
+        val userName = response.userName!!
         val users = response.users
         val messageHistory = response.messageHistory
 
-        loadRoomInfo(roomName, users, messageHistory)
+        loadRoomInfo(roomName, userName, users, messageHistory)
       }
       ResponseType.UserHasJoinedResponseType -> {
         println("UserHasJoinedResponseType response received")
@@ -271,7 +282,7 @@ class ChatMainWindowController : BaseController() {
     }
   }
 
-  private fun loadRoomInfo(roomName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
+  private fun loadRoomInfo(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
     runLater {
       find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
 
@@ -280,6 +291,7 @@ class ChatMainWindowController : BaseController() {
         store.addJoinedRoom(roomName)
         store.setChatRoomUserList(roomName, users)
         store.setChatRoomMessageList(roomName, messageHistory)
+        store.addUserToRoom(roomName, userName)
 
         replaceRoomMessageHistory(roomName)
         addChatMessage(roomName, SystemChatMessageItem("You've joined the chat room"))
@@ -307,7 +319,8 @@ class ChatMainWindowController : BaseController() {
   private fun onErrorWhileTryingToConnect(error: Throwable?) {
     runLater {
       selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, SystemChatMessageItem("Error while trying to reconnect: ${error?.message ?: "No error message"}"))
+        addChatMessage(roomName, SystemChatMessageItem("Error while trying to reconnect: ${error?.message
+          ?: "No error message"}"))
       }
     }
   }

@@ -4,10 +4,11 @@ import core.collections.RingBuffer
 import core.extensions.myWithLock
 import core.model.drainable.chat_message.BaseChatMessage
 import kotlinx.coroutines.experimental.sync.Mutex
+import java.util.*
 
 data class ChatRoom(
   val chatRoomName: String,
-  val roomPasswordHash: String?,
+  val roomPasswordHash: ByteArray?,
   val isPublic: Boolean,
   val createdOn: Long,
   val userList: MutableSet<UserInRoom> = mutableSetOf(),
@@ -66,9 +67,9 @@ data class ChatRoom(
     }
   }
 
-  suspend fun passwordsMatch(chatRoomPassword: String): Boolean {
+  suspend fun passwordsMatch(chatRoomPassword: ByteArray): Boolean {
     return mutex.myWithLock {
-      return@myWithLock roomPasswordHash == chatRoomPassword
+      return@myWithLock Arrays.equals(roomPasswordHash, chatRoomPassword)
     }
   }
 
@@ -83,6 +84,6 @@ data class ChatRoom(
   }
 
   fun copy(): ChatRoom {
-    return ChatRoom(chatRoomName, roomPasswordHash, isPublic, createdOn, userList.toMutableSet(), messageHistory.clone())
+    return ChatRoom(chatRoomName, roomPasswordHash?.copyOf(), isPublic, createdOn, userList.toMutableSet(), messageHistory.clone())
   }
 }
