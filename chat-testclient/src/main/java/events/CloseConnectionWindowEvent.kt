@@ -1,4 +1,4 @@
-package ui.events
+package events
 
 import tornadofx.EventBus
 import tornadofx.FXEvent

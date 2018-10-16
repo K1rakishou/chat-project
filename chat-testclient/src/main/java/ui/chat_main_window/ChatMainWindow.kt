@@ -5,16 +5,21 @@ import javafx.geometry.Orientation
 import javafx.scene.control.SplitPane
 import javafx.scene.layout.Border
 import javafx.scene.layout.Priority
-import tornadofx.View
-import tornadofx.splitpane
-import tornadofx.vbox
-import tornadofx.vboxConstraints
+import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
+import events.ShowJoinChatRoomDialog
+import tornadofx.*
 
 class ChatMainWindow : View("Chat") {
   private val chatMainWindowController: ChatMainWindowController by inject()
 
   override fun onDock() {
     chatMainWindowController.createController()
+
+    subscribe<ShowJoinChatRoomDialog> {
+      runLater {
+        find<JoinChatRoomDialogFragment>().openModal(resizable = false)
+      }
+    }
   }
 
   override fun onUndock() {

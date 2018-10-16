@@ -93,7 +93,7 @@ class ConnectionManager(
 
       try {
         val roomsWithUserNames = chatRoomManager.leaveAllRooms(clientAddress)
-        
+
         roomsWithUserNames.forEach { (roomName, userName) ->
           val room = chatRoomManager.getChatRoom(roomName)
           if (room != null) {

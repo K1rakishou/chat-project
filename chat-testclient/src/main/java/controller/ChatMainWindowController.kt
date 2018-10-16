@@ -26,6 +26,7 @@ import store.Store
 import tornadofx.runLater
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
+import events.ShowJoinChatRoomDialog
 
 class ChatMainWindowController : BaseController() {
   private val networkManager = ChatApp.networkManager
@@ -84,6 +85,12 @@ class ChatMainWindowController : BaseController() {
 
   fun joinChatRoom(publicChatRoomItem: PublicChatRoomItem) {
     selectedRoomName = publicChatRoomItem.roomName
+
+    if (!store.isUserInRoom(publicChatRoomItem.roomName)) {
+      //if user has not joined this room yet - show a JoinChatRoomDialogFragment
+      fire(ShowJoinChatRoomDialog)
+      return
+    }
 
     if (store.isUserInRoom(publicChatRoomItem.roomName)) {
       replaceRoomMessageHistory(publicChatRoomItem.roomName)

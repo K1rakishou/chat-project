@@ -8,7 +8,7 @@ import manager.NetworkManager
 import store.Store
 import tornadofx.runLater
 import ui.chat_main_window.ChatMainWindow
-import ui.events.CloseConnectionWindowEvent
+import events.CloseConnectionWindowEvent
 import ui.loading_window.LoadingWindow
 
 class LoadingWindowController : BaseController() {

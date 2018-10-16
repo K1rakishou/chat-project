@@ -4,7 +4,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import model.viewmodel.HostInfoViewModel
 import tornadofx.*
-import ui.events.CloseConnectionWindowEvent
+import events.CloseConnectionWindowEvent
 import ui.loading_window.LoadingWindow
 
 class ConnectionWindow : View("Connection parameters") {
