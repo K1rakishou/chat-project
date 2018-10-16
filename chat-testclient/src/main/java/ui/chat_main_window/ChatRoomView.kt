@@ -6,6 +6,7 @@ import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
 import javafx.scene.text.Text
 import javafx.util.Duration
+import model.chat_message.SystemChatMessageItem
 import model.chat_message.TextChatMessageItem
 import tornadofx.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -38,6 +39,7 @@ class ChatRoomView : View() {
         bindChildren(chatMainWindowController.currentChatRoomMessageList) { baseChatMessage ->
           return@bindChildren when (baseChatMessage) {
             is TextChatMessageItem -> createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+            is SystemChatMessageItem -> createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
             else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
           }
         }

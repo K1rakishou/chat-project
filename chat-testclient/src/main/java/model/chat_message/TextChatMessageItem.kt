@@ -5,7 +5,7 @@ import javafx.beans.property.SimpleStringProperty
 import tornadofx.ItemViewModel
 import java.util.*
 
-class TextChatMessageItem(
+open class TextChatMessageItem(
   senderName: String,
   messageText: String
 ) : BaseChatMessageItem() {
@@ -41,12 +41,6 @@ class TextChatMessageItem(
 
   override fun hashCode(): Int {
     return id.hashCode()
-  }
-
-  companion object {
-    fun systemMessage(messageText: String): TextChatMessageItem {
-      return TextChatMessageItem("System", messageText)
-    }
   }
 }
 

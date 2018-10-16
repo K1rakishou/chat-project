@@ -85,8 +85,6 @@ class ConnectionManager(
   }
 
   suspend fun removeConnection(clientAddress: String) {
-    println("Removing connection for client ${clientAddress}")
-
     mutex.myWithLock {
       if (!connections.containsKey(clientAddress)) {
         println("Does not contain clientAddress: $clientAddress")
@@ -95,16 +93,11 @@ class ConnectionManager(
 
       try {
         val roomsWithUserNames = chatRoomManager.leaveAllRooms(clientAddress)
-        println("roomsWithUserNames = $roomsWithUserNames")
-
+        
         roomsWithUserNames.forEach { (roomName, userName) ->
           val room = chatRoomManager.getChatRoom(roomName)
-          println("room = $room")
-
           if (room != null) {
             for (userInRoom in room.getEveryone()) {
-              println("userInRoom = $userInRoom, roomName = $roomName, userName = $userName")
-
               sendResponse(userInRoom.user.clientAddress, UserHasLeftResponsePayload.success(roomName, userName))
             }
           }

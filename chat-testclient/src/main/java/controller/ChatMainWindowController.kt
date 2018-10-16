@@ -20,6 +20,7 @@ import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
 import model.PublicChatRoomItem
 import model.chat_message.BaseChatMessageItem
+import model.chat_message.SystemChatMessageItem
 import model.chat_message.TextChatMessageItem
 import store.Store
 import tornadofx.runLater
@@ -58,7 +59,7 @@ class ChatMainWindowController : BaseController() {
       println("Not connected")
 
       selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, TextChatMessageItem.systemMessage("Not connected to the server"))
+        addChatMessage(roomName, SystemChatMessageItem("Not connected to the server"))
       }
 
       return
@@ -187,7 +188,7 @@ class ChatMainWindowController : BaseController() {
           return
         }
 
-        addChatMessage(response.roomName!!, TextChatMessageItem.systemMessage("User \"${response.user!!.userName}\" has joined to chat room"))
+        addChatMessage(response.roomName!!, SystemChatMessageItem("User \"${response.user!!.userName}\" has joined to chat room"))
       }
       ResponseType.SendChatMessageResponseType -> {
         println("SendChatMessageResponseType response received")
@@ -236,7 +237,7 @@ class ChatMainWindowController : BaseController() {
           return
         }
 
-        addChatMessage(response.roomName!!, TextChatMessageItem.systemMessage("User \"${response.userName!!}\" has left the room"))
+        addChatMessage(response.roomName!!, SystemChatMessageItem("User \"${response.userName!!}\" has left the room"))
       }
       else -> {
         //Do nothing
@@ -274,7 +275,7 @@ class ChatMainWindowController : BaseController() {
         store.setChatRoomMessageList(roomName, messageHistory)
 
         replaceRoomMessageHistory(roomName)
-        addChatMessage(roomName, TextChatMessageItem.systemMessage("You've joined the chat room"))
+        addChatMessage(roomName, SystemChatMessageItem("You've joined the chat room"))
 
         scrollChatToBottom()
       }
@@ -291,7 +292,7 @@ class ChatMainWindowController : BaseController() {
   private fun onDisconnected() {
     runLater {
       selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, TextChatMessageItem.systemMessage("Disconnected from the server"))
+        addChatMessage(roomName, SystemChatMessageItem("Disconnected from the server"))
       }
     }
   }
@@ -299,7 +300,7 @@ class ChatMainWindowController : BaseController() {
   private fun onErrorWhileTryingToConnect(error: Throwable?) {
     runLater {
       selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, TextChatMessageItem.systemMessage("Error while trying to reconnect: ${error?.message ?: "No error message"}"))
+        addChatMessage(roomName, SystemChatMessageItem("Error while trying to reconnect: ${error?.message ?: "No error message"}"))
       }
     }
   }
