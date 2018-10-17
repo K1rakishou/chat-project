@@ -2,6 +2,7 @@ package manager
 
 import core.ChatRoom
 import core.Constants
+import core.Constants.defaultChatRoomLength
 import core.User
 import core.UserInRoom
 import core.extensions.myWithLock
@@ -12,7 +13,6 @@ import kotlinx.coroutines.experimental.sync.Mutex
 
 class ChatRoomManager {
   private val mutex = Mutex()
-  private val defaultChatRoomLength = 10
   private val clientAddressToRoomNameCache = mutableMapOf<String, MutableList<RoomNameUserNamePair>>()
   private val chatRooms = mutableMapOf<String, ChatRoom>()
 
@@ -133,14 +133,12 @@ class ChatRoomManager {
 
   suspend fun exists(chatRoomName: String? = null): Boolean {
     requireNotNull(chatRoomName)
-
     return mutex.myWithLock { chatRooms.containsKey(chatRoomName) }
   }
 
   suspend fun hasPassword(chatRoomName: String): Boolean {
     return mutex.myWithLock {
       require(chatRooms.containsKey(chatRoomName))
-
       return@myWithLock chatRooms[chatRoomName]!!.hasPassword()
     }
   }
@@ -172,7 +170,10 @@ class ChatRoomManager {
 
   suspend fun getUser(clientAddress: String, roomName: String, userName: String): UserInRoom? {
     return mutex.myWithLock {
-      val joinedRoom = clientAddressToRoomNameCache[clientAddress]?.any { it.roomName == roomName && it.userName == userName } ?: false
+      val joinedRoom = clientAddressToRoomNameCache[clientAddress]
+        ?.any { it.roomName == roomName && it.userName == userName }
+        ?: false
+
       if (!joinedRoom) {
         return@myWithLock null
       }

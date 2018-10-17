@@ -15,4 +15,5 @@ object Constants {
 
   const val ivLen = 24
   const val randomBytesLen = 16
+  const val defaultChatRoomLength = 10
 }
