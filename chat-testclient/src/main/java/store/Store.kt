@@ -79,6 +79,10 @@ class Store : Controller() {
         ChatMessageType.Unknown -> throw UnknownChatMessageTypeException(message.messageType)
         ChatMessageType.Text -> {
           message as TextChatMessage
+
+          //TODO: check every message's clientId whether it exists in the roomMessages list.
+          //Depending on it - create either ForeignTextChatMessageItem (if it does not exists there)
+          //or MyTextChatMessageItem (if it does)
           ForeignTextChatMessageItem(message.senderName, message.message)
         }
       }
