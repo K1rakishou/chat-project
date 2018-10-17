@@ -26,7 +26,6 @@ import kotlinx.coroutines.experimental.io.ByteWriteChannel
 import kotlinx.coroutines.experimental.io.close
 import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.sync.Mutex
-import kotlinx.coroutines.experimental.sync.withLock
 import java.io.File
 import java.io.IOException
 import java.net.InetSocketAddress
@@ -48,22 +47,22 @@ class NetworkManager {
   private var cachedHostInfo: HostInfo? = null
   private var reconnectionActor: SendChannel<Unit>? = null
   private var sendPacketsActor: SendChannel<BasePacket>? = null
+  private var socket: Socket? = null
+  private var writeChannel: ByteWriteChannel? = null
+  private var connectionJob: Job? = null
+  private var connectionAttempts: Int = 0
+
+  private lateinit var readChannel: ByteReadChannel
+  private lateinit var byteSinkFileCachePath: String
 
   val connectionStateObservable = BehaviorSubject.createDefault<ConnectionState>(ConnectionState.Uninitialized)
   val isConnected: Boolean
-    get() = connectionStateObservable.value == ConnectionState.Connected
+    get() = (connectionStateObservable.value == ConnectionState.Connected) || (connectionStateObservable.value == ConnectionState.Reconnected)
 
   private val responsesQueue = PublishSubject.create<ResponseInfo>()
     .toSerialized()
   val responsesFlowable: Flowable<ResponseInfo>
     get() = responsesQueue.toFlowable(BackpressureStrategy.BUFFER)
-
-  private var socket: Socket? = null
-  private var writeChannel: ByteWriteChannel? = null
-  private var connectionJob: Job? = null
-
-  private lateinit var readChannel: ByteReadChannel
-  private lateinit var byteSinkFileCachePath: String
 
   init {
     val byteSinkCachePathFile = File(System.getProperty("user.dir") + "\\byte-sink-cache")
@@ -95,7 +94,17 @@ class NetworkManager {
     shouldReconnectToServer.set(value)
   }
 
-  fun connect(host: String, port: Int) {
+  fun doConnect(host: String, port: Int) {
+    connect(host, port)
+  }
+
+  fun doDisconnect() {
+    connectionAttempts = 0
+
+    disconnect()
+  }
+
+  private fun connect(host: String, port: Int) {
     connectionStateObservable.onNext(ConnectionState.Uninitialized)
 
     connectionJob = launch {
@@ -139,7 +148,15 @@ class NetworkManager {
             writeChannel = newSocket.openWriteChannel(autoFlush = false)
 
             launch { listenServer(isActive) }
-            connectionStateObservable.onNext(ConnectionState.Connected)
+
+            //send Connected state only on the first connection attempt
+            if (connectionAttempts == 0) {
+              connectionStateObservable.onNext(ConnectionState.Connected)
+            } else {
+              connectionStateObservable.onNext(ConnectionState.Reconnected)
+            }
+
+            ++connectionAttempts
           } else {
             //if we are not in connecting state that means the connection has been canceled
             println("Connection canceled while trying to connect")
@@ -164,7 +181,7 @@ class NetworkManager {
     }
   }
 
-  fun disconnect() {
+  private fun disconnect() {
     launch {
       try {
         mutex.myWithLock {
@@ -327,6 +344,7 @@ class NetworkManager {
     object Connecting  : ConnectionState()
     class ErrorWhileTryingToConnect(val error: Throwable?) : ConnectionState()
     object Connected : ConnectionState()
+    object Reconnected : ConnectionState()
   }
 
   data class HostInfo(

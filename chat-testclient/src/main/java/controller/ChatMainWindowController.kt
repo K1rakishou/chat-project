@@ -131,6 +131,9 @@ class ChatMainWindowController : BaseController() {
       .filter { connectionState -> connectionState != NetworkManager.ConnectionState.Connected }
       .subscribeBy(onNext = { connectionState ->
         when (connectionState) {
+          is NetworkManager.ConnectionState.Uninitialized -> {
+            //Default state
+          }
           is NetworkManager.ConnectionState.Connecting -> {
           }
           is NetworkManager.ConnectionState.Disconnected -> {
@@ -141,8 +144,8 @@ class ChatMainWindowController : BaseController() {
           }
           is NetworkManager.ConnectionState.Connected -> {
           }
-          is NetworkManager.ConnectionState.Uninitialized -> {
-            //Default state
+          is NetworkManager.ConnectionState.Reconnected -> {
+            onReconnected()
           }
         }
       })
@@ -312,6 +315,14 @@ class ChatMainWindowController : BaseController() {
     runLater {
       selectedRoomName?.let { roomName ->
         addChatMessage(roomName, SystemChatMessageItem("Disconnected from the server"))
+      }
+    }
+  }
+
+  private fun onReconnected() {
+    runLater {
+      selectedRoomName?.let { roomName ->
+        addChatMessage(roomName, SystemChatMessageItem("Reconnected"))
       }
     }
   }

@@ -10,6 +10,7 @@ import tornadofx.runLater
 import ui.chat_main_window.ChatMainWindow
 import events.CloseConnectionWindowEvent
 import ui.loading_window.LoadingWindow
+import java.lang.IllegalStateException
 
 class LoadingWindowController : BaseController() {
   private val networkManager = ChatApp.networkManager
@@ -30,13 +31,13 @@ class LoadingWindowController : BaseController() {
 
   fun startConnectionToServer(host: String, port: String) {
     changeConnectionStatus("Connecting...")
-    networkManager.connect(host, port.toInt())
+    networkManager.doConnect(host, port.toInt())
 
     startListeningToPackets()
   }
 
   fun stopConnectionToServer() {
-    networkManager.disconnect()
+    networkManager.doDisconnect()
 
     goBackToConnectionWindow()
   }
@@ -45,6 +46,9 @@ class LoadingWindowController : BaseController() {
     compositeDisposable += networkManager.connectionStateObservable
       .subscribeBy(onNext = { connectionState ->
         when (connectionState) {
+          is NetworkManager.ConnectionState.Uninitialized -> {
+            //Default state
+          }
           is NetworkManager.ConnectionState.Connecting -> {
             println("Connecting")
           }
@@ -61,8 +65,8 @@ class LoadingWindowController : BaseController() {
             changeConnectionStatus("Connected")
             goToChatMainWindow()
           }
-          is NetworkManager.ConnectionState.Uninitialized -> {
-            //Default state
+          is NetworkManager.ConnectionState.Reconnected -> {
+            throw IllegalStateException("Should not happen here")
           }
         }
       })
