@@ -16,7 +16,7 @@ class JoinChatRoomInfoEvent private constructor(
     }
 
     fun createCanceled(): JoinChatRoomInfoEvent {
-      return JoinChatRoomInfoEvent(false, "", "", null)
+      return JoinChatRoomInfoEvent(true, "", "", null)
     }
   }
 }
