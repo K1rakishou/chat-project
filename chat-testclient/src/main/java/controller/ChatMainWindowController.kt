@@ -12,6 +12,7 @@ import core.packet.JoinChatRoomPacket
 import core.packet.SendChatMessagePacket
 import core.response.*
 import core.security.SecurityUtils
+import events.ChatRoomListClearRoomSelectionEvent
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import javafx.beans.property.SimpleIntegerProperty
@@ -263,7 +264,13 @@ class ChatMainWindowController : BaseController() {
     }
 
     if (response.status != Status.Ok) {
-      showErrorAlert("Error while trying to join a chat room")
+      if (response.status == Status.UserNameAlreadyTaken) {
+        showErrorAlert("Username has already been taken")
+      } else {
+        showErrorAlert("Error while trying to join a chat room")
+      }
+
+      fire(ChatRoomListClearRoomSelectionEvent)
       return
     }
 
