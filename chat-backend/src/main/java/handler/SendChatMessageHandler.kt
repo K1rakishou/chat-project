@@ -57,7 +57,6 @@ class SendChatMessageHandler(
 
     println("User ($userName) is trying to send a message ($message)")
 
-    //TODO: check clientAddress to ensure it's the one client that is in the room and not an impostor
     val chatRoom = chatRoomManager.getChatRoom(roomName)
     if (chatRoom == null) {
       println("Room with name (${roomName}) does not exist")
@@ -65,13 +64,14 @@ class SendChatMessageHandler(
       return
     }
 
-    val user = chatRoomManager.getUser(roomName, userName)
+    val user = chatRoomManager.getUser(clientAddress, roomName, userName)
     if (user == null) {
       println("User ($userName) does not exist in the room $roomName")
       connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.fail(Status.UserDoesNotExistInTheRoom))
       return
     }
 
+    //-1 here will be filled in the addMessage function by messageIdCounter
     val serverMessageId = chatRoom.addMessage(TextChatMessage(-1, clientMessageId, userName, message))
     val response = NewChatMessageResponsePayload.success(serverMessageId, clientMessageId, roomName, userName, message)
 

@@ -170,8 +170,13 @@ class ChatRoomManager {
     }
   }
 
-  suspend fun getUser(roomName: String, userName: String): UserInRoom? {
+  suspend fun getUser(clientAddress: String, roomName: String, userName: String): UserInRoom? {
     return mutex.myWithLock {
+      val joinedRoom = clientAddressToRoomNameCache[clientAddress]?.any { it.roomName == roomName && it.userName == userName } ?: false
+      if (!joinedRoom) {
+        return@myWithLock null
+      }
+
       return@myWithLock chatRooms[roomName]?.getUser(userName)
     }
   }
