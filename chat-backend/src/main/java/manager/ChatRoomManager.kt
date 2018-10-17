@@ -113,10 +113,20 @@ class ChatRoomManager {
     }
   }
 
-  suspend fun alreadyJoined(chatRoomName: String, userName: String): Boolean {
+  suspend fun alreadyJoined(clientAddress: String, chatRoomName: String, userName: String): Boolean {
+    return mutex.myWithLock {
+      val cacheEntry = clientAddressToRoomNameCache[clientAddress]
+      if (cacheEntry == null) {
+        return@myWithLock false
+      }
+
+      return@myWithLock cacheEntry.any { it.roomName == chatRoomName && it.userName == userName }
+    }
+  }
+
+  suspend fun roomContainsNickname(chatRoomName: String, userName: String): Boolean {
     return mutex.myWithLock {
       require(chatRooms.containsKey(chatRoomName))
-
       return@myWithLock chatRooms[chatRoomName]!!.containsUser(userName)
     }
   }

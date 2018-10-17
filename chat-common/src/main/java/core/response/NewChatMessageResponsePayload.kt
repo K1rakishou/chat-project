@@ -9,7 +9,8 @@ import core.sizeof
 
 class NewChatMessageResponsePayload private constructor(
   status: Status,
-  val messageId: Int = -1,
+  val serverMessageId: Int = -1,
+  val clientMessageId: Int = -1,
   val roomName: String? = null,
   val userName: String? = null,
   val message: String? = null
@@ -19,7 +20,7 @@ class NewChatMessageResponsePayload private constructor(
   override fun getResponseVersion(): Short = CURRENT_RESPONSE_VERSION.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(messageId) + sizeof(roomName) + sizeof(userName) + sizeof(message)
+    return super.getPayloadSize() + sizeof(serverMessageId) + sizeof(clientMessageId) + sizeof(roomName) + sizeof(userName) + sizeof(message)
   }
 
   override fun toByteSink(byteSink: ByteSink) {
@@ -30,7 +31,8 @@ class NewChatMessageResponsePayload private constructor(
         byteSink.writeShort(status.value)
 
         if (status == Status.Ok) {
-          byteSink.writeInt(messageId)
+          byteSink.writeInt(serverMessageId)
+          byteSink.writeInt(clientMessageId)
           byteSink.writeString(roomName)
           byteSink.writeString(userName)
           byteSink.writeString(message)
@@ -54,8 +56,8 @@ class NewChatMessageResponsePayload private constructor(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
-    fun success(messageId: Int, roomName: String, userName: String, message: String): NewChatMessageResponsePayload {
-      return NewChatMessageResponsePayload(Status.Ok, messageId, roomName, userName, message)
+    fun success(serverMessageId: Int, clientMessageId: Int, roomName: String, userName: String, message: String): NewChatMessageResponsePayload {
+      return NewChatMessageResponsePayload(Status.Ok, serverMessageId, clientMessageId, roomName, userName, message)
     }
 
     fun fail(status: Status): NewChatMessageResponsePayload {
@@ -73,7 +75,8 @@ class NewChatMessageResponsePayload private constructor(
               return fail(status)
             }
 
-            val messageId = byteSink.readInt()
+            val serverMessageId = byteSink.readInt()
+            val clientMessageId = byteSink.readInt()
             val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
               ?: throw ResponseDeserializationException("Could not read chatRoomName")
             val userName = byteSink.readString(Constants.maxUserNameLen)
@@ -81,7 +84,7 @@ class NewChatMessageResponsePayload private constructor(
             val message = byteSink.readString(Constants.maxTextMessageLen)
               ?: throw ResponseDeserializationException("Could not read chatRoomName")
 
-            return NewChatMessageResponsePayload(status, messageId, roomName, userName, message)
+            return NewChatMessageResponsePayload(status, serverMessageId, clientMessageId, roomName, userName, message)
           }
           NewChatMessageResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
         }

@@ -21,12 +21,14 @@ import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
 import model.PublicChatRoomItem
 import model.chat_message.BaseChatMessageItem
-import model.chat_message.SystemChatMessageItem
-import model.chat_message.TextChatMessageItem
+import model.chat_message.ForeignTextChatMessageItem
+import model.chat_message.SystemChatMessageItemMy
+import model.chat_message.MyTextChatMessageItem
 import store.Store
 import tornadofx.runLater
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
+import java.lang.IllegalStateException
 
 class ChatMainWindowController : BaseController() {
   private val networkManager = ChatApp.networkManager
@@ -60,7 +62,7 @@ class ChatMainWindowController : BaseController() {
       println("Not connected")
 
       selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, SystemChatMessageItem("Not connected to the server"))
+        addChatMessage(roomName, SystemChatMessageItemMy("Not connected to the server"))
       }
 
       return
@@ -76,10 +78,13 @@ class ChatMainWindowController : BaseController() {
       return
     }
 
-    addChatMessage(selectedRoomName!!, TextChatMessageItem(store.getUserName(selectedRoomName), messageText))
+    val messageId = addChatMessage(selectedRoomName!!, MyTextChatMessageItem(store.getUserName(selectedRoomName), messageText))
+    if (messageId == -1) {
+      throw IllegalStateException("Could not add chat message (Probably selectedRoomName (${selectedRoomName}) refers to an unknown room)")
+    }
 
     launch {
-      networkManager.sendPacket(SendChatMessagePacket(0, selectedRoomName!!, store.getUserName(selectedRoomName), messageText))
+      networkManager.sendPacket(SendChatMessagePacket(messageId, selectedRoomName!!, store.getUserName(selectedRoomName), messageText))
     }
   }
 
@@ -209,7 +214,7 @@ class ChatMainWindowController : BaseController() {
           return
         }
 
-        addChatMessage(response.roomName!!, SystemChatMessageItem("User \"${response.user!!.userName}\" has joined to chat room"))
+        addChatMessage(response.roomName!!, SystemChatMessageItemMy("User \"${response.user!!.userName}\" has joined to chat room"))
       }
       ResponseType.SendChatMessageResponseType -> {
         println("SendChatMessageResponseType response received")
@@ -225,6 +230,14 @@ class ChatMainWindowController : BaseController() {
           showErrorAlert("SendChatMessageResponseType with non ok status ${response.status}")
           return
         }
+
+        val roomName = response.roomName!!
+        val serverMessageId = response.serverMessageId
+        val clientMessageId = response.clientMessageId
+
+        store.updateChatRoomMessageServerId(roomName, serverMessageId, clientMessageId)
+
+        //TODO: update sent message UI state here
       }
       ResponseType.NewChatMessageResponseType -> {
         println("NewChatMessageResponseType response received")
@@ -241,7 +254,12 @@ class ChatMainWindowController : BaseController() {
           return
         }
 
-        addChatMessage(response.roomName!!, TextChatMessageItem(response.userName!!, response.message!!))
+        val message = ForeignTextChatMessageItem(
+          response.userName!!,
+          response.message!!
+        )
+
+        addChatMessage(response.roomName!!, message)
       }
       ResponseType.UserHasLeftResponseType -> {
         println("UserHasLeftResponseType response received")
@@ -258,7 +276,7 @@ class ChatMainWindowController : BaseController() {
           return
         }
 
-        addChatMessage(response.roomName!!, SystemChatMessageItem("User \"${response.userName!!}\" has left the room"))
+        addChatMessage(response.roomName!!, SystemChatMessageItemMy("User \"${response.userName!!}\" has left the room"))
       }
       else -> {
         //Do nothing
@@ -266,16 +284,19 @@ class ChatMainWindowController : BaseController() {
     }
   }
 
-  private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem) {
-    if (!store.addChatRoomMessage(roomName, chatMessage)) {
+  private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem): Int {
+    val messageId = store.addChatRoomMessage(roomName, chatMessage)
+    if (messageId == -1) {
       println("Could not add chat room message to room with name $roomName")
-      return
+      return -1
     }
 
     runLater {
       currentChatRoomMessageList.add(chatMessage)
       scrollChatToBottom()
     }
+
+    return messageId
   }
 
   private fun replaceRoomMessageHistory(roomName: String) {
@@ -293,11 +314,11 @@ class ChatMainWindowController : BaseController() {
       runLater(Duration.millis(delayBeforeAddFirstChatRoomMessage)) {
         store.addJoinedRoom(roomName)
         store.setChatRoomUserList(roomName, users)
-        store.setChatRoomMessageList(roomName, messageHistory)
+        store.loadChatRoomMessageHistory(roomName, messageHistory)
         store.addUserToRoom(roomName, userName)
 
         replaceRoomMessageHistory(roomName)
-        addChatMessage(roomName, SystemChatMessageItem("You've joined the chat room"))
+        addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
 
         scrollChatToBottom()
       }
@@ -314,7 +335,7 @@ class ChatMainWindowController : BaseController() {
   private fun onDisconnected() {
     runLater {
       selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, SystemChatMessageItem("Disconnected from the server"))
+        addChatMessage(roomName, SystemChatMessageItemMy("Disconnected from the server"))
       }
     }
   }
@@ -322,7 +343,7 @@ class ChatMainWindowController : BaseController() {
   private fun onReconnected() {
     runLater {
       selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, SystemChatMessageItem("Reconnected"))
+        addChatMessage(roomName, SystemChatMessageItemMy("Reconnected"))
       }
     }
   }
@@ -330,7 +351,7 @@ class ChatMainWindowController : BaseController() {
   private fun onErrorWhileTryingToConnect(error: Throwable?) {
     runLater {
       selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, SystemChatMessageItem("Error while trying to reconnect: ${error?.message
+        addChatMessage(roomName, SystemChatMessageItemMy("Error while trying to reconnect: ${error?.message
           ?: "No error message"}"))
       }
     }

@@ -8,10 +8,11 @@ import core.model.drainable.chat_message.ChatMessageType
 import core.model.drainable.chat_message.TextChatMessage
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
+import manager.IdGeneratorManager
 import model.PublicChatRoomItem
 import model.PublicUserInChatItem
 import model.chat_message.BaseChatMessageItem
-import model.chat_message.TextChatMessageItem
+import model.chat_message.ForeignTextChatMessageItem
 import tornadofx.Controller
 
 class Store : Controller() {
@@ -59,8 +60,6 @@ class Store : Controller() {
     joinedRooms.add(roomName)
   }
 
-  fun getJoinedRoomsList() = ArrayList(joinedRooms)
-
   fun isUserInRoom(roomName: String): Boolean {
     return joinedRooms.any { it == roomName }
   }
@@ -73,14 +72,14 @@ class Store : Controller() {
     chatRoom.userListProperty().addAll(convertedUserList)
   }
 
-  fun setChatRoomMessageList(roomName: String, messageHistory: List<BaseChatMessage>) {
+  fun loadChatRoomMessageHistory(roomName: String, messageHistory: List<BaseChatMessage>) {
     val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
     val convertedMessageList = messageHistory.map { message ->
       when (message.messageType) {
         ChatMessageType.Unknown -> throw UnknownChatMessageTypeException(message.messageType)
         ChatMessageType.Text -> {
           message as TextChatMessage
-          TextChatMessageItem(message.senderName, message.message)
+          ForeignTextChatMessageItem(message.senderName, message.message)
         }
       }
     }
@@ -89,14 +88,43 @@ class Store : Controller() {
     chatRoom.roomMessagesProperty().addAll(convertedMessageList)
   }
 
-  fun addChatRoomMessage(roomName: String, message: BaseChatMessageItem): Boolean {
+  fun addChatRoomMessage(roomName: String, message: BaseChatMessageItem): Int {
     val chatRoom = publicChatRoomList.firstOrNull { it.roomName == roomName }
     if (chatRoom == null) {
-      return false
+      return -1
+    }
+
+    if (message.shouldUpdateIds()) {
+      val messageId = IdGeneratorManager.getNextClientMessageId()
+      val newChatMessage = BaseChatMessageItem.copyWithNewClientMessageId(message, messageId)
+      chatRoom.roomMessagesProperty().add(newChatMessage)
+      return messageId
     }
 
     chatRoom.roomMessagesProperty().add(message)
-    return true
+
+    //always return 0 for messages (like SystemMessage, or TextMessage but when it was received from the server)
+    //that won't be send to the server
+    return 0
+  }
+
+  fun updateChatRoomMessageServerId(roomName: String, serverMessageId: Int, clientMessageId: Int) {
+    val chatRoom = publicChatRoomList.firstOrNull { it.roomName == roomName }
+    if (chatRoom == null) {
+      return
+    }
+
+    val messageItemIndex = chatRoom.roomMessagesProperty()
+      .indexOfFirst { it.clientMessageId == clientMessageId }
+
+    if (messageItemIndex == -1) {
+      return
+    }
+
+    val oldMessageItem = chatRoom.roomMessagesProperty().get(messageItemIndex)
+    val newChatMessage = BaseChatMessageItem.copyWithNewServerMessageId(oldMessageItem, serverMessageId)
+
+    chatRoom.roomMessagesProperty().set(messageItemIndex, newChatMessage)
   }
 
   fun getChatRoomMessageHistory(roomName: String): ObservableList<BaseChatMessageItem> {

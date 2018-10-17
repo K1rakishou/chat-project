@@ -60,7 +60,7 @@ class JoinChatRoomPacketHandler(
       return
     }
 
-    if (chatRoomManager.alreadyJoined(roomName, userName)) {
+    if (chatRoomManager.alreadyJoined(clientAddress, roomName, userName)) {
       //we have already joined this room, no need to add the user in the room second time and notify everyone in the room about it
       println("User (${userName}) has already joined room (${roomName})")
 
@@ -80,6 +80,12 @@ class JoinChatRoomPacketHandler(
       val response = JoinChatRoomResponsePayload.success(chatRoom.chatRoomName, userName, messageHistory, publicUserInChatList)
 
       connectionManager.sendResponse(clientAddress, response)
+      return
+    }
+
+    if (chatRoomManager.roomContainsNickname(roomName, userName)) {
+      println("Room with name (${roomName}) already contains user with userName: ${userName}")
+      connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.fail(Status.UserNameAlreadyTaken))
       return
     }
 

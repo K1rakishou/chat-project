@@ -33,7 +33,7 @@ class SendChatMessageHandler(
   }
 
   private suspend fun handleInternalV1(packet: SendChatMessagePacket, clientAddress: String) {
-    val messageId = packet.messageId
+    val clientMessageId = packet.clientMessageId
     val roomName = packet.roomName
     val userName = packet.userName
     val message = packet.message
@@ -57,6 +57,7 @@ class SendChatMessageHandler(
 
     println("User ($userName) is trying to send a message ($message)")
 
+    //TODO: check clientAddress to ensure it's the one client that is in the room and not an impostor
     val chatRoom = chatRoomManager.getChatRoom(roomName)
     if (chatRoom == null) {
       println("Room with name (${roomName}) does not exist")
@@ -71,15 +72,14 @@ class SendChatMessageHandler(
       return
     }
 
-    chatRoom.addMessage(TextChatMessage(messageId, userName, message))
-    val roomParticipants = chatRoom.getEveryoneExcept(userName)
-    val response = NewChatMessageResponsePayload.success(messageId, roomName, userName, message)
+    val serverMessageId = chatRoom.addMessage(TextChatMessage(-1, clientMessageId, userName, message))
+    val response = NewChatMessageResponsePayload.success(serverMessageId, clientMessageId, roomName, userName, message)
 
-    for (userInRoom in roomParticipants) {
+    for (userInRoom in chatRoom.getEveryoneExcept(userName)) {
       connectionManager.sendResponse(userInRoom.user.clientAddress, response)
     }
 
-    connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.success())
+    connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.success(roomName, serverMessageId, clientMessageId))
     println("Message ($message) has been successfully sent in room ${roomName} by user ${userName}")
   }
 }

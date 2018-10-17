@@ -1,6 +1,7 @@
 package core
 
 enum class Status(val value: Short) {
+  UserNameAlreadyTaken(-9),
   BadPacket(-8),
   UserDoesNotExistInTheRoom(-7),
   WrongRoomPassword(-6),

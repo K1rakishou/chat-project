@@ -4,7 +4,11 @@ import core.collections.RingBuffer
 import core.extensions.myWithLock
 import core.model.drainable.chat_message.BaseChatMessage
 import kotlinx.coroutines.experimental.sync.Mutex
+import repository.mapper.BaseChatMessageMapper
+import repository.model.BaseChatMessageData
+import java.lang.IllegalStateException
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 data class ChatRoom(
   val chatRoomName: String,
@@ -12,9 +16,10 @@ data class ChatRoom(
   val isPublic: Boolean,
   val createdOn: Long,
   val userList: MutableSet<UserInRoom> = mutableSetOf(),
-  val messageHistory: RingBuffer<BaseChatMessage> = RingBuffer(Constants.maxRoomHistoryMessagesCount)
+  val messageHistory: RingBuffer<BaseChatMessageData> = RingBuffer(Constants.maxRoomHistoryMessagesCount)
 ) {
   private val mutex = Mutex()
+  private val messageIdCounter = AtomicInteger(0)
 
   suspend fun addUser(userInRoom: UserInRoom): Boolean {
     return mutex.myWithLock { userList.add(userInRoom) }
@@ -24,8 +29,16 @@ data class ChatRoom(
     mutex.myWithLock { userList.removeIf { it.user.userName == userName } }
   }
 
-  suspend fun addMessage(chatMessage: BaseChatMessage) {
-    mutex.myWithLock { messageHistory.add(chatMessage) }
+  suspend fun addMessage(chatMessage: BaseChatMessage): Int {
+    if (chatMessage.serverMessageId != -1) {
+      throw IllegalStateException("serverMessageId should be initialized here!")
+    }
+
+    val serverMessageId = messageIdCounter.getAndIncrement()
+    val chatMessageData = BaseChatMessageMapper.FromBaseChatMessage.toBaseChatMessageData(serverMessageId, chatMessage)
+
+    mutex.myWithLock { messageHistory.add(chatMessageData) }
+    return serverMessageId
   }
 
   suspend fun containsUser(userName: String): Boolean {
@@ -75,7 +88,7 @@ data class ChatRoom(
 
   suspend fun getMessageHistory(): List<BaseChatMessage> {
     return mutex.myWithLock {
-      return@myWithLock messageHistory.getAll()
+      return@myWithLock BaseChatMessageMapper.FromBaseChatMessageData.toBaseChatMessageList(messageHistory.getAll())
     }
   }
 

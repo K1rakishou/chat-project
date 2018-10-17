@@ -100,21 +100,21 @@ class SizeofKtTest {
 
   @Test
   fun `sizeof TextChatMessage`() {
-    assertEquals(18, sizeof(TextChatMessage(1, "1", "1")))
+    assertEquals(22, sizeof(TextChatMessage(1, 1, "1", "1")))
   }
 
   @Test
   fun `sizeof TextChatMessage with empty senderName`() {
-    assertEquals(13, sizeof(TextChatMessage(1, "", "1")))
+    assertEquals(17, sizeof(TextChatMessage(1, 1, "", "1")))
   }
 
   @Test
   fun `sizeof TextChatMessage with empty message`() {
-    assertEquals(13, sizeof(TextChatMessage(1, "1", "")))
+    assertEquals(17, sizeof(TextChatMessage(1, 1, "1", "")))
   }
 
   @Test
   fun `sizeof TextChatMessage with empty senderName and message`() {
-    assertEquals(8, sizeof(TextChatMessage(1, "", "")))
+    assertEquals(12, sizeof(TextChatMessage(1, 1, "", "")))
   }
 }

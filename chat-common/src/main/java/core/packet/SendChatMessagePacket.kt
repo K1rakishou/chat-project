@@ -7,7 +7,7 @@ import core.exception.*
 import core.sizeof
 
 class SendChatMessagePacket(
-  val messageId: Int,
+  val clientMessageId: Int,
   val roomName: String,
   val userName: String,
   val message: String
@@ -17,7 +17,7 @@ class SendChatMessagePacket(
   override fun getPacketType(): PacketType = PacketType.SendChatMessagePacketType
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(messageId) + sizeof(roomName) + sizeof(userName) + sizeof(message)
+    return super.getPayloadSize() + sizeof(clientMessageId) + sizeof(roomName) + sizeof(userName) + sizeof(message)
   }
 
   override fun toByteSink(byteSink: ByteSink) {
@@ -25,7 +25,7 @@ class SendChatMessagePacket(
 
     when (CURRENT_PACKET_VERSION) {
       PacketVersion.V1 -> {
-        byteSink.writeInt(messageId)
+        byteSink.writeInt(clientMessageId)
         byteSink.writeString(roomName)
         byteSink.writeString(userName)
         byteSink.writeString(message)
@@ -54,7 +54,7 @@ class SendChatMessagePacket(
         val packetVersion = PacketVersion.fromShort(byteSink.readShort())
         when (packetVersion) {
           SendChatMessagePacket.PacketVersion.V1 -> {
-            val messageId = byteSink.readInt()
+            val clientMessageId = byteSink.readInt()
             val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
               ?: throw PacketDeserializationException("Could not read roomName")
             val userName = byteSink.readString(Constants.maxUserNameLen)
@@ -62,7 +62,7 @@ class SendChatMessagePacket(
             val message = byteSink.readString(Constants.maxTextMessageLen)
               ?: throw PacketDeserializationException("Could not read message")
 
-            return SendChatMessagePacket(messageId, roomName, userName, message)
+            return SendChatMessagePacket(clientMessageId, roomName, userName, message)
           }
           SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
         }

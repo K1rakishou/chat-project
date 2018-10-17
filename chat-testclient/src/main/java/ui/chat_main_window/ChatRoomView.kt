@@ -6,8 +6,8 @@ import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
 import javafx.scene.text.Text
 import javafx.util.Duration
-import model.chat_message.SystemChatMessageItem
-import model.chat_message.TextChatMessageItem
+import model.chat_message.BaseChatMessageItem
+import model.chat_message.MyTextChatMessageItem
 import tornadofx.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -37,9 +37,13 @@ class ChatRoomView : View() {
         vboxConstraints { vGrow = Priority.ALWAYS }
 
         bindChildren(chatMainWindowController.currentChatRoomMessageList) { baseChatMessage ->
-          return@bindChildren when (baseChatMessage) {
-            is TextChatMessageItem -> createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
-            is SystemChatMessageItem -> createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+          return@bindChildren when (baseChatMessage.getMessageType()) {
+            BaseChatMessageItem.MessageType.MyTextMessage,
+            BaseChatMessageItem.MessageType.ForeignTextMessage,
+            BaseChatMessageItem.MessageType.SystemTextMessage -> {
+              baseChatMessage as MyTextChatMessageItem
+              createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+            }
             else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
           }
         }

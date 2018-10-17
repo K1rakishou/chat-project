@@ -55,16 +55,8 @@ class Server(
         .bind(InetSocketAddress("127.0.0.1", 2323))
 
       //test zone
-      chatRoomManager.createChatRoom(true, chatRoomName = "chatroom1").apply {
-        addMessage(TextChatMessage(0, "test", "test message 1"))
-        addMessage(TextChatMessage(1, "test", "test message 2"))
-        addMessage(TextChatMessage(2, "test", "test message 3"))
-      }
-      chatRoomManager.createChatRoom(true, chatRoomName = "chatroom2").apply {
-        addMessage(TextChatMessage(0, "test", "test message 4"))
-        addMessage(TextChatMessage(1, "test", "test message 5"))
-        addMessage(TextChatMessage(2, "test", "test message 6"))
-      }
+      chatRoomManager.createChatRoom(true, chatRoomName = "chatroom1")
+      chatRoomManager.createChatRoom(true, chatRoomName = "chatroom2")
       //test zone
 
       println("Started server at ${server.localAddress}")

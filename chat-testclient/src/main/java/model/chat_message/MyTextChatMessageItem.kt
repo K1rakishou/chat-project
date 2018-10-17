@@ -5,10 +5,15 @@ import javafx.beans.property.SimpleStringProperty
 import tornadofx.ItemViewModel
 import java.util.*
 
-open class TextChatMessageItem(
+open class MyTextChatMessageItem(
   senderName: String,
-  messageText: String
-) : BaseChatMessageItem() {
+  messageText: String,
+  serverMessageId: Int = -1,
+  clientMessageId: Int = -1
+) : BaseChatMessageItem(serverMessageId, clientMessageId) {
+
+  override fun getMessageType(): MessageType = MessageType.MyTextMessage
+
   val id = UUID.randomUUID()
 
   private val senderNameProperty by lazy { SimpleStringProperty(senderName) }
@@ -28,7 +33,7 @@ open class TextChatMessageItem(
       return false
     }
 
-    if (other !is TextChatMessageItem) {
+    if (other !is MyTextChatMessageItem) {
       return false
     }
 
@@ -45,8 +50,8 @@ open class TextChatMessageItem(
 }
 
 class TextChatMessageItemModel(
-  property: ObjectProperty<TextChatMessageItem>
-) : ItemViewModel<TextChatMessageItem>(itemProperty = property) {
+  property: ObjectProperty<MyTextChatMessageItem>
+) : ItemViewModel<MyTextChatMessageItem>(itemProperty = property) {
   val senderName = bind(autocommit = true) { item?.senderNameProperty() }
   val messageText = bind(autocommit = true) { item?.messageTextProperty() }
 }

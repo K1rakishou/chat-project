@@ -4,10 +4,11 @@ import core.byte_sink.ByteSink
 import core.sizeof
 
 class TextChatMessage(
-  messageId: Int,
+  serverMessageId: Int,
+  clientMessageId: Int,
   val senderName: String,
   val message: String
-) : BaseChatMessage(messageId, ChatMessageType.Text) {
+) : BaseChatMessage(serverMessageId, clientMessageId, ChatMessageType.Text) {
 
   override fun getSize(): Int {
     return super.getSize() + sizeof(senderName) + sizeof(message)
