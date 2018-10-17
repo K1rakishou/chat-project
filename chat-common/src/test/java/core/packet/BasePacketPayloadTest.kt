@@ -27,12 +27,6 @@ open class BasePacketPayloadTest {
 
   private fun <T> testPacket(basePacket: BasePacket, _byteSink: ByteSink, restoreFunction: (ByteSink) -> T, testFunction: (T) -> Unit) {
     val response = packetBuilder.buildPacket(basePacket, _byteSink)
-
-    assertNotNull(response)
-    //TODO
-    //can't wait for kotlin's 1.3 contracts to get rid of this
-    response!!
-
     val bodySize = response.bodySize
 
     response.bodyByteSink.use { byteSink ->
