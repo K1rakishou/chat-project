@@ -30,11 +30,9 @@ class JoinChatRoomDialogFragment : Fragment("Join Chat Room") {
         textfield(model.roomPassword)
       }
     }
-
     vbox {
       minHeight = 24.0
     }
-
     hbox {
       alignment = Pos.BASELINE_RIGHT
       hgrow = Priority.ALWAYS
@@ -46,7 +44,7 @@ class JoinChatRoomDialogFragment : Fragment("Join Chat Room") {
 
         action {
           model.commit {
-            fire(JoinChatRoomInfoEvent(false, roomNameItem.roomName, model.userName.value, model.roomPassword.value))
+            fire(JoinChatRoomInfoEvent.createOk(roomNameItem.roomName, model.userName.value, model.roomPassword.value))
             close()
           }
         }
@@ -58,7 +56,7 @@ class JoinChatRoomDialogFragment : Fragment("Join Chat Room") {
         minWidth = 64.0
 
         action {
-          fire(JoinChatRoomInfoEvent(true, "", "", null))
+          fire(JoinChatRoomInfoEvent.createCanceled())
           close()
         }
       }
