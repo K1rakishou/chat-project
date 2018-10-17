@@ -90,12 +90,12 @@ class SizeofKtTest {
 
   @Test
   fun `sizeof PublicChatRoom`() {
-    assertEquals(9, sizeof(PublicChatRoom("1", 5.toShort())))
+    assertEquals(13, sizeof(PublicChatRoom("1", "2")))
   }
 
   @Test
   fun `sizeof PublicChatRoom with empty chatRoomName`() {
-    assertEquals(4, sizeof(PublicChatRoom("", 5.toShort())))
+    assertEquals(8, sizeof(PublicChatRoom("", "1")))
   }
 
   @Test

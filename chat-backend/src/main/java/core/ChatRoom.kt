@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 data class ChatRoom(
   val chatRoomName: String,
+  val chatRoomImageUrl: String,
   val roomPasswordHash: ByteArray?,
   val isPublic: Boolean,
   val createdOn: Long,
@@ -97,6 +98,14 @@ data class ChatRoom(
   }
 
   fun copy(): ChatRoom {
-    return ChatRoom(chatRoomName, roomPasswordHash?.copyOf(), isPublic, createdOn, userList.toMutableSet(), messageHistory.clone())
+    return ChatRoom(
+      chatRoomName,
+      chatRoomImageUrl,
+      roomPasswordHash?.copyOf(),
+      isPublic,
+      createdOn,
+      userList.toMutableSet(),
+      messageHistory.clone()
+    )
   }
 }

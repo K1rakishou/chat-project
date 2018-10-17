@@ -12,6 +12,7 @@ import core.utils.TimeUtils
 import kotlinx.coroutines.experimental.sync.Mutex
 
 class ChatRoomManager {
+  private val defaultChatRoomimage = "default_chat_room_image"
   private val mutex = Mutex()
   private val clientAddressToRoomNameCache = mutableMapOf<String, MutableList<RoomNameUserNamePair>>()
   private val chatRooms = mutableMapOf<String, ChatRoom>()
@@ -24,10 +25,12 @@ class ChatRoomManager {
   suspend fun createChatRoom(
     isPublic: Boolean = true,
     chatRoomName: String? = null,
+    chatRoomImageUrl: String? = null,
     chatRoomPasswordHash: ByteArray? = null
   ): ChatRoom {
+    val roomImageUrl = chatRoomImageUrl ?: defaultChatRoomimage
     val roomName = (chatRoomName ?: SecurityUtils.Generator.generateRandomString(defaultChatRoomLength))
-    val chatRoom = ChatRoom(roomName, chatRoomPasswordHash, isPublic, TimeUtils.getCurrentTime())
+    val chatRoom = ChatRoom(roomName, roomImageUrl, chatRoomPasswordHash, isPublic, TimeUtils.getCurrentTime())
 
     mutex.myWithLock {
       require(chatRooms.size < Constants.maxUsersInRoomCount)
@@ -149,7 +152,7 @@ class ChatRoomManager {
         .filter { chatRoom -> chatRoom.isPublic }
         .map { chatRoom ->
           val copy = chatRoom.copy()
-          return@map PublicChatRoom(copy.chatRoomName, copy.countUsers().toShort())
+          return@map PublicChatRoom(copy.chatRoomName, copy.chatRoomImageUrl)
         }
     }
   }

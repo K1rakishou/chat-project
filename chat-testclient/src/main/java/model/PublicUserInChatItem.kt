@@ -36,9 +36,3 @@ class PublicUserInChatItem(
     return id.hashCode()
   }
 }
-
-class PublicUserInChatItemModel(
-  property: ObjectProperty<PublicUserInChatItem>
-) : ItemViewModel<PublicUserInChatItem>(itemProperty = property) {
-  val userName = bind(autocommit = true) { item?.userNameProperty() }
-}

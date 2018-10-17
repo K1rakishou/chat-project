@@ -9,16 +9,16 @@ import core.sizeof
 
 class PublicChatRoom(
   val chatRoomName: String,
-  val usersCount: Short
+  val chatRoomImageUrl: String
 ) : CanMeasureSizeOfFields, CanBeDrainedToSink {
 
   override fun getSize(): Int {
-    return sizeof(chatRoomName) + sizeof(usersCount)
+    return sizeof(chatRoomName) + sizeof(chatRoomImageUrl)
   }
 
   override fun serialize(sink: ByteSink) {
     sink.writeString(chatRoomName)
-    sink.writeShort(usersCount)
+    sink.writeString(chatRoomImageUrl)
   }
 
   companion object : CanBeRestoredFromSink {
@@ -28,7 +28,12 @@ class PublicChatRoom(
         return null
       }
 
-      return PublicChatRoom(roomName, byteSink.readShort()) as T
+      val chatRoomImageUrl = byteSink.readString(Constants.maxImageUrlLen)
+      if (chatRoomImageUrl == null) {
+        return null
+      }
+
+      return PublicChatRoom(roomName, chatRoomImageUrl) as T
     }
   }
 }

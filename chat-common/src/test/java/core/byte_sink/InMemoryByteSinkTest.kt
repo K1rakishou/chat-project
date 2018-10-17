@@ -235,32 +235,32 @@ class InMemoryByteSinkTest {
   @Test
   fun testReadWriteListOfDrainables() {
     val expectedListOfDrainables = listOf(
-      PublicChatRoom("1", 22)
+      PublicChatRoom("1", "1")
     )
 
     byteSink.writeList(expectedListOfDrainables)
 
-    assertEquals(11, sizeofList(expectedListOfDrainables))
-    assertEquals(11, byteSink.getWriterPosition())
+    assertEquals(15, sizeofList(expectedListOfDrainables))
+    assertEquals(15, byteSink.getWriterPosition())
 
     val actualListOfDrainables = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, expectedListOfDrainables.size)
-    assertEquals(11, byteSink.getReaderPosition())
+    assertEquals(15, byteSink.getReaderPosition())
 
     for (i in 0 until expectedListOfDrainables.size) {
       assertEquals(expectedListOfDrainables[i].chatRoomName, actualListOfDrainables[i].chatRoomName)
-      assertEquals(expectedListOfDrainables[i].usersCount, actualListOfDrainables[i].usersCount)
+      assertEquals(expectedListOfDrainables[i].chatRoomImageUrl, actualListOfDrainables[i].chatRoomImageUrl)
     }
   }
 
   @Test
   fun testReadWriteListOfDrainables2() {
     val expectedListOfDrainables = listOf(
-      PublicChatRoom("s5sdhe6e46je46j", 22),
-      PublicChatRoom("a35h35jw35kk56k", 51),
-      PublicChatRoom("s5sdhe6e4576je46j", 34),
-      PublicChatRoom("64hwhw4hj54hj", 15),
-      PublicChatRoom("fg6yfdt7futu", 5),
-      PublicChatRoom("46", 2)
+      PublicChatRoom("s5sdhe6e46je46j", "111"),
+      PublicChatRoom("a35h35jw35kk56k", "222"),
+      PublicChatRoom("s5sdhe6e4576je46j", "333"),
+      PublicChatRoom("64hwhw4hj54hj", "444"),
+      PublicChatRoom("fg6yfdt7futu", "555"),
+      PublicChatRoom("46", "666")
     )
 
     byteSink.writeList(expectedListOfDrainables)
@@ -268,7 +268,7 @@ class InMemoryByteSinkTest {
 
     for (i in 0 until expectedListOfDrainables.size) {
       assertEquals(expectedListOfDrainables[i].chatRoomName, actualListOfDrainables[i].chatRoomName)
-      assertEquals(expectedListOfDrainables[i].usersCount, actualListOfDrainables[i].usersCount)
+      assertEquals(expectedListOfDrainables[i].chatRoomImageUrl, actualListOfDrainables[i].chatRoomImageUrl)
     }
   }
 

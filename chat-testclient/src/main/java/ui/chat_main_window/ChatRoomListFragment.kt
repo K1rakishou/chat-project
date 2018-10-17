@@ -3,17 +3,18 @@ package ui.chat_main_window
 import controller.ChatMainWindowController
 import events.ChatRoomListClearRoomSelectionEvent
 import events.ShowJoinChatRoomDialogEvent
-import store.Store
+import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.Parent
 import javafx.scene.control.Label
 import javafx.scene.control.ListCell
 import javafx.scene.control.ListView
+import javafx.scene.image.ImageView
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.HBox
-import javafx.scene.layout.Pane
 import javafx.scene.layout.Priority
 import model.PublicChatRoomItem
+import store.Store
 import tornadofx.*
 
 class ChatRoomListFragment : Fragment() {
@@ -82,11 +83,17 @@ class ChatRoomListFragment : Fragment() {
   private fun createCellItem(item: PublicChatRoomItem): Node {
     return HBox().apply {
       prefHeight = 64.0
+      maxHeight = 64.0
+      paddingAll = 4.0
 
-      add(Label(item.usersCount.toString()))
-      add(Pane().apply {
-        paddingRight = 15.0
+      add(ImageView(item.imageUrl).apply {
+        fitHeight = 48.0
+        isPreserveRatio = true
+        isSmooth = true
+        alignment = Pos.CENTER_LEFT
+        paddingRight = 8.0
       })
+
       add(Label(item.roomName).apply {
         hgrow = Priority.ALWAYS
       })

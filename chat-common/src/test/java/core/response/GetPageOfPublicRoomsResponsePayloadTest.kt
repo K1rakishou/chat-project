@@ -14,11 +14,11 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
   fun testResponse() {
     val status = Status.Ok
     val publicChatRoomList = listOf(
-      PublicChatRoom("testRoom1", 0),
-      PublicChatRoom("testRoom154364r6dr76rt7", 44),
-      PublicChatRoom("45476d478", 52),
-      PublicChatRoom("88888888888888888888888888888888888888888888888", 0),
-      PublicChatRoom("545745", 46)
+      PublicChatRoom("testRoom1", "111"),
+      PublicChatRoom("testRoom154364r6dr76rt7", "222"),
+      PublicChatRoom("45476d478", "333"),
+      PublicChatRoom("88888888888888888888888888888888888888888888888", "444"),
+      PublicChatRoom("545745", "555")
     )
 
     testPayload(GetPageOfPublicRoomsResponsePayload.success(publicChatRoomList), { byteSink ->
@@ -28,6 +28,7 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
 
       for (i in 0 until publicChatRoomList.size) {
         assertEquals(restoredResponse.publicChatRoomList[i].chatRoomName, restoredResponse.publicChatRoomList[i].chatRoomName)
+        assertEquals(restoredResponse.publicChatRoomList[i].chatRoomImageUrl, restoredResponse.publicChatRoomList[i].chatRoomImageUrl)
       }
     })
   }
@@ -68,11 +69,11 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
   fun testResponseExceedChatRoomName() {
     val status = Status.Ok
     val publicChatRoomList = listOf(
-      PublicChatRoom("testRoom1", 0),
-      PublicChatRoom("testRoom154364r6dr76rt7", 44),
-      PublicChatRoom("45476d478", 52),
-      PublicChatRoom(SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10), 0),
-      PublicChatRoom("545745", 46)
+      PublicChatRoom("testRoom1", "111"),
+      PublicChatRoom("testRoom154364r6dr76rt7", "222"),
+      PublicChatRoom("45476d478", "333"),
+      PublicChatRoom(SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10), "444"),
+      PublicChatRoom("545745", "555")
     )
 
     testPayload(GetPageOfPublicRoomsResponsePayload.success(publicChatRoomList), { byteSink ->
@@ -82,6 +83,30 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
 
       for (i in 0 until publicChatRoomList.size) {
         assertEquals(restoredResponse.publicChatRoomList[i].chatRoomName, restoredResponse.publicChatRoomList[i].chatRoomName)
+        assertEquals(restoredResponse.publicChatRoomList[i].chatRoomImageUrl, restoredResponse.publicChatRoomList[i].chatRoomImageUrl)
+      }
+    })
+  }
+
+  @Test(expected = ResponseDeserializationException::class)
+  fun testResponseExceedChatImageUrl() {
+    val status = Status.Ok
+    val publicChatRoomList = listOf(
+      PublicChatRoom("testRoom1", "111"),
+      PublicChatRoom("testRoom154364r6dr76rt7", "222"),
+      PublicChatRoom("45476d478", "333"),
+      PublicChatRoom("32423", SecurityUtils.Generator.generateRandomString(Constants.maxImageUrlLen + 10)),
+      PublicChatRoom("545745", "555")
+    )
+
+    testPayload(GetPageOfPublicRoomsResponsePayload.success(publicChatRoomList), { byteSink ->
+      GetPageOfPublicRoomsResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(status, restoredResponse.status)
+
+      for (i in 0 until publicChatRoomList.size) {
+        assertEquals(restoredResponse.publicChatRoomList[i].chatRoomName, restoredResponse.publicChatRoomList[i].chatRoomName)
+        assertEquals(restoredResponse.publicChatRoomList[i].chatRoomImageUrl, restoredResponse.publicChatRoomList[i].chatRoomImageUrl)
       }
     })
   }

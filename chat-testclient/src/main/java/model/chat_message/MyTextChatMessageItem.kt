@@ -48,10 +48,3 @@ open class MyTextChatMessageItem(
     return id.hashCode()
   }
 }
-
-class TextChatMessageItemModel(
-  property: ObjectProperty<MyTextChatMessageItem>
-) : ItemViewModel<MyTextChatMessageItem>(itemProperty = property) {
-  val senderName = bind(autocommit = true) { item?.senderNameProperty() }
-  val messageText = bind(autocommit = true) { item?.messageTextProperty() }
-}
