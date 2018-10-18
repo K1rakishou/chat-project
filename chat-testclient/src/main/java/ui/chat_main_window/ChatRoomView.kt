@@ -5,11 +5,14 @@ import controller.ChatMainWindowController
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
 import javafx.scene.text.Text
-import javafx.util.Duration
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.javafx.JavaFx
+import kotlinx.coroutines.experimental.launch
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.MyTextChatMessageItem
 import tornadofx.*
 import ui.base.BaseView
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -73,7 +76,8 @@ class ChatRoomView : BaseView() {
     //goddamn hacks I swear
     //So, if you don't add a delay here before trying to update scrollbar's position it will scroll to the
     //currentItemPosition-1 and not to the last one because it needs some time to calculate that item's size
-    runLater(Duration.millis(delayBeforeUpdatingScrollBarPosition)) {
+    launch(coroutineContext + JavaFx) {
+      delay(delayBeforeUpdatingScrollBarPosition.toLong(), TimeUnit.MILLISECONDS)
       scrollPane.vvalue = 1.0
     }
   }

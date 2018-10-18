@@ -56,7 +56,7 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
         null
       }
 
-      launch {
+      launch(coroutineContext) {
         val packet = JoinChatRoomPacket(
           name,
           chatRoomName,

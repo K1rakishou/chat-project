@@ -4,9 +4,10 @@ import io.reactivex.disposables.CompositeDisposable
 import javafx.scene.control.Alert
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.javafx.JavaFx
+import kotlinx.coroutines.experimental.launch
 import tornadofx.Controller
 import tornadofx.alert
-import tornadofx.runLater
 import ui.base.IView
 import kotlin.coroutines.experimental.CoroutineContext
 
@@ -33,7 +34,7 @@ abstract class BaseController<View: IView> : Controller(), CoroutineScope {
   }
 
   protected fun showErrorAlert(message: String) {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       alert(Alert.AlertType.ERROR, "Error", message)
     }
   }

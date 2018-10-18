@@ -8,8 +8,6 @@ import core.byte_sink.OnDiskByteSink
 import core.utils.TimeUtils
 import kotlinx.coroutines.experimental.io.ByteReadChannel
 import kotlinx.coroutines.experimental.io.readFully
-import kotlinx.io.core.IoBuffer
-import kotlinx.io.core.readFully
 import java.io.File
 
 suspend fun ByteReadChannel.readResponseInfo(byteSinkFileCachePath: String, bodySize: Int): ResponseInfo {

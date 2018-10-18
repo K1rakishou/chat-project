@@ -3,10 +3,11 @@ package ui.base
 import javafx.scene.control.Alert
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.javafx.JavaFx
+import kotlinx.coroutines.experimental.launch
 import tornadofx.FXEventRegistration
 import tornadofx.Fragment
 import tornadofx.alert
-import tornadofx.runLater
 import kotlin.coroutines.experimental.CoroutineContext
 
 abstract class BaseFragment(
@@ -35,7 +36,7 @@ abstract class BaseFragment(
   }
 
   protected fun showErrorAlert(message: String) {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       alert(Alert.AlertType.ERROR, "Error", message)
     }
   }

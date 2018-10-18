@@ -6,6 +6,8 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.control.Alert
 import javafx.scene.text.TextAlignment
+import kotlinx.coroutines.experimental.javafx.JavaFx
+import kotlinx.coroutines.experimental.launch
 import model.viewmodel.HostInfoViewModel
 import tornadofx.*
 import ui.base.BaseView
@@ -54,25 +56,25 @@ class LoadingWindow : BaseView("Chat") {
   }
 
   fun updateConnectionStatus(message: String) {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       connectionStatus.set(message)
     }
   }
 
   fun showConnectionError(message: String) {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       alert(Alert.AlertType.ERROR, header = "Connection error", content = message)
     }
   }
 
   fun closeView() {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       close()
     }
   }
 
   fun onConnectedToServer() {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       find<ChatMainWindow>().openWindow(resizable = true)
 
       closeView()

@@ -14,7 +14,8 @@ import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.collections.FXCollections
-import javafx.util.Duration
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.javafx.JavaFx
 import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
 import model.PublicChatRoomItem
@@ -23,10 +24,10 @@ import model.chat_message.ForeignTextChatMessageItem
 import model.chat_message.MyTextChatMessageItem
 import model.chat_message.SystemChatMessageItemMy
 import store.Store
-import tornadofx.runLater
 import ui.chat_main_window.ChatMainWindow
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
+import java.util.concurrent.TimeUnit
 
 class ChatMainWindowController : BaseController<ChatMainWindow>() {
   private val networkManager = ChatApp.networkManager
@@ -227,7 +228,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       return
     }
 
-    runLater {
+    launch(coroutineContext + JavaFx) {
       store.setPublicChatRoomList(response.publicChatRoomList)
 
       publicChatRoomList.clear()
@@ -244,7 +245,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
     selectedRoomName?.let { name ->
       if (name == roomName) {
-        runLater {
+        launch(coroutineContext + JavaFx) {
           currentChatRoomMessageList.add(chatMessage)
           scrollChatToBottom()
         }
@@ -255,28 +256,28 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   fun reloadRoomMessageHistory(roomName: String) {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       currentChatRoomMessageList.clear()
       currentChatRoomMessageList.addAll(store.getChatRoomMessageHistory(roomName))
     }
   }
 
   fun loadRoomInfo(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
 
       //Wait some time before ChatRoomView shows up
-      runLater(Duration.millis(delayBeforeAddFirstChatRoomMessage)) {
-        store.addJoinedRoom(roomName)
-        store.setChatRoomUserList(roomName, users)
-        store.loadChatRoomMessageHistory(roomName, messageHistory)
-        store.addUserToRoom(roomName, userName)
+      delay(delayBeforeAddFirstChatRoomMessage.toLong(), TimeUnit.MILLISECONDS)
 
-        reloadRoomMessageHistory(roomName)
-        addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
+      store.addJoinedRoom(roomName)
+      store.setChatRoomUserList(roomName, users)
+      store.loadChatRoomMessageHistory(roomName, messageHistory)
+      store.addUserToRoom(roomName, userName)
 
-        scrollChatToBottom()
-      }
+      reloadRoomMessageHistory(roomName)
+      addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
+
+      scrollChatToBottom()
     }
   }
 
@@ -288,7 +289,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   private fun onDisconnected() {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       selectedRoomName?.let { roomName ->
         addChatMessage(roomName, SystemChatMessageItemMy("Disconnected from the server"))
       }
@@ -296,7 +297,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   private fun onReconnected() {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       selectedRoomName?.let { roomName ->
         addChatMessage(roomName, SystemChatMessageItemMy("Reconnected"))
       }
@@ -304,7 +305,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   private fun onErrorWhileTryingToConnect(error: Throwable?) {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       selectedRoomName?.let { roomName ->
         addChatMessage(roomName, SystemChatMessageItemMy("Error while trying to reconnect: ${error?.message
           ?: "No error message"}"))

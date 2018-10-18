@@ -10,6 +10,8 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.layout.Priority
+import kotlinx.coroutines.experimental.javafx.JavaFx
+import kotlinx.coroutines.experimental.launch
 import tornadofx.*
 import ui.base.BaseFragment
 
@@ -85,7 +87,7 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   }
 
   fun closeFragment() {
-    runLater {
+    launch(coroutineContext + JavaFx) {
       close()
     }
   }
