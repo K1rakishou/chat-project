@@ -242,9 +242,13 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       return -1
     }
 
-    runLater {
-      currentChatRoomMessageList.add(chatMessage)
-      scrollChatToBottom()
+    selectedRoomName?.let { name ->
+      if (name == roomName) {
+        runLater {
+          currentChatRoomMessageList.add(chatMessage)
+          scrollChatToBottom()
+        }
+      }
     }
 
     return messageId
