@@ -13,14 +13,14 @@ class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
   fun testPacket() {
     val userName = "test_user_name"
     val roomName = "test_room_name"
-    val roomPasswordHash = "12345678".toByteArray()
+    val roomPasswordHash = "12345678"
 
     testPayload(JoinChatRoomPacket(userName, roomName, roomPasswordHash), { byteSink ->
       JoinChatRoomPacket.fromByteSink(byteSink)
     }, { restorePacket ->
       assertEquals(userName, restorePacket.userName)
       assertEquals(roomName, restorePacket.roomName)
-      assertArrayEquals(roomPasswordHash, restorePacket.roomPasswordHash)
+      assertEquals(roomPasswordHash, restorePacket.roomPasswordHash)
     })
   }
 
@@ -43,14 +43,14 @@ class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
   fun testPacketExceedUserName() {
     val userName = SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10)
     val roomName = "test_room_name"
-    val roomPasswordHash = "12345678".toByteArray()
+    val roomPasswordHash = "12345678"
 
     testPayload(JoinChatRoomPacket(userName, roomName, roomPasswordHash), { byteSink ->
       JoinChatRoomPacket.fromByteSink(byteSink)
     }, { restorePacket ->
       assertEquals(userName, restorePacket.userName)
       assertEquals(roomName, restorePacket.roomName)
-      assertArrayEquals(roomPasswordHash, restorePacket.roomPasswordHash)
+      assertEquals(roomPasswordHash, restorePacket.roomPasswordHash)
     })
   }
 
@@ -58,14 +58,14 @@ class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
   fun testPacketExceedRoomName() {
     val userName = "test_user_name"
     val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10)
-    val roomPasswordHash = "12345678".toByteArray()
+    val roomPasswordHash = "12345678"
 
     testPayload(JoinChatRoomPacket(userName, roomName, roomPasswordHash), { byteSink ->
       JoinChatRoomPacket.fromByteSink(byteSink)
     }, { restorePacket ->
       assertEquals(userName, restorePacket.userName)
       assertEquals(roomName, restorePacket.roomName)
-      assertArrayEquals(roomPasswordHash, restorePacket.roomPasswordHash)
+      assertEquals(roomPasswordHash, restorePacket.roomPasswordHash)
     })
   }
 
@@ -73,14 +73,14 @@ class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
   fun testPacketExceedRoomPassword() {
     val userName = "test_user_name"
     val roomName = "test_room_name"
-    val roomPasswordHash = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomPasswordHash + 10).toByteArray()
+    val roomPasswordHash = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomPasswordHash + 10)
 
     testPayload(JoinChatRoomPacket(userName, roomName, roomPasswordHash), { byteSink ->
       JoinChatRoomPacket.fromByteSink(byteSink)
     }, { restorePacket ->
       assertEquals(userName, restorePacket.userName)
       assertEquals(roomName, restorePacket.roomName)
-      assertArrayEquals(roomPasswordHash, restorePacket.roomPasswordHash)
+      assertEquals(roomPasswordHash, restorePacket.roomPasswordHash)
     })
   }
 }

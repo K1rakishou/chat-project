@@ -8,11 +8,8 @@ import core.exception.ResponseDeserializationException
 import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
 import core.packet.GetPageOfPublicRoomsPacket
-import core.packet.JoinChatRoomPacket
 import core.packet.SendChatMessagePacket
 import core.response.*
-import core.security.SecurityUtils
-import events.ChatRoomListClearRoomSelectionEvent
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import javafx.beans.property.SimpleIntegerProperty
@@ -23,15 +20,15 @@ import manager.NetworkManager
 import model.PublicChatRoomItem
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.ForeignTextChatMessageItem
-import model.chat_message.SystemChatMessageItemMy
 import model.chat_message.MyTextChatMessageItem
+import model.chat_message.SystemChatMessageItemMy
 import store.Store
 import tornadofx.runLater
+import ui.chat_main_window.ChatMainWindow
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
-import java.lang.IllegalStateException
 
-class ChatMainWindowController : BaseController() {
+class ChatMainWindowController : BaseController<ChatMainWindow>() {
   private val networkManager = ChatApp.networkManager
   private val store: Store by inject()
   private val delayBeforeAddFirstChatRoomMessage = 250.0
@@ -42,8 +39,8 @@ class ChatMainWindowController : BaseController() {
   val publicChatRoomList = FXCollections.observableArrayList<PublicChatRoomItem>()
   val currentChatRoomMessageList = FXCollections.observableArrayList<BaseChatMessageItem>()
 
-  override fun createController() {
-    super.createController()
+  override fun createController(viewParam: ChatMainWindow) {
+    super.createController(viewParam)
 
     scrollToBottomFlag = SimpleIntegerProperty(0)
 
@@ -56,6 +53,10 @@ class ChatMainWindowController : BaseController() {
     selectedRoomName = null
 
     super.destroyController()
+  }
+
+  fun updateSelectedRoom(roomName: String) {
+    selectedRoomName = roomName
   }
 
   fun sendMessage(messageText: String) {
@@ -86,45 +87,6 @@ class ChatMainWindowController : BaseController() {
 
     launch {
       networkManager.sendPacket(SendChatMessagePacket(messageId, selectedRoomName!!, store.getUserName(selectedRoomName), messageText))
-    }
-  }
-
-  fun joinChatRoom(chatRoomName: String, userName: String? = null, roomPassword: String? = null) {
-    selectedRoomName = chatRoomName
-
-    selectedRoomName?.let { roomName ->
-      if (store.isUserInRoom(roomName)) {
-        replaceRoomMessageHistory(roomName)
-        return
-      }
-
-      if (!networkManager.isConnected) {
-        println("Not connected")
-        return
-      }
-
-      val userNameToSend = when {
-        userName != null -> userName
-        store.hasUserNameByRoomName(chatRoomName) -> store.getUserName(chatRoomName)
-        else -> null
-      }
-
-      userNameToSend?.let { name ->
-        val hashedPassword = if (roomPassword != null) {
-          SecurityUtils.Hashing.sha3(roomPassword.toByteArray())
-        } else {
-          null
-        }
-
-        launch {
-          val packet = JoinChatRoomPacket(
-            name,
-            roomName,
-            hashedPassword)
-
-          networkManager.sendPacket(packet)
-        }
-      }
     }
   }
 
@@ -160,7 +122,6 @@ class ChatMainWindowController : BaseController() {
   private fun handleIncomingResponses(responseInfo: ResponseInfo) {
     when (responseInfo.responseType) {
       ResponseType.GetPageOfPublicRoomsResponseType -> handleGetPageOfPublicRoomsResponse(responseInfo)
-      ResponseType.JoinChatRoomResponseType -> handleJoinChatRoomResponse(responseInfo)
       ResponseType.UserHasJoinedResponseType -> handleUserHasJoinedResponse(responseInfo)
       ResponseType.SendChatMessageResponseType -> handleSendChatMessageResponse(responseInfo)
       ResponseType.NewChatMessageResponseType -> handleNewChatMessageResponse(responseInfo)
@@ -253,35 +214,6 @@ class ChatMainWindowController : BaseController() {
     addChatMessage(response.roomName!!, SystemChatMessageItemMy("User \"${response.user!!.userName}\" has joined to chat room"))
   }
 
-  private fun handleJoinChatRoomResponse(responseInfo: ResponseInfo) {
-    println("JoinChatRoomResponseType response received")
-
-    val response = try {
-      JoinChatRoomResponsePayload.fromByteSink(responseInfo.byteSink)
-    } catch (error: ResponseDeserializationException) {
-      showErrorAlert("Could not deserialize packet JoinChatRoomResponse, error: ${error.message}")
-      return
-    }
-
-    if (response.status != Status.Ok) {
-      if (response.status == Status.UserNameAlreadyTaken) {
-        showErrorAlert("Username has already been taken")
-      } else {
-        showErrorAlert("Error while trying to join a chat room")
-      }
-
-      fire(ChatRoomListClearRoomSelectionEvent)
-      return
-    }
-
-    val roomName = response.roomName!!
-    val userName = response.userName!!
-    val users = response.users
-    val messageHistory = response.messageHistory
-
-    loadRoomInfo(roomName, userName, users, messageHistory)
-  }
-
   private fun handleGetPageOfPublicRoomsResponse(responseInfo: ResponseInfo) {
     val response = try {
       GetPageOfPublicRoomsResponsePayload.fromByteSink(responseInfo.byteSink)
@@ -318,14 +250,14 @@ class ChatMainWindowController : BaseController() {
     return messageId
   }
 
-  private fun replaceRoomMessageHistory(roomName: String) {
+  fun replaceRoomMessageHistory(roomName: String) {
     runLater {
       currentChatRoomMessageList.clear()
       currentChatRoomMessageList.addAll(store.getChatRoomMessageHistory(roomName))
     }
   }
 
-  private fun loadRoomInfo(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
+  fun loadRoomInfo(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
     runLater {
       find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
 

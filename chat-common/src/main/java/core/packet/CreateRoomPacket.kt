@@ -9,7 +9,7 @@ import core.sizeof
 class CreateRoomPacket(
   val isPublic: Boolean,
   val chatRoomName: String?,
-  val chatRoomPasswordHash: ByteArray?
+  val chatRoomPasswordHash: String?
 ) : BasePacket() {
 
   override fun getPacketVersion(): Short = CURRENT_PACKET_VERSION.value
@@ -26,7 +26,7 @@ class CreateRoomPacket(
       CreateRoomPacket.PacketVersion.V1 -> {
         byteSink.writeBoolean(isPublic)
         byteSink.writeString(chatRoomName)
-        byteSink.writeByteArray(chatRoomPasswordHash)
+        byteSink.writeString(chatRoomPasswordHash)
       }
       CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(getPacketVersion())
     }
@@ -54,7 +54,7 @@ class CreateRoomPacket(
           CreateRoomPacket.PacketVersion.V1 -> {
             val isPublic = byteSink.readBoolean()
             val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
-            val chatRoomPasswordHash = byteSink.readByteArray(Constants.maxChatRoomPasswordHash)
+            val chatRoomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHash)
 
             return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash)
           }

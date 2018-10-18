@@ -9,10 +9,11 @@ import javafx.util.Duration
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.MyTextChatMessageItem
 import tornadofx.*
+import ui.base.BaseView
 import java.util.concurrent.atomic.AtomicInteger
 
 
-class ChatRoomView : View() {
+class ChatRoomView : BaseView() {
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val childIndex = AtomicInteger(0)
   private val chatMainWindowController: ChatMainWindowController by inject()
@@ -68,7 +69,7 @@ class ChatRoomView : View() {
     }
   }
 
-  private fun scrollToBottom() {
+  fun scrollToBottom() {
     //goddamn hacks I swear
     //So, if you don't add a delay here before trying to update scrollbar's position it will scroll to the
     //currentItemPosition-1 and not to the last one because it needs some time to calculate that item's size

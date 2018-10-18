@@ -1,9 +1,10 @@
 package ui.chat_main_window
 
 import controller.ChatMainWindowController
-import events.ChatRoomListClearRoomSelectionEvent
-import events.ShowJoinChatRoomDialogEvent
+import events.ChatMainWindowEvents
+import events.ChatRoomListFragmentEvents
 import javafx.geometry.Pos
+import javafx.scene.Cursor
 import javafx.scene.Node
 import javafx.scene.Parent
 import javafx.scene.control.Label
@@ -16,22 +17,21 @@ import javafx.scene.layout.Priority
 import model.PublicChatRoomItem
 import store.Store
 import tornadofx.*
+import ui.base.BaseFragment
 
-class ChatRoomListFragment : Fragment() {
+class ChatRoomListFragment : BaseFragment() {
   private val store: Store by inject()
-  private val chatMainWindowController: ChatMainWindowController by inject()
+  private val controller: ChatMainWindowController by inject()
 
   private var chatRoomListView: ListView<PublicChatRoomItem>? = null
 
   init {
-    subscribe<ChatRoomListClearRoomSelectionEvent> {
-      runLater {
-        chatRoomListView?.selectionModel?.clearSelection()
-      }
-    }
+    subscribe<ChatRoomListFragmentEvents.ClearRoomSelectionEvent> { event ->
+      chatRoomListView?.selectionModel?.clearSelection()
+    }.autoUnsubscribe()
   }
 
-  override val root = listview(chatMainWindowController.publicChatRoomList) {
+  override val root = listview(controller.publicChatRoomList) {
     vboxConstraints { vGrow = Priority.ALWAYS }
     setCellFactory { cellFactory() }
 
@@ -48,6 +48,8 @@ class ChatRoomListFragment : Fragment() {
           return
         }
 
+        //TODO: Optimize.
+        //This method is getting called every time a ListView item is clicked.
         graphic = createCellItem(item)
       }
     }
@@ -66,12 +68,14 @@ class ChatRoomListFragment : Fragment() {
       if (event.button == MouseButton.PRIMARY && event.clickCount == 1 && target.id == componentId) {
         val item = (target as? ListCell<PublicChatRoomItem>)?.item
         if (item != null) {
+          controller.updateSelectedRoom(item.roomName)
+
+          //TODO: should be able to click them same ListView item if user has not joined the room associated with it.
+          //Right now you can't - nothing happens
           if (store.isUserInRoom(item.roomName)) {
-            //if user has not yet joined the room - send join packet
-            chatMainWindowController.joinChatRoom(item.roomName)
+            controller.replaceRoomMessageHistory(item.roomName)
           } else {
-            //otherwise - open a JoinToChatRoom window
-            fire(ShowJoinChatRoomDialogEvent(item.roomName))
+            fire(ChatMainWindowEvents.ShowJoinChatRoomDialogEvent(item.roomName))
           }
         }
       }
@@ -85,6 +89,7 @@ class ChatRoomListFragment : Fragment() {
       prefHeight = 64.0
       maxHeight = 64.0
       paddingAll = 4.0
+      cursor = Cursor.HAND
 
       add(ImageView(item.imageUrl).apply {
         fitHeight = 48.0

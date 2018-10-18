@@ -1,13 +1,14 @@
 package ui.connection_window
 
+import events.ConnectionWindowEvents
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import model.viewmodel.HostInfoViewModel
 import tornadofx.*
-import events.CloseConnectionWindowEvent
+import ui.base.BaseView
 import ui.loading_window.LoadingWindow
 
-class ConnectionWindow : View("Connection parameters") {
+class ConnectionWindow : BaseView("Connection parameters") {
 
   private val model = object : ViewModel() {
     val host = bind { SimpleStringProperty() }
@@ -15,11 +16,9 @@ class ConnectionWindow : View("Connection parameters") {
   }
 
   init {
-    subscribe<CloseConnectionWindowEvent> {
-      runLater {
-        close()
-      }
-    }
+    subscribe<ConnectionWindowEvents.CloseConnectionWindowEvent> {
+      close()
+    }.autoUnsubscribe()
   }
 
   override val root = form {

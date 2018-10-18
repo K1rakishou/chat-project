@@ -26,7 +26,7 @@ class ChatRoomManager {
     isPublic: Boolean = true,
     chatRoomName: String? = null,
     chatRoomImageUrl: String? = null,
-    chatRoomPasswordHash: ByteArray? = null
+    chatRoomPasswordHash: String? = null
   ): ChatRoom {
     val roomImageUrl = chatRoomImageUrl ?: defaultChatRoomimage
     val roomName = (chatRoomName ?: SecurityUtils.Generator.generateRandomString(defaultChatRoomLength))
@@ -157,7 +157,7 @@ class ChatRoomManager {
     }
   }
 
-  suspend fun passwordsMatch(chatRoomName: String, chatRoomPassword: ByteArray): Boolean {
+  suspend fun passwordsMatch(chatRoomName: String, chatRoomPassword: String): Boolean {
     return mutex.myWithLock {
       require(chatRooms.containsKey(chatRoomName))
 

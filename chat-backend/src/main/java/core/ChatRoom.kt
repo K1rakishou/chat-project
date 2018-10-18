@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger
 data class ChatRoom(
   val chatRoomName: String,
   val chatRoomImageUrl: String,
-  val roomPasswordHash: ByteArray?,
+  val roomPasswordHash: String?,
   val isPublic: Boolean,
   val createdOn: Long,
   val userList: MutableSet<UserInRoom> = mutableSetOf(),
@@ -81,9 +81,9 @@ data class ChatRoom(
     }
   }
 
-  suspend fun passwordsMatch(chatRoomPassword: ByteArray): Boolean {
+  suspend fun passwordsMatch(chatRoomPassword: String): Boolean {
     return mutex.myWithLock {
-      return@myWithLock Arrays.equals(roomPasswordHash, chatRoomPassword)
+      return@myWithLock roomPasswordHash == chatRoomPassword
     }
   }
 
@@ -101,7 +101,7 @@ data class ChatRoom(
     return ChatRoom(
       chatRoomName,
       chatRoomImageUrl,
-      roomPasswordHash?.copyOf(),
+      roomPasswordHash,
       isPublic,
       createdOn,
       userList.toMutableSet(),

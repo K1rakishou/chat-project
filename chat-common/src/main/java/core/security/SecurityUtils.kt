@@ -1,6 +1,7 @@
 package core.security
 
 import core.byte_sink.ByteSink
+import core.extensions.toHex
 import org.bouncycastle.asn1.ASN1InputStream
 import org.bouncycastle.asn1.ASN1Integer
 import org.bouncycastle.asn1.DERSequenceGenerator
@@ -175,8 +176,12 @@ object SecurityUtils {
   object Hashing {
     private val sha3 = SHA3.DigestSHA3(384)
 
-    fun sha3(data: ByteArray): ByteArray {
-      return sha3.digest(data)
+    fun sha3(data: ByteArray): String {
+      return sha3.digest(data).toHex().toUpperCase()
+    }
+
+    fun sha3(data: String): String {
+      return sha3(data.toByteArray())
     }
   }
 

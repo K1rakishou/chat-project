@@ -1,31 +1,29 @@
 package ui.loading_window
 
 import controller.LoadingWindowController
+import events.ConnectionWindowEvents
+import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.control.Alert
 import javafx.scene.text.TextAlignment
 import model.viewmodel.HostInfoViewModel
 import tornadofx.*
+import ui.base.BaseView
+import ui.chat_main_window.ChatMainWindow
 import ui.connection_window.ConnectionWindow
 
-class LoadingWindow : View("Chat") {
+class LoadingWindow : BaseView("Chat") {
   private val loadingWindowController: LoadingWindowController by inject()
   private val hostInfoViewModel: HostInfoViewModel by inject()
 
+  private val connectionStatus = SimpleStringProperty("")
+
   override fun onDock() {
-    loadingWindowController.createController()
+    loadingWindowController.createController(this)
 
     if (hostInfoViewModel.isEmpty()) {
       find<LoadingWindow>().replaceWith<ConnectionWindow>()
       return
-    }
-
-    loadingWindowController.connectionError.addListener { _, _, newValue ->
-      if (newValue == null) {
-        return@addListener
-      }
-
-      alert(Alert.AlertType.ERROR, header = "Connection error", content = newValue)
     }
 
     loadingWindowController.startConnectionToServer(hostInfoViewModel.host, hostInfoViewModel.port)
@@ -41,7 +39,7 @@ class LoadingWindow : View("Chat") {
 
     progressindicator {
     }
-    label(observable = loadingWindowController.connectionStatus) {
+    label(observable = connectionStatus) {
       textAlignment = TextAlignment.CENTER
       wrapTextProperty().set(true)
     }
@@ -52,6 +50,33 @@ class LoadingWindow : View("Chat") {
       action {
         loadingWindowController.stopConnectionToServer()
       }
+    }
+  }
+
+  fun updateConnectionStatus(message: String) {
+    runLater {
+      connectionStatus.set(message)
+    }
+  }
+
+  fun showConnectionError(message: String) {
+    runLater {
+      alert(Alert.AlertType.ERROR, header = "Connection error", content = message)
+    }
+  }
+
+  fun closeView() {
+    runLater {
+      close()
+    }
+  }
+
+  fun onConnectedToServer() {
+    runLater {
+      find<ChatMainWindow>().openWindow(resizable = true)
+
+      closeView()
+      fire(ConnectionWindowEvents.CloseConnectionWindowEvent)
     }
   }
 

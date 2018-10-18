@@ -3,26 +3,16 @@ package controller
 import ChatApp
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
-import javafx.beans.property.SimpleStringProperty
 import manager.NetworkManager
 import store.Store
-import tornadofx.runLater
-import ui.chat_main_window.ChatMainWindow
-import events.CloseConnectionWindowEvent
 import ui.loading_window.LoadingWindow
-import java.lang.IllegalStateException
 
-class LoadingWindowController : BaseController() {
+class LoadingWindowController : BaseController<LoadingWindow>() {
   private val networkManager = ChatApp.networkManager
   val store: Store by inject()
-  val connectionStatus = SimpleStringProperty("")
-  val connectionError = SimpleStringProperty(null)
 
-  override fun createController() {
-    super.createController()
-
-    connectionError.set(null)
-    connectionStatus.set("")
+  override fun createController(viewParam: LoadingWindow) {
+    super.createController(viewParam)
   }
 
   override fun destroyController() {
@@ -30,7 +20,6 @@ class LoadingWindowController : BaseController() {
   }
 
   fun startConnectionToServer(host: String, port: String) {
-    changeConnectionStatus("Connecting...")
     networkManager.doConnect(host, port.toInt())
 
     startListeningToPackets()
@@ -39,7 +28,7 @@ class LoadingWindowController : BaseController() {
   fun stopConnectionToServer() {
     networkManager.doDisconnect()
 
-    goBackToConnectionWindow()
+    view.closeView()
   }
 
   private fun startListeningToPackets() {
@@ -47,55 +36,28 @@ class LoadingWindowController : BaseController() {
       .subscribeBy(onNext = { connectionState ->
         when (connectionState) {
           is NetworkManager.ConnectionState.Uninitialized -> {
-            //Default state
+            view.updateConnectionStatus("Initiating the connection...")
           }
           is NetworkManager.ConnectionState.Connecting -> {
-            println("Connecting")
+            view.updateConnectionStatus("Connecting...")
           }
           is NetworkManager.ConnectionState.Disconnected -> {
-            goBackToConnectionWindow()
+            view.closeView()
           }
           is NetworkManager.ConnectionState.ErrorWhileTryingToConnect -> {
             val additionalInfo = connectionState.error ?: "no error message"
-            connectionError("Error while trying to connect. Additional error message: \n\n$additionalInfo")
 
-            goBackToConnectionWindow()
+            view.showConnectionError("Error while trying to connect. Additional error message: \n\n$additionalInfo")
+            view.closeView()
           }
           is NetworkManager.ConnectionState.Connected -> {
-            changeConnectionStatus("Connected")
-            goToChatMainWindow()
+            view.updateConnectionStatus("Connected")
+            view.onConnectedToServer()
           }
           is NetworkManager.ConnectionState.Reconnected -> {
             throw IllegalStateException("Should not happen here")
           }
         }
       })
-  }
-
-  private fun changeConnectionStatus(content: String?) {
-    runLater {
-      connectionStatus.set(content ?: "Unknown error")
-    }
-  }
-
-  private fun connectionError(message: String) {
-    runLater {
-      connectionError.set(message)
-    }
-  }
-
-  private fun goBackToConnectionWindow() {
-    runLater {
-      find<LoadingWindow>().close()
-    }
-  }
-
-  private fun goToChatMainWindow() {
-    runLater {
-      find<ChatMainWindow>().openWindow(resizable = true)
-
-      find<LoadingWindow>().close()
-      fire(CloseConnectionWindowEvent)
-    }
   }
 }

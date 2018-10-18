@@ -13,14 +13,14 @@ class CreateRoomPacketPayloadV1Test : BasePacketPayloadTest() {
   fun testPacket() {
     val isPublic = true
     val roomName = "dgfdsgdfg"
-    val roomPassword = "fgfdhd".toByteArray()
+    val roomPassword = "fgfdhd"
 
     testPayload(CreateRoomPacket(isPublic, roomName, roomPassword), { byteSink ->
       CreateRoomPacket.fromByteSink(byteSink)
     }, { restoredPacket ->
       assertEquals(isPublic, restoredPacket.isPublic)
       assertEquals(roomName, restoredPacket.chatRoomName)
-      assertArrayEquals(roomPassword, restoredPacket.chatRoomPasswordHash)
+      assertEquals(roomPassword, restoredPacket.chatRoomPasswordHash)
     })
   }
 
@@ -43,14 +43,14 @@ class CreateRoomPacketPayloadV1Test : BasePacketPayloadTest() {
   fun testPacketExceedMaxRoomName() {
     val isPublic = true
     val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10)
-    val roomPassword = "fgfdhd".toByteArray()
+    val roomPassword = "fgfdhd"
 
     testPayload(CreateRoomPacket(isPublic, roomName, roomPassword), { byteSink ->
       CreateRoomPacket.fromByteSink(byteSink)
     }, { restoredPacket ->
       assertEquals(isPublic, restoredPacket.isPublic)
       assertEquals(roomName, restoredPacket.chatRoomName)
-      assertArrayEquals(roomPassword, restoredPacket.chatRoomPasswordHash)
+      assertEquals(roomPassword, restoredPacket.chatRoomPasswordHash)
     })
   }
 
@@ -58,14 +58,14 @@ class CreateRoomPacketPayloadV1Test : BasePacketPayloadTest() {
   fun testPacketExceedMaxRoomPassword() {
     val isPublic = true
     val roomName = "fgfdhd"
-    val roomPassword = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomPasswordHash + 10).toByteArray()
+    val roomPassword = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomPasswordHash + 10)
 
     testPayload(CreateRoomPacket(isPublic, roomName, roomPassword), { byteSink ->
       CreateRoomPacket.fromByteSink(byteSink)
     }, { restoredPacket ->
       assertEquals(isPublic, restoredPacket.isPublic)
       assertEquals(roomName, restoredPacket.chatRoomName)
-      assertArrayEquals(roomPassword, restoredPacket.chatRoomPasswordHash)
+      assertEquals(roomPassword, restoredPacket.chatRoomPasswordHash)
     })
   }
 }
