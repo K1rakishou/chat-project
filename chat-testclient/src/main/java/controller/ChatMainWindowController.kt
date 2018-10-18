@@ -250,7 +250,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     return messageId
   }
 
-  fun replaceRoomMessageHistory(roomName: String) {
+  fun reloadRoomMessageHistory(roomName: String) {
     runLater {
       currentChatRoomMessageList.clear()
       currentChatRoomMessageList.addAll(store.getChatRoomMessageHistory(roomName))
@@ -268,7 +268,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
         store.loadChatRoomMessageHistory(roomName, messageHistory)
         store.addUserToRoom(roomName, userName)
 
-        replaceRoomMessageHistory(roomName)
+        reloadRoomMessageHistory(roomName)
         addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
 
         scrollChatToBottom()

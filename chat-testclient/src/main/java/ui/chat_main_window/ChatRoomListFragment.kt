@@ -2,7 +2,6 @@ package ui.chat_main_window
 
 import controller.ChatMainWindowController
 import events.ChatMainWindowEvents
-import events.ChatRoomListFragmentEvents
 import javafx.geometry.Pos
 import javafx.scene.Cursor
 import javafx.scene.Node
@@ -22,14 +21,7 @@ import ui.base.BaseFragment
 class ChatRoomListFragment : BaseFragment() {
   private val store: Store by inject()
   private val controller: ChatMainWindowController by inject()
-
   private var chatRoomListView: ListView<PublicChatRoomItem>? = null
-
-  init {
-    subscribe<ChatRoomListFragmentEvents.ClearRoomSelectionEvent> { event ->
-      chatRoomListView?.selectionModel?.clearSelection()
-    }.autoUnsubscribe()
-  }
 
   override val root = listview(controller.publicChatRoomList) {
     vboxConstraints { vGrow = Priority.ALWAYS }
@@ -65,15 +57,28 @@ class ChatRoomListFragment : BaseFragment() {
       val target = event.target as? Parent
         ?: return@setOnMouseClicked
 
-      if (event.button == MouseButton.PRIMARY && event.clickCount == 1 && target.id == componentId) {
-        val item = (target as? ListCell<PublicChatRoomItem>)?.item
+      if (event.button == MouseButton.PRIMARY && event.clickCount == 1) {
+        //TODO: This hack does not work if ListView item's imageView or Label is clicked
+        val (item, shouldReloadRoomMessageHistory) = if (target.id == componentId) {
+          //This happens normally when not selected ListView item gets selected by user
+          (target as? ListCell<PublicChatRoomItem>)?.item to true
+        } else {
+          //HACKS HACKS HACKS
+          //I dunno how to do it otherwise
+
+          //This happens when user selects already selected ListView item
+          //We should not reload roomMessageHistory in this case, but at the same time we should show JoinChatRoomDialog
+          //so we return false
+          ((event.target as? HBox)?.parent as? ListCell<PublicChatRoomItem>)?.item to false
+        }
+
         if (item != null) {
           controller.updateSelectedRoom(item.roomName)
 
-          //TODO: should be able to click them same ListView item if user has not joined the room associated with it.
-          //Right now you can't - nothing happens
           if (store.isUserInRoom(item.roomName)) {
-            controller.replaceRoomMessageHistory(item.roomName)
+            if (shouldReloadRoomMessageHistory) {
+              controller.reloadRoomMessageHistory(item.roomName)
+            }
           } else {
             fire(ChatMainWindowEvents.ShowJoinChatRoomDialogEvent(item.roomName))
           }

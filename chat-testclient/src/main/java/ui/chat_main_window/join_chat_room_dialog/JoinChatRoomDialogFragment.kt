@@ -15,7 +15,6 @@ import ui.base.BaseFragment
 
 class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   private val disableControlsFlag = SimpleBooleanProperty(false)
-  private var shouldClearSelectedChatRoom = false
 
   private val roomNameItem: RoomNameItem by inject()
   private val controller: JoinChatRoomDialogController by inject()
@@ -32,11 +31,6 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
 
   override fun onUndock() {
     controller.destroyController()
-
-    if (shouldClearSelectedChatRoom) {
-      fire(ChatRoomListFragmentEvents.ClearRoomSelectionEvent)
-    }
-
     super.onUndock()
   }
 
@@ -84,7 +78,6 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
         minWidth = 64.0
 
         action {
-          shouldClearSelectedChatRoom = true
           closeFragment()
         }
       }
@@ -111,8 +104,6 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
     users: List<PublicUserInChat>,
     messageHistory: List<BaseChatMessage>
   ) {
-    shouldClearSelectedChatRoom = false
-
     fire(ChatMainWindowEvents.JoinedChatRoomEvent(roomName, userName, users, messageHistory))
     unlockControls()
 
@@ -120,7 +111,6 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   }
 
   fun onFailedToJoinChatRoom(status: Status) {
-    shouldClearSelectedChatRoom = true
     val errorMessage = status.toErrorMessage()
 
     showErrorAlert(errorMessage)
@@ -128,7 +118,6 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   }
 
   fun onError(message: String) {
-    shouldClearSelectedChatRoom = true
     showErrorAlert(message)
     unlockControls()
   }
