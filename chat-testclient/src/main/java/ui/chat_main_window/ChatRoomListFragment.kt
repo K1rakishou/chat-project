@@ -54,11 +54,10 @@ class ChatRoomListFragment : BaseFragment() {
         return@setOnMouseClicked
       }
 
-      val target = event.target as? Parent
+      val target = event.target as? Node
         ?: return@setOnMouseClicked
 
       if (event.button == MouseButton.PRIMARY && event.clickCount == 1) {
-        //TODO: This hack does not work if ListView item's imageView or Label is clicked
         val (item, shouldReloadRoomMessageHistory) = if (target.id == componentId) {
           //This happens normally when not selected ListView item gets selected by user
           (target as? ListCell<PublicChatRoomItem>)?.item to true
@@ -69,7 +68,7 @@ class ChatRoomListFragment : BaseFragment() {
           //This happens when user selects already selected ListView item
           //We should not reload roomMessageHistory in this case, but at the same time we should show JoinChatRoomDialog
           //so we return false
-          ((event.target as? HBox)?.parent as? ListCell<PublicChatRoomItem>)?.item to false
+          findListCellInTree<PublicChatRoomItem>(event.target as Node)?.item to false
         }
 
         if (item != null) {
@@ -93,21 +92,37 @@ class ChatRoomListFragment : BaseFragment() {
     return HBox().apply {
       prefHeight = 64.0
       maxHeight = 64.0
-      paddingAll = 4.0
+      paddingAll = 2.0
       cursor = Cursor.HAND
 
       add(ImageView(item.imageUrl).apply {
-        fitHeight = 48.0
+        fitHeight = 60.0
         isPreserveRatio = true
         isSmooth = true
         alignment = Pos.CENTER_LEFT
         paddingRight = 8.0
       })
-
+      label { prefWidth = 8.0 }
       add(Label(item.roomName).apply {
         hgrow = Priority.ALWAYS
       })
     }
+  }
+
+  private tailrec fun <T> findListCellInTree(node: Node?): ListCell<T>? {
+    if (node == null) {
+      return null
+    }
+
+    if (node is ListCell<*>) {
+      return node as ListCell<T>
+    }
+
+    if (node is ListView<*>) {
+      return null
+    }
+
+    return findListCellInTree(node.parent)
   }
 
   companion object {
