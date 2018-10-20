@@ -319,8 +319,6 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
       reloadRoomMessageHistory(roomName)
       addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
-
-      scrollChatToBottom()
     }
   }
 

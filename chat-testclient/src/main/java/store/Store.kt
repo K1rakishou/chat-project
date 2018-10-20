@@ -37,6 +37,14 @@ class Store : Controller() {
     userNameByRoomName[roomName] = userName
   }
 
+  fun addJoinedRoom(roomName: String) {
+    joinedRooms.add(roomName)
+  }
+
+  fun isUserInRoom(roomName: String): Boolean {
+    return joinedRooms.any { it == roomName }
+  }
+
   fun addPublicChatRoom(roomName: String, roomImageUrl: String) {
     if (getPublicChatRoom(roomName) != null) {
       throw IllegalStateException("Room with name ${roomName} already exists!")
@@ -57,18 +65,6 @@ class Store : Controller() {
     publicChatRoomList.addAll(list.map { chatRoom ->
       PublicChatRoomItem(chatRoom.chatRoomName, chatRoom.chatRoomImageUrl, FXCollections.observableArrayList(), FXCollections.observableArrayList())
     })
-  }
-
-  fun clearPublicChatRoomList() {
-    publicChatRoomList.clear()
-  }
-
-  fun addJoinedRoom(roomName: String) {
-    joinedRooms.add(roomName)
-  }
-
-  fun isUserInRoom(roomName: String): Boolean {
-    return joinedRooms.any { it == roomName }
   }
 
   fun setChatRoomUserList(roomName: String, userList: List<PublicUserInChat>) {
