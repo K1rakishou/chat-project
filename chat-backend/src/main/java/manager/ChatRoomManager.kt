@@ -9,7 +9,7 @@ import core.extensions.myWithLock
 import core.model.drainable.PublicChatRoom
 import core.security.SecurityUtils
 import core.utils.TimeUtils
-import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.sync.Mutex
 
 class ChatRoomManager {
   private val defaultChatRoomimage = "default_chat_room_image"

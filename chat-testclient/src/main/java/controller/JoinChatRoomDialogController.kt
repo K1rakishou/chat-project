@@ -10,7 +10,6 @@ import core.response.JoinChatRoomResponsePayload
 import core.security.SecurityUtils
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
-import kotlinx.coroutines.experimental.launch
 import manager.NetworkManager
 import store.Store
 import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
@@ -56,7 +55,7 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
         null
       }
 
-      launch(coroutineContext) {
+      doOnBg {
         val packet = JoinChatRoomPacket(
           name,
           chatRoomName,

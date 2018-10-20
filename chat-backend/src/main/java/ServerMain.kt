@@ -3,7 +3,6 @@ import core.Packet
 import core.PacketType
 import core.extensions.readPacketInfo
 import core.extensions.toHex
-import core.model.drainable.chat_message.TextChatMessage
 import core.response.ResponseBuilder
 import handler.CreateRoomPacketHandler
 import handler.GetPageOfPublicRoomsHandler
@@ -11,11 +10,12 @@ import handler.JoinChatRoomPacketHandler
 import handler.SendChatMessageHandler
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.aSocket
-import io.ktor.network.util.ioCoroutineDispatcher
-import kotlinx.coroutines.experimental.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.experimental.io.ByteReadChannel
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.io.ByteReadChannel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import manager.ChatRoomManager
 import manager.ConnectionManager
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -50,7 +50,7 @@ class Server(
 
   fun run() {
     runBlocking {
-      val server = aSocket(ActorSelectorManager(ioCoroutineDispatcher))
+      val server = aSocket(ActorSelectorManager(Dispatchers.IO))
         .tcp()
         .bind(InetSocketAddress("127.0.0.1", 2323))
 

@@ -10,19 +10,26 @@ import core.extensions.tryWithLock
 import core.response.BaseResponse
 import core.response.ResponseBuilder
 import core.response.UserHasLeftResponsePayload
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.channels.actor
-import kotlinx.coroutines.experimental.io.ByteWriteChannel
-import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.io.ByteWriteChannel
+import kotlinx.coroutines.sync.Mutex
+import kotlin.coroutines.CoroutineContext
 
 class ConnectionManager(
   private val chatRoomManager: ChatRoomManager,
   private val responseBuilder: ResponseBuilder
-) {
+) : CoroutineScope {
+  private val job = Job()
   private val connections = mutableMapOf<String, Connection>()
   private val mutex = Mutex()
   private val sendActorChannelCapacity = 2048
   private val sendPacketsActor: SendChannel<Pair<Connection, BaseResponse>>
+
+  override val coroutineContext: CoroutineContext
+    get() = job
 
   init {
     sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
@@ -61,7 +68,7 @@ class ConnectionManager(
   }
 
   suspend fun sendResponse(clientAddress: String, response: BaseResponse) {
-    val connection = mutex.tryWithLock { connections.getOrDefault(clientAddress, null) }
+    val connection = mutex.tryWithLock { connections[clientAddress] }
     if (connection == null) {
       println("Could not send response because connection with clientAddress: $clientAddress does not exist")
       return

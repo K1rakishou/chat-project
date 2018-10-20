@@ -1,7 +1,7 @@
 package manager
 
 import core.User
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -31,14 +31,14 @@ class ChatRoomManagerTest {
         assertNotNull(user1)
 
         assertEquals(userName1, userInRoom!!.user.userName)
-        assertEquals(clientAddress1, userInRoom!!.user.clientAddress)
+        assertEquals(clientAddress1, userInRoom.user.clientAddress)
 
         val roomsJoinedByUser = chatRoomManager.__getClientAddressToRoomNameCache()[clientAddress1]
         assertNotNull(roomsJoinedByUser)
 
         assertEquals(1, roomsJoinedByUser!!.size)
-        assertEquals(chatRoomName, roomsJoinedByUser[0]!!.roomName)
-        assertEquals(userName1, roomsJoinedByUser[0]!!.userName)
+        assertEquals(chatRoomName, roomsJoinedByUser[0].roomName)
+        assertEquals(userName1, roomsJoinedByUser[0].userName)
       }
 
       kotlin.run {
@@ -48,14 +48,14 @@ class ChatRoomManagerTest {
         assertNotNull(user2)
 
         assertEquals(userName2, userInRoom!!.user.userName)
-        assertEquals(clientAddress2, userInRoom!!.user.clientAddress)
+        assertEquals(clientAddress2, userInRoom.user.clientAddress)
 
         val roomsJoinedByUser = chatRoomManager.__getClientAddressToRoomNameCache()[clientAddress2]
         assertNotNull(roomsJoinedByUser)
 
         assertEquals(1, roomsJoinedByUser!!.size)
-        assertEquals(chatRoomName, roomsJoinedByUser[0]!!.roomName)
-        assertEquals(userName2, roomsJoinedByUser[0]!!.userName)
+        assertEquals(chatRoomName, roomsJoinedByUser[0].roomName)
+        assertEquals(userName2, roomsJoinedByUser[0].userName)
       }
     }
   }

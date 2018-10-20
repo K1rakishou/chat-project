@@ -1,4 +1,4 @@
-package extensions
+package core.extensions
 
 import kotlinx.io.core.IoBuffer
 import kotlinx.io.pool.ObjectPool

@@ -4,8 +4,8 @@ import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.isClosed
 import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
-import kotlinx.coroutines.experimental.io.ByteReadChannel
-import kotlinx.coroutines.experimental.io.ByteWriteChannel
+import kotlinx.coroutines.io.ByteReadChannel
+import kotlinx.coroutines.io.ByteWriteChannel
 import java.util.concurrent.atomic.AtomicBoolean
 
 class Connection(

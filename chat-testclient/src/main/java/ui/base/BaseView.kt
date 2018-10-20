@@ -1,14 +1,15 @@
 package ui.base
 
 import javafx.scene.control.Alert
-import kotlinx.coroutines.experimental.CoroutineScope
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.javafx.JavaFx
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.launch
 import tornadofx.FXEventRegistration
 import tornadofx.View
 import tornadofx.alert
-import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.CoroutineContext
 
 abstract class BaseView(
   title: String? = null
@@ -19,8 +20,6 @@ abstract class BaseView(
 
   override val coroutineContext: CoroutineContext
     get() = job
-  override val isActive: Boolean
-    get() = job.isActive
 
   override fun onDock() {
     super.onDock()
@@ -35,8 +34,20 @@ abstract class BaseView(
     super.onUndock()
   }
 
+  protected fun doOnUI(block: suspend () -> Unit) {
+    launch(coroutineContext + Dispatchers.JavaFx) {
+      block()
+    }
+  }
+
+  protected fun doOnBg(block: suspend () -> Unit) {
+    launch(coroutineContext + Dispatchers.Default) {
+      block()
+    }
+  }
+
   protected fun showErrorAlert(message: String) {
-    launch(coroutineContext + JavaFx) {
+    doOnUI {
       alert(Alert.AlertType.ERROR, "Error", message)
     }
   }

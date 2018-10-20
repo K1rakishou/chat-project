@@ -14,9 +14,7 @@ import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.collections.FXCollections
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.javafx.JavaFx
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.delay
 import manager.NetworkManager
 import model.PublicChatRoomItem
 import model.chat_message.BaseChatMessageItem
@@ -32,7 +30,7 @@ import java.util.concurrent.TimeUnit
 class ChatMainWindowController : BaseController<ChatMainWindow>() {
   private val networkManager = ChatApp.networkManager
   private val store: Store by inject()
-  private val delayBeforeAddFirstChatRoomMessage = 250.0
+  private val delayBeforeAddFirstChatRoomMessage = 250L
   private var selectedRoomName: String? = null
 
   lateinit var scrollToBottomFlag: SimpleIntegerProperty
@@ -86,7 +84,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       throw IllegalStateException("Could not add chat message (Probably selectedRoomName (${selectedRoomName}) refers to an unknown room)")
     }
 
-    launch {
+    doOnBg {
       networkManager.sendPacket(SendChatMessagePacket(messageId, selectedRoomName!!, store.getUserName(selectedRoomName), messageText))
     }
   }
@@ -228,7 +226,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       return
     }
 
-    launch(coroutineContext + JavaFx) {
+    doOnUI {
       store.setPublicChatRoomList(response.publicChatRoomList)
 
       publicChatRoomList.clear()
@@ -245,7 +243,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
     selectedRoomName?.let { name ->
       if (name == roomName) {
-        launch(coroutineContext + JavaFx) {
+        doOnUI {
           currentChatRoomMessageList.add(chatMessage)
           scrollChatToBottom()
         }
@@ -256,18 +254,18 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   fun reloadRoomMessageHistory(roomName: String) {
-    launch(coroutineContext + JavaFx) {
+    doOnUI {
       currentChatRoomMessageList.clear()
       currentChatRoomMessageList.addAll(store.getChatRoomMessageHistory(roomName))
     }
   }
 
   fun loadRoomInfo(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
-    launch(coroutineContext + JavaFx) {
+    doOnUI {
       find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
 
       //Wait some time before ChatRoomView shows up
-      delay(delayBeforeAddFirstChatRoomMessage.toLong(), TimeUnit.MILLISECONDS)
+      delay(TimeUnit.MILLISECONDS.toMillis(delayBeforeAddFirstChatRoomMessage))
 
       store.addJoinedRoom(roomName)
       store.setChatRoomUserList(roomName, users)
@@ -289,7 +287,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   private fun onDisconnected() {
-    launch(coroutineContext + JavaFx) {
+    doOnUI {
       selectedRoomName?.let { roomName ->
         addChatMessage(roomName, SystemChatMessageItemMy("Disconnected from the server"))
       }
@@ -297,7 +295,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   private fun onReconnected() {
-    launch(coroutineContext + JavaFx) {
+    doOnUI {
       selectedRoomName?.let { roomName ->
         addChatMessage(roomName, SystemChatMessageItemMy("Reconnected"))
       }
@@ -305,7 +303,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   private fun onErrorWhileTryingToConnect(error: Throwable?) {
-    launch(coroutineContext + JavaFx) {
+    doOnUI {
       selectedRoomName?.let { roomName ->
         addChatMessage(roomName, SystemChatMessageItemMy("Error while trying to reconnect: ${error?.message
           ?: "No error message"}"))

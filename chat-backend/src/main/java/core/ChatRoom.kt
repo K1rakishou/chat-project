@@ -3,11 +3,9 @@ package core
 import core.collections.RingBuffer
 import core.extensions.myWithLock
 import core.model.drainable.chat_message.BaseChatMessage
-import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.sync.Mutex
 import repository.mapper.BaseChatMessageMapper
 import repository.model.BaseChatMessageData
-import java.lang.IllegalStateException
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 data class ChatRoom(

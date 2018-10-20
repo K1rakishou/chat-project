@@ -72,4 +72,12 @@ abstract class ByteSink : AutoCloseable {
   abstract fun <T> writeDrainable(obj: T?)
     where T : CanBeDrainedToSink,
           T : CanMeasureSizeOfFields
+
+  inline fun <T> use(block: (ByteSink) -> T): T {
+    try {
+      return block(this)
+    } finally {
+      this.close()
+    }
+  }
 }

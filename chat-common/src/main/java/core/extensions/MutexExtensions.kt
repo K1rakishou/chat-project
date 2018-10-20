@@ -1,6 +1,6 @@
 package core.extensions
 
-import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.sync.Mutex
 import java.lang.IllegalStateException
 
 /**

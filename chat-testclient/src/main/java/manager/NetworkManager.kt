@@ -5,40 +5,39 @@ import core.Packet
 import core.ResponseInfo
 import core.byte_sink.InMemoryByteSink
 import core.extensions.forEachChunkAsync
+import core.extensions.myWithLock
+import core.extensions.readResponseInfo
 import core.extensions.toHex
 import core.packet.BasePacket
 import core.packet.PacketBuilder
-import extensions.myWithLock
-import extensions.readResponseInfo
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.*
-import io.ktor.network.util.ioCoroutineDispatcher
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.channels.SendChannel
-import kotlinx.coroutines.experimental.channels.actor
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.io.ByteReadChannel
-import kotlinx.coroutines.experimental.io.ByteWriteChannel
-import kotlinx.coroutines.experimental.io.close
-import kotlinx.coroutines.experimental.launch
-import kotlinx.coroutines.experimental.sync.Mutex
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.io.ByteReadChannel
+import kotlinx.coroutines.io.ByteWriteChannel
+import kotlinx.coroutines.io.close
+import kotlinx.coroutines.sync.Mutex
 import java.io.File
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 
-class NetworkManager {
+class NetworkManager : CoroutineScope {
   private val TAG = NetworkManager::class.simpleName
 
   @Volatile
   private var connectionState: ConnectionState
 
+  private val job = Job()
   private val shouldReconnectToServer = AtomicBoolean(false)
   private val mutex = Mutex()
   private val sendActorChannelCapacity = 128
@@ -53,7 +52,7 @@ class NetworkManager {
   private var connectionAttempts: Int = 0
 
   private lateinit var readChannel: ByteReadChannel
-  private lateinit var byteSinkFileCachePath: String
+  private var byteSinkFileCachePath: String
 
   val connectionStateObservable = BehaviorSubject.createDefault<ConnectionState>(ConnectionState.Uninitialized)
   val isConnected: Boolean
@@ -63,6 +62,9 @@ class NetworkManager {
     .toSerialized()
   val responsesFlowable: Flowable<ResponseInfo>
     get() = responsesQueue.toFlowable(BackpressureStrategy.BUFFER)
+
+  override val coroutineContext: CoroutineContext
+    get() = job
 
   init {
     val byteSinkCachePathFile = File(System.getProperty("user.dir") + "\\byte-sink-cache")
@@ -79,7 +81,7 @@ class NetworkManager {
     //it will wait delayTime milliseconds and the try to connect to the server again
     reconnectionActor = actor(capacity = 1) {
       for (event in channel) {
-        val delayTime = 5000
+        val delayTime = 5000L
         println("Trying to reconnect in $delayTime ms...")
 
         delay(delayTime)
@@ -127,9 +129,9 @@ class NetworkManager {
           connectionState = ConnectionState.Connecting
           connectionStateObservable.onNext(ConnectionState.Connecting)
 
-          delay(1, TimeUnit.SECONDS)
+          delay(TimeUnit.SECONDS.toMillis(1L))
 
-          val newSocket = aSocket(ActorSelectorManager(ioCoroutineDispatcher))
+          val newSocket = aSocket(ActorSelectorManager(Dispatchers.IO))
             .tcp()
             .connect(InetSocketAddress(host, port))
 

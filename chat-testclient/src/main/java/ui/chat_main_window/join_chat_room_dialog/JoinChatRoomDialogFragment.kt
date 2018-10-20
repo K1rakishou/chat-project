@@ -5,13 +5,10 @@ import core.Status
 import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
 import events.ChatMainWindowEvents
-import events.ChatRoomListFragmentEvents
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.layout.Priority
-import kotlinx.coroutines.experimental.javafx.JavaFx
-import kotlinx.coroutines.experimental.launch
 import tornadofx.*
 import ui.base.BaseFragment
 
@@ -87,7 +84,7 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   }
 
   fun closeFragment() {
-    launch(coroutineContext + JavaFx) {
+    doOnUI {
       close()
     }
   }
