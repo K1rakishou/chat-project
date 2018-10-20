@@ -229,7 +229,6 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     doOnUI {
       store.setPublicChatRoomList(response.publicChatRoomList)
 
-      publicChatRoomList.clear()
       publicChatRoomList.addAll(store.getPublicChatRoomList())
     }
   }
@@ -262,7 +261,10 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   fun loadRoomInfo(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
     doOnUI {
-      find<ChatRoomViewEmpty>().replaceWith<ChatRoomView>()
+      val chatRoomViewEmpty = find<ChatRoomViewEmpty>()
+      if (chatRoomViewEmpty.isDocked) {
+        chatRoomViewEmpty.replaceWith<ChatRoomView>()
+      }
 
       //Wait some time before ChatRoomView shows up
       delay(TimeUnit.MILLISECONDS.toMillis(delayBeforeAddFirstChatRoomMessage))
@@ -276,6 +278,23 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
 
       scrollChatToBottom()
+    }
+  }
+
+  fun onChatRoomCreated(roomName: String, roomImageUrl: String) {
+    doOnUI {
+//      val chatRoomViewEmpty = find<ChatRoomViewEmpty>()
+//      if (chatRoomViewEmpty.isDocked) {
+//        chatRoomViewEmpty.replaceWith<ChatRoomView>()
+//      }
+
+      store.addPublicChatRoom(roomName, roomImageUrl)
+      publicChatRoomList.add(0, PublicChatRoomItem(
+        roomName,
+        roomImageUrl,
+        FXCollections.observableArrayList(),
+        FXCollections.observableArrayList())
+      )
     }
   }
 
@@ -310,4 +329,5 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       }
     }
   }
+
 }

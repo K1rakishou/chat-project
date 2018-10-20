@@ -66,6 +66,8 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
 
         action {
           model.commit {
+            //TODO: add validators (text length, banned symbols, etc)
+            
             controller.joinChatRoom(roomNameItem.roomName, model.userName.value, model.roomPassword.value)
           }
         }

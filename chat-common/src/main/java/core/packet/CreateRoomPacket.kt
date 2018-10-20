@@ -9,14 +9,15 @@ import core.sizeof
 class CreateRoomPacket(
   val isPublic: Boolean,
   val chatRoomName: String?,
-  val chatRoomPasswordHash: String?
+  val chatRoomPasswordHash: String?,
+  val chatRoomImageUrl: String?
 ) : BasePacket() {
 
   override fun getPacketVersion(): Short = CURRENT_PACKET_VERSION.value
   override fun getPacketType(): PacketType = PacketType.CreateRoomPacketType
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash)
+    return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash) + sizeof(chatRoomImageUrl)
   }
 
   override fun toByteSink(byteSink: ByteSink) {
@@ -27,6 +28,7 @@ class CreateRoomPacket(
         byteSink.writeBoolean(isPublic)
         byteSink.writeString(chatRoomName)
         byteSink.writeString(chatRoomPasswordHash)
+        byteSink.writeString(chatRoomImageUrl)
       }
       CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(getPacketVersion())
     }
@@ -54,9 +56,11 @@ class CreateRoomPacket(
           CreateRoomPacket.PacketVersion.V1 -> {
             val isPublic = byteSink.readBoolean()
             val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
-            val chatRoomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHash)
+            val chatRoomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHashLen)
+            val chatRoomImageUrl = byteSink.readString(Constants.maxImageUrlLen)
+              ?: throw PacketDeserializationException("Could not read chatRoomImageUrl")
 
-            return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash)
+            return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash, chatRoomImageUrl)
           }
           CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
         }

@@ -3,7 +3,6 @@ package core.packet
 import core.Constants
 import core.exception.PacketDeserializationException
 import core.security.SecurityUtils
-import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -73,7 +72,7 @@ class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
   fun testPacketExceedRoomPassword() {
     val userName = "test_user_name"
     val roomName = "test_room_name"
-    val roomPasswordHash = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomPasswordHash + 10)
+    val roomPasswordHash = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomPasswordHashLen + 10)
 
     testPayload(JoinChatRoomPacket(userName, roomName, roomPasswordHash), { byteSink ->
       JoinChatRoomPacket.fromByteSink(byteSink)

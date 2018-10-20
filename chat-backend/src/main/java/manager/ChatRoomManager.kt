@@ -2,17 +2,14 @@ package manager
 
 import core.ChatRoom
 import core.Constants
-import core.Constants.defaultChatRoomLength
 import core.User
 import core.UserInRoom
 import core.extensions.myWithLock
 import core.model.drainable.PublicChatRoom
-import core.security.SecurityUtils
 import core.utils.TimeUtils
 import kotlinx.coroutines.sync.Mutex
 
 class ChatRoomManager {
-  private val defaultChatRoomimage = "default_chat_room_image"
   private val mutex = Mutex()
   private val clientAddressToRoomNameCache = mutableMapOf<String, MutableList<RoomNameUserNamePair>>()
   private val chatRooms = mutableMapOf<String, ChatRoom>()
@@ -24,19 +21,17 @@ class ChatRoomManager {
 
   suspend fun createChatRoom(
     isPublic: Boolean = true,
-    chatRoomName: String? = null,
-    chatRoomImageUrl: String? = null,
+    chatRoomName: String,
+    chatRoomImageUrl: String,
     chatRoomPasswordHash: String? = null
   ): ChatRoom {
-    val roomImageUrl = chatRoomImageUrl ?: defaultChatRoomimage
-    val roomName = (chatRoomName ?: SecurityUtils.Generator.generateRandomString(defaultChatRoomLength))
-    val chatRoom = ChatRoom(roomName, roomImageUrl, chatRoomPasswordHash, isPublic, TimeUtils.getCurrentTime())
+    val chatRoom = ChatRoom(chatRoomName, chatRoomImageUrl, chatRoomPasswordHash, isPublic, TimeUtils.getCurrentTime())
 
     mutex.myWithLock {
       require(chatRooms.size < Constants.maxUsersInRoomCount)
-      require(!chatRooms.containsKey(roomName))
+      require(!chatRooms.containsKey(chatRoomName))
 
-      chatRooms[roomName] = chatRoom
+      chatRooms[chatRoomName] = chatRoom
     }
 
     return chatRoom

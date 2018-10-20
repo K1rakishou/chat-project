@@ -8,6 +8,7 @@ import javafx.scene.layout.Border
 import javafx.scene.layout.Priority
 import tornadofx.*
 import ui.base.BaseView
+import ui.chat_main_window.create_chat_room_dialog.CreateChatRoomDialogFragment
 import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
 
 class ChatMainWindow : BaseView("Chat") {
@@ -23,6 +24,10 @@ class ChatMainWindow : BaseView("Chat") {
       val scope = Scope(roomNameItem)
       find<JoinChatRoomDialogFragment>(scope).openModal(resizable = false)
     }.autoUnsubscribe()
+
+    subscribe<ChatMainWindowEvents.ChatRoomCreatedEvent> { event ->
+      controller.onChatRoomCreated(event.roomName, event.roomImageUrl)
+    }.autoUnsubscribe()
   }
 
   override fun onDock() {
@@ -36,6 +41,16 @@ class ChatMainWindow : BaseView("Chat") {
   override val root = vbox {
     prefWidth = 720.0
     prefHeight = 480.0
+
+    menubar {
+      menu("Chat") {
+        item("Create Chat Room") {
+          action {
+            find<CreateChatRoomDialogFragment>().openModal(resizable = false)
+          }
+        }
+      }
+    }
 
     splitpane {
       orientation = Orientation.HORIZONTAL

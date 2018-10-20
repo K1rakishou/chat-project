@@ -1,5 +1,6 @@
 package handler
 
+import core.Constants
 import core.Status
 import core.byte_sink.ByteSink
 import core.exception.PacketDeserializationException
@@ -39,14 +40,65 @@ class CreateRoomPacketHandler(
       return CreateRoomResponsePayload.fail(Status.ChatRoomAlreadyExists)
     }
 
+    if (packet.chatRoomName.isNullOrEmpty() || packet.chatRoomImageUrl.isNullOrEmpty()) {
+      if (packet.chatRoomName.isNullOrEmpty()) {
+        println("chatRoomName is null or empty: ${packet.chatRoomName}")
+      }
+
+      if (packet.chatRoomImageUrl.isNullOrEmpty()) {
+        println("chatRoomImageUrl is null or empty: ${packet.chatRoomImageUrl}")
+      }
+
+      return CreateRoomResponsePayload.fail(Status.BadParam)
+    }
+
+    val chatRoomName = packet.chatRoomName!!
+    val chatRoomImageUrl = packet.chatRoomImageUrl!!
+
+    if (chatRoomName.length < Constants.minChatRoomNameLen || chatRoomName.length > Constants.maxChatRoomNameLength) {
+      if (chatRoomName.length < Constants.minChatRoomNameLen) {
+        println("chatRoomName.length (${chatRoomName.length}) < Constants.minChatRoomNameLen (${Constants.minChatRoomNameLen})")
+      }
+
+      if (chatRoomName.length > Constants.maxChatRoomNameLength) {
+        println("chatRoomName.length (${chatRoomName.length}) > Constants.maxChatRoomNameLength (${Constants.maxChatRoomNameLength})")
+      }
+
+      return CreateRoomResponsePayload.fail(Status.BadParam)
+    }
+
+    if (!isImageUrlValid(chatRoomImageUrl)) {
+      println("chatRoomImageUrl is not valid")
+      return CreateRoomResponsePayload.fail(Status.BadParam)
+    }
+
     val chatRoom = chatRoomManager.createChatRoom(
       isPublic = packet.isPublic,
-      chatRoomName = packet.chatRoomName,
-      chatRoomPasswordHash = packet.chatRoomPasswordHash
+      chatRoomName = packet.chatRoomName!!,
+      chatRoomPasswordHash = packet.chatRoomPasswordHash,
+      chatRoomImageUrl = packet.chatRoomImageUrl!!
     )
 
     println("ChatRoom ${chatRoom} has been successfully created!")
-    return CreateRoomResponsePayload.success(chatRoom.chatRoomName)
+    return CreateRoomResponsePayload.success()
+  }
+
+  private fun isImageUrlValid(url: String): Boolean {
+    //for now only allow images from imgur.com
+    //https://i.imgur.com/xxx.jpg
+
+    val split1 = url.split("//")
+    if (split1[0] != "https:") {
+      return false
+    }
+
+    val split2 = split1[1].split("/")
+    if (!split2[0].startsWith("i.imgur.com")) {
+      return false
+    }
+
+    val split3 = split2[1].split('.')
+    return split3[1] == "jpg" || split3[1] == "png" || split3[1] == "jpeg"
   }
 
 }

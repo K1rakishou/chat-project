@@ -20,11 +20,11 @@ enum class Status(val value: Short) {
       BadPacket -> "Bad packet received from the server"
       UserDoesNotExistInTheRoom -> "User does not exist in the room"
       WrongRoomPassword -> "Wrong room password"
-      BadParam -> "Bad parameter"
+      BadParam -> "One of the input parameters is wrong"
       CouldNotJoinChatRoom -> "Could not join chat room for some unknown reason (try again later)"
-      ChatRoomDoesNotExist -> "Chat room does not exist"
-      ChatRoomAlreadyExists -> "Chat room already exists"
-      UnknownError -> "Unknown error"
+      ChatRoomDoesNotExist -> "Chat room with this name does not exist"
+      ChatRoomAlreadyExists -> "Chat room with this name already exists"
+      UnknownError -> "Unknown error (Something happened on the server-side, try again later)"
       Ok -> throw IllegalArgumentException("Not an error!")
     }
   }
@@ -57,6 +57,21 @@ enum class Status(val value: Short) {
       ChatRoomDoesNotExist -> true
       ChatRoomAlreadyExists,
       UserDoesNotExistInTheRoom -> false
+    }
+  }
+
+  fun belongsToCreateRoomResponse(): Boolean {
+    return when (this) {
+      UnknownError,
+      Ok,
+      BadPacket,
+      BadParam,
+      ChatRoomAlreadyExists -> true
+      UserNameAlreadyTaken,
+      UserDoesNotExistInTheRoom,
+      WrongRoomPassword,
+      CouldNotJoinChatRoom,
+      ChatRoomDoesNotExist -> false
     }
   }
 

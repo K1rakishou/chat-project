@@ -97,7 +97,7 @@ class JoinChatRoomPacketHandler(
       }
 
       if (!chatRoomManager.passwordsMatch(roomName, roomPasswordHash)) {
-        println("Provided by the user password does not match room's password (${roomPasswordHash})")
+        println("Password provided by the user does not match room's password")
         connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.fail(Status.WrongRoomPassword))
         return
       }

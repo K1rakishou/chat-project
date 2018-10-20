@@ -18,4 +18,8 @@ class ChatMainWindowEvents {
     val messageHistory: List<BaseChatMessage>
   ) : FXEvent(EventBus.RunOn.ApplicationThread)
 
+  class ChatRoomCreatedEvent(
+    val roomName: String,
+    val roomImageUrl: String
+  ) : FXEvent(EventBus.RunOn.ApplicationThread)
 }

@@ -9,6 +9,9 @@ class ChatRoomManagerTest {
   val chatRoomName = "test room"
   val chatRoomName2 = "test room2"
 
+  val chatRoomImageUrl = "imgur.com/123.jpg"
+  val chatRoomImageUrl2 = "imgur.com/234.jpg"
+
   val clientAddress1 = "127.0.0.1"
   val userName1 = "test user"
   val user1 = User(userName1, clientAddress1)
@@ -23,7 +26,7 @@ class ChatRoomManagerTest {
   fun `should add user to the chatRoom and to the user cache`() {
     runBlocking {
       kotlin.run {
-        chatRoomManager.createChatRoom(chatRoomName = chatRoomName)
+        chatRoomManager.createChatRoom(chatRoomName = chatRoomName, chatRoomImageUrl = chatRoomImageUrl)
 
         assertNotNull(chatRoomManager.joinRoom(clientAddress1, chatRoomName, user1))
 
@@ -72,7 +75,7 @@ class ChatRoomManagerTest {
   @Test
   fun `should not be able to join one room twice`() {
     runBlocking {
-      chatRoomManager.createChatRoom(chatRoomName = chatRoomName)
+      chatRoomManager.createChatRoom(chatRoomName = chatRoomName, chatRoomImageUrl = chatRoomImageUrl)
 
       assertNotNull(chatRoomManager.joinRoom(clientAddress1, chatRoomName, user1))
       assertNull(chatRoomManager.joinRoom(clientAddress1, chatRoomName, user1))
@@ -85,7 +88,7 @@ class ChatRoomManagerTest {
   @Test
   fun `should remove user from the room and from the cache`() {
     runBlocking {
-      chatRoomManager.createChatRoom(chatRoomName = chatRoomName)
+      chatRoomManager.createChatRoom(chatRoomName = chatRoomName, chatRoomImageUrl = chatRoomImageUrl)
 
       assertNotNull(chatRoomManager.joinRoom(clientAddress1, chatRoomName, user1))
       assertNotNull(chatRoomManager.joinRoom(clientAddress2, chatRoomName, user2))

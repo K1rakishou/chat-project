@@ -55,14 +55,12 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
         null
       }
 
-      doOnBg {
-        val packet = JoinChatRoomPacket(
-          name,
-          chatRoomName,
-          hashedPassword)
+      val packet = JoinChatRoomPacket(
+        name,
+        chatRoomName,
+        hashedPassword)
 
-        networkManager.sendPacket(packet)
-      }
+      networkManager.sendPacket(packet)
     }
   }
 
@@ -116,11 +114,13 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
 
     if (response.status != Status.Ok) {
       if (response.status.isFatalError()) {
-        throw RuntimeException("Fatal Error: ${response.status.toErrorMessage()}")
+        view.onError("Fatal Error: ${response.status.toErrorMessage()}")
+        return
       }
 
       if (!response.status.belongsToJoinChatRoomResponse()) {
-        throw IllegalStateException("The status code (${response.status}) does not belong to this response (JoinChatRoomResponsePayload)")
+        view.onError("The status code (${response.status}) does not belong to this response (JoinChatRoomResponsePayload)")
+        return
       }
 
       view.onFailedToJoinChatRoom(response.status)
@@ -134,5 +134,4 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
 
     view.onJoinedToChatRoom(roomName, userName, users, messageHistory)
   }
-
 }

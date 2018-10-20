@@ -1,25 +1,19 @@
 package core.response
 
-import core.Constants
 import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
 import core.exception.*
-import core.sizeof
 
 class CreateRoomResponsePayload private constructor(
-  status: Status,
-  val chatRoomName: String? = null
+  status: Status
 ) : BaseResponse(status) {
 
   override fun getResponseType(): ResponseType = ResponseType.CreateRoomResponseType
   override fun getResponseVersion(): Short = CURRENT_RESPONSE_VERSION.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + when (status) {
-      Status.Ok -> sizeof(chatRoomName)
-      else -> 0
-    }
+    return super.getPayloadSize()
   }
 
   override fun toByteSink(byteSink: ByteSink) {
@@ -30,7 +24,6 @@ class CreateRoomResponsePayload private constructor(
         byteSink.writeShort(status.value)
 
         if (status == Status.Ok) {
-          byteSink.writeString(chatRoomName)
         }
       }
       CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(CURRENT_RESPONSE_VERSION.value)
@@ -51,8 +44,8 @@ class CreateRoomResponsePayload private constructor(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
-    fun success(chatRoomName: String): CreateRoomResponsePayload {
-      return CreateRoomResponsePayload(Status.Ok, chatRoomName)
+    fun success(): CreateRoomResponsePayload {
+      return CreateRoomResponsePayload(Status.Ok)
     }
 
     fun fail(status: Status): CreateRoomResponsePayload {
@@ -70,10 +63,7 @@ class CreateRoomResponsePayload private constructor(
               return fail(status)
             }
 
-            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
-              ?: throw ResponseDeserializationException("Could not read chatRoomName")
-
-            CreateRoomResponsePayload(status, chatRoomName)
+            CreateRoomResponsePayload(status)
           }
           CreateRoomResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
         }

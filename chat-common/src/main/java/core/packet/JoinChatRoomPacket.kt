@@ -56,7 +56,7 @@ class JoinChatRoomPacket(
               ?: throw PacketDeserializationException("Could not read userName")
             val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
               ?: throw PacketDeserializationException("Could not read chatRoomName")
-            val roomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHash)
+            val roomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHashLen)
 
             return JoinChatRoomPacket(userName, roomName, roomPasswordHash)
           }

@@ -37,6 +37,14 @@ class Store : Controller() {
     userNameByRoomName[roomName] = userName
   }
 
+  fun addPublicChatRoom(roomName: String, roomImageUrl: String) {
+    if (getPublicChatRoom(roomName) != null) {
+      throw IllegalStateException("Room with name ${roomName} already exists!")
+    }
+
+    publicChatRoomList.add(0, PublicChatRoomItem(roomName, roomImageUrl, FXCollections.observableArrayList(), FXCollections.observableArrayList()))
+  }
+
   fun getPublicChatRoomList(): ObservableList<PublicChatRoomItem> {
     return publicChatRoomList
   }
@@ -46,7 +54,6 @@ class Store : Controller() {
   }
 
   fun setPublicChatRoomList(list: List<PublicChatRoom>) {
-    publicChatRoomList.clear()
     publicChatRoomList.addAll(list.map { chatRoom ->
       PublicChatRoomItem(chatRoom.chatRoomName, chatRoom.chatRoomImageUrl, FXCollections.observableArrayList(), FXCollections.observableArrayList())
     })
@@ -107,7 +114,7 @@ class Store : Controller() {
 
     chatRoom.roomMessagesProperty().add(message)
 
-    //always return 0 for messages (like SystemMessage, or TextMessage but when it was received from the server)
+    //always return 0 for messages (like SystemMessage, or TextMessage when it was received from the server)
     //that won't be send to the server
     return 0
   }

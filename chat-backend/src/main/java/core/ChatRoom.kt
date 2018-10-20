@@ -81,6 +81,7 @@ data class ChatRoom(
 
   suspend fun passwordsMatch(chatRoomPassword: String): Boolean {
     return mutex.myWithLock {
+      println("Room password ($roomPasswordHash), user password ($chatRoomPassword)")
       return@myWithLock roomPasswordHash == chatRoomPassword
     }
   }
