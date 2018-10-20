@@ -281,20 +281,42 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     }
   }
 
-  fun onChatRoomCreated(roomName: String, roomImageUrl: String) {
+  fun onChatRoomCreated(roomName: String, userName: String?, roomImageUrl: String) {
     doOnUI {
-//      val chatRoomViewEmpty = find<ChatRoomViewEmpty>()
-//      if (chatRoomViewEmpty.isDocked) {
-//        chatRoomViewEmpty.replaceWith<ChatRoomView>()
-//      }
-
       store.addPublicChatRoom(roomName, roomImageUrl)
+
+      //if userName is not null that means that we need to auto join this user into the created room
+      if (userName != null) {
+        val chatRoomViewEmpty = find<ChatRoomViewEmpty>()
+        if (chatRoomViewEmpty.isDocked) {
+          chatRoomViewEmpty.replaceWith<ChatRoomView>()
+        }
+
+        //Wait some time before ChatRoomView shows up
+        delay(TimeUnit.MILLISECONDS.toMillis(delayBeforeAddFirstChatRoomMessage))
+
+        selectedRoomName = roomName
+
+        store.addJoinedRoom(roomName)
+        store.setChatRoomUserList(roomName, FXCollections.observableArrayList())
+        store.addUserToRoom(roomName, userName)
+
+        view.selectRoomWithIndex(0)
+      }
+
       publicChatRoomList.add(0, PublicChatRoomItem(
         roomName,
         roomImageUrl,
         FXCollections.observableArrayList(),
         FXCollections.observableArrayList())
       )
+
+      if (userName != null) {
+        reloadRoomMessageHistory(roomName)
+        addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
+
+        scrollChatToBottom()
+      }
     }
   }
 

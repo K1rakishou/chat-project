@@ -2,6 +2,7 @@ package ui.chat_main_window
 
 import controller.ChatMainWindowController
 import events.ChatMainWindowEvents
+import events.ChatRoomListFragmentEvents
 import javafx.geometry.Pos
 import javafx.scene.Cursor
 import javafx.scene.Node
@@ -21,6 +22,12 @@ class ChatRoomListFragment : BaseFragment() {
   private val store: Store by inject()
   private val controller: ChatMainWindowController by inject()
   private var chatRoomListView: ListView<PublicChatRoomItem>? = null
+
+  init {
+    subscribe<ChatRoomListFragmentEvents.SelectListViewItem> { event ->
+      chatRoomListView?.selectionModel?.select(event.itemIndex)
+    }.autoUnsubscribe()
+  }
 
   override val root = listview(controller.publicChatRoomList) {
     vboxConstraints { vGrow = Priority.ALWAYS }

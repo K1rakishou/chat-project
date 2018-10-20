@@ -27,7 +27,7 @@ class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragme
     super.destroyController()
   }
 
-  fun createChatRoom(roomName: String, roomPassword: String?, roomImageUrl: String, userName: String, isPublic: Boolean) {
+  fun createChatRoom(roomName: String, roomPassword: String?, roomImageUrl: String, userName: String?, isPublic: Boolean) {
     view.lockControls()
 
     if (!networkManager.isConnected) {
@@ -46,8 +46,8 @@ class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragme
       null
     }
 
-    roomToBeCreated = ChatRoomToBeCreatedTempInfo(roomName, passwordHash, roomImageUrl, isPublic)
-    networkManager.sendPacket(CreateRoomPacket(isPublic, roomName, passwordHash, roomImageUrl))
+    roomToBeCreated = ChatRoomToBeCreatedTempInfo(roomName, passwordHash, roomImageUrl, userName, isPublic)
+    networkManager.sendPacket(CreateRoomPacket(isPublic, roomName, passwordHash, roomImageUrl, userName))
   }
 
   private fun startListeningToPackets() {
@@ -121,6 +121,7 @@ class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragme
         roomToBeCreated!!.roomName,
         roomToBeCreated!!.roomPassword,
         roomToBeCreated!!.roomImageUrl,
+        roomToBeCreated!!.userName,
         roomToBeCreated!!.isPublic
       )
     } finally {
@@ -132,6 +133,7 @@ class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragme
     val roomName: String,
     val roomPassword: String?,
     val roomImageUrl: String,
+    val userName: String?,
     val isPublic: Boolean
   )
 }

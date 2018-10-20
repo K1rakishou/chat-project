@@ -61,7 +61,7 @@ class CreateChatRoomDialogFragment : BaseFragment("Create Chat Room") {
       field("User Name") {
         textfield(model.userName) {
           disableWhen { disableControlsFlag }
-          tooltip("Used to automatically joined this room (May be left empty)")
+          tooltip("Provide user name if you want to automatically join this room (May be left empty)")
         }
       }
       field {
@@ -142,9 +142,9 @@ class CreateChatRoomDialogFragment : BaseFragment("Create Chat Room") {
     }
   }
 
-  fun onChatRoomCreated(roomName: String, roomPassword: String?, roomImageUrl: String, isPublic: Boolean) {
+  fun onChatRoomCreated(roomName: String, roomPassword: String?, roomImageUrl: String, userName: String?, isPublic: Boolean) {
     doOnUI {
-      fire(ChatMainWindowEvents.ChatRoomCreatedEvent(roomName, roomImageUrl))
+      fire(ChatMainWindowEvents.ChatRoomCreatedEvent(roomName, userName, roomImageUrl))
       unlockControls()
       closeFragment()
     }

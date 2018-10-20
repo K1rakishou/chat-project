@@ -2,6 +2,7 @@ package ui.chat_main_window
 
 import controller.ChatMainWindowController
 import events.ChatMainWindowEvents
+import events.ChatRoomListFragmentEvents
 import javafx.geometry.Orientation
 import javafx.scene.control.SplitPane
 import javafx.scene.layout.Border
@@ -26,7 +27,7 @@ class ChatMainWindow : BaseView("Chat") {
     }.autoUnsubscribe()
 
     subscribe<ChatMainWindowEvents.ChatRoomCreatedEvent> { event ->
-      controller.onChatRoomCreated(event.roomName, event.roomImageUrl)
+      controller.onChatRoomCreated(event.roomName, event.userName!!, event.roomImageUrl)
     }.autoUnsubscribe()
   }
 
@@ -71,6 +72,12 @@ class ChatMainWindow : BaseView("Chat") {
 
         add(ChatRoomViewEmpty::class)
       }
+    }
+  }
+
+  fun selectRoomWithIndex(index: Int) {
+    doOnUI {
+      fire(ChatRoomListFragmentEvents.SelectListViewItem(index))
     }
   }
 }

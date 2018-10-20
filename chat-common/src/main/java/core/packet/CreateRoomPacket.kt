@@ -10,14 +10,15 @@ class CreateRoomPacket(
   val isPublic: Boolean,
   val chatRoomName: String?,
   val chatRoomPasswordHash: String?,
-  val chatRoomImageUrl: String?
+  val chatRoomImageUrl: String?,
+  val userName: String?
 ) : BasePacket() {
 
   override fun getPacketVersion(): Short = CURRENT_PACKET_VERSION.value
   override fun getPacketType(): PacketType = PacketType.CreateRoomPacketType
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash) + sizeof(chatRoomImageUrl)
+    return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash) + sizeof(chatRoomImageUrl) + sizeof(userName)
   }
 
   override fun toByteSink(byteSink: ByteSink) {
@@ -29,6 +30,7 @@ class CreateRoomPacket(
         byteSink.writeString(chatRoomName)
         byteSink.writeString(chatRoomPasswordHash)
         byteSink.writeString(chatRoomImageUrl)
+        byteSink.writeString(userName)
       }
       CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(getPacketVersion())
     }
@@ -59,8 +61,10 @@ class CreateRoomPacket(
             val chatRoomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHashLen)
             val chatRoomImageUrl = byteSink.readString(Constants.maxImageUrlLen)
               ?: throw PacketDeserializationException("Could not read chatRoomImageUrl")
+            val userName = byteSink.readString(Constants.maxUserNameLen)
+              ?: throw PacketDeserializationException("Could not read userName")
 
-            return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash, chatRoomImageUrl)
+            return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash, chatRoomImageUrl, userName)
           }
           CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
         }

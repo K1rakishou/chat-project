@@ -2,6 +2,7 @@ package handler
 
 import core.Constants
 import core.Status
+import core.User
 import core.byte_sink.ByteSink
 import core.exception.PacketDeserializationException
 import core.exception.UnknownPacketVersionException
@@ -27,14 +28,14 @@ class CreateRoomPacketHandler(
 
     val packetVersion = CreateRoomPacket.PacketVersion.fromShort(packet.getPacketVersion())
     val response = when (packetVersion) {
-      CreateRoomPacket.PacketVersion.V1 -> handleInternalV1(packet)
+      CreateRoomPacket.PacketVersion.V1 -> handleInternalV1(packet, clientAddress)
       CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
 
     connectionManager.sendResponse(clientAddress, response)
   }
 
-  private suspend fun handleInternalV1(packet: CreateRoomPacket): BaseResponse {
+  private suspend fun handleInternalV1(packet: CreateRoomPacket, clientAddress: String): BaseResponse {
     if (chatRoomManager.exists(packet.chatRoomName)) {
       println("ChatRoom with name ${packet.chatRoomName} already exists")
       return CreateRoomResponsePayload.fail(Status.ChatRoomAlreadyExists)
@@ -80,6 +81,17 @@ class CreateRoomPacketHandler(
     )
 
     println("ChatRoom ${chatRoom} has been successfully created!")
+
+    if (packet.userName != null) {
+      val newUser = User(packet.userName!!, clientAddress)
+      val joinedChatRoom = chatRoomManager.joinRoom(clientAddress, packet.chatRoomName!!, newUser)
+
+      if (joinedChatRoom == null) {
+        println("Could not join the room (${joinedChatRoom}) by user (${newUser.clientAddress}, ${newUser.userName})")
+        return CreateRoomResponsePayload.fail(Status.CouldNotJoinChatRoom)
+      }
+    }
+
     return CreateRoomResponsePayload.success()
   }
 

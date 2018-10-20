@@ -20,6 +20,7 @@ class ChatMainWindowEvents {
 
   class ChatRoomCreatedEvent(
     val roomName: String,
+    val userName: String?,
     val roomImageUrl: String
   ) : FXEvent(EventBus.RunOn.ApplicationThread)
 }
