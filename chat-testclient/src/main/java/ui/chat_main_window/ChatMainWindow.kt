@@ -61,7 +61,7 @@ class ChatMainWindow : BaseView("Chat") {
       vbox {
         SplitPane.setResizableWithParent(this, false)
 
-        minWidth = 156.0
+        minWidth = 200.0
         border = Border.EMPTY
 
         add(ChatRoomListFragment::class)

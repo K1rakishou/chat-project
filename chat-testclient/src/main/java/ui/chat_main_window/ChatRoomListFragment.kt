@@ -3,13 +3,11 @@ package ui.chat_main_window
 import controller.ChatMainWindowController
 import events.ChatMainWindowEvents
 import events.ChatRoomListFragmentEvents
+import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.geometry.Pos
 import javafx.scene.Cursor
 import javafx.scene.Node
-import javafx.scene.control.Label
-import javafx.scene.control.ListCell
-import javafx.scene.control.ListView
-import javafx.scene.image.ImageView
+import javafx.scene.control.*
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
@@ -31,12 +29,12 @@ class ChatRoomListFragment : BaseFragment() {
 
   override val root = listview(controller.publicChatRoomList) {
     vboxConstraints { vGrow = Priority.ALWAYS }
-    setCellFactory { cellFactory() }
 
+    setCellFactory { cellFactory(widthProperty()) }
     chatRoomListView = this
   }
 
-  private fun cellFactory(): ListCell<PublicChatRoomItem> {
+  private fun cellFactory(widthProperty: ReadOnlyDoubleProperty): ListCell<PublicChatRoomItem> {
     val cell = object : ListCell<PublicChatRoomItem>() {
       override fun updateItem(item: PublicChatRoomItem?, empty: Boolean) {
         super.updateItem(item, empty)
@@ -48,7 +46,7 @@ class ChatRoomListFragment : BaseFragment() {
 
         //TODO: Optimize.
         //This method is getting called every time a ListView item is clicked.
-        graphic = createCellItem(item)
+        graphic = createCellItem(widthProperty, item)
       }
     }
 
@@ -94,24 +92,31 @@ class ChatRoomListFragment : BaseFragment() {
     return cell
   }
 
-  private fun createCellItem(item: PublicChatRoomItem): Node {
+  private fun createCellItem(widthProperty: ReadOnlyDoubleProperty, item: PublicChatRoomItem): Node {
     return HBox().apply {
       prefHeight = 64.0
       maxHeight = 64.0
       paddingAll = 2.0
       cursor = Cursor.HAND
 
-      add(ImageView(item.imageUrl).apply {
+      maxWidthProperty().bind(widthProperty.subtract(16.0))
+
+      imageview(item.imageUrl) {
         fitHeight = 60.0
         isPreserveRatio = true
         isSmooth = true
         alignment = Pos.CENTER_LEFT
         paddingRight = 8.0
-      })
-      label { prefWidth = 8.0 }
-      add(Label(item.roomName).apply {
-        hgrow = Priority.ALWAYS
-      })
+      }
+      label { minWidth = 8.0 }
+      vbox {
+        label(item.roomName) {
+          textOverrun = OverrunStyle.ELLIPSIS
+        }
+        label(controller.lastChatMessageMap[item.roomName]!!) {
+          textOverrun = OverrunStyle.ELLIPSIS
+        }
+      }
     }
   }
 

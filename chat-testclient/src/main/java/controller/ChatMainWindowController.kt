@@ -13,6 +13,7 @@ import core.response.*
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import javafx.beans.property.SimpleIntegerProperty
+import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import kotlinx.coroutines.delay
 import manager.NetworkManager
@@ -36,6 +37,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   lateinit var scrollToBottomFlag: SimpleIntegerProperty
 
   val publicChatRoomList = FXCollections.observableArrayList<PublicChatRoomItem>()
+  val lastChatMessageMap = FXCollections.observableHashMap<String, SimpleStringProperty>()
   val currentChatRoomMessageList = FXCollections.observableArrayList<BaseChatMessageItem>()
 
   override fun createController(viewParam: ChatMainWindow) {
@@ -228,8 +230,11 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
     doOnUI {
       store.setPublicChatRoomList(response.publicChatRoomList)
-
       publicChatRoomList.addAll(store.getPublicChatRoomList())
+
+      response.publicChatRoomList.forEach { chatRoom ->
+        lastChatMessageMap[chatRoom.chatRoomName] = SimpleStringProperty("")
+      }
     }
   }
 
@@ -249,13 +254,51 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       }
     }
 
+    updateLastChatRoomMessage(roomName, chatMessage)
+
     return messageId
+  }
+
+  private fun updateLastChatRoomMessage(roomName: String, chatMessage: BaseChatMessageItem) {
+    when (chatMessage.getMessageType()) {
+      BaseChatMessageItem.MessageType.MyTextMessage,
+      BaseChatMessageItem.MessageType.ForeignTextMessage -> {
+        doOnUI {
+          val lastMessageText = when (chatMessage.getMessageType()) {
+            BaseChatMessageItem.MessageType.MyTextMessage -> {
+              chatMessage as MyTextChatMessageItem
+              "${chatMessage.senderName}: ${chatMessage.messageText}"
+            }
+            BaseChatMessageItem.MessageType.ForeignTextMessage -> {
+              chatMessage as ForeignTextChatMessageItem
+              "${chatMessage.senderName}: ${chatMessage.messageText}"
+            }
+            else -> null
+          }
+
+          if (lastMessageText != null) {
+            lastChatMessageMap[roomName]!!.set(lastMessageText)
+          }
+        }
+      }
+      else -> {
+        //do nothing
+      }
+    }
   }
 
   fun reloadRoomMessageHistory(roomName: String) {
     doOnUI {
       currentChatRoomMessageList.clear()
-      currentChatRoomMessageList.addAll(store.getChatRoomMessageHistory(roomName))
+
+      val chatMessageHistory = store.getChatRoomMessageHistory(roomName)
+      val lastMessage = chatMessageHistory.last {
+        it.getMessageType() == BaseChatMessageItem.MessageType.ForeignTextMessage
+          || it.getMessageType() == BaseChatMessageItem.MessageType.MyTextMessage
+      }
+
+      updateLastChatRoomMessage(roomName, lastMessage)
+      currentChatRoomMessageList.addAll(chatMessageHistory)
     }
   }
 
@@ -310,6 +353,8 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
         FXCollections.observableArrayList(),
         FXCollections.observableArrayList())
       )
+
+      lastChatMessageMap[roomName] = SimpleStringProperty()
 
       if (userName != null) {
         reloadRoomMessageHistory(roomName)
