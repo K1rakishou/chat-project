@@ -52,7 +52,7 @@ class Server(
     runBlocking {
       val server = aSocket(ActorSelectorManager(Dispatchers.IO))
         .tcp()
-        .bind(InetSocketAddress("127.0.0.1", 2323))
+        .bind(InetSocketAddress("0.0.0.0", 2323))
 
       //test zone
       //test zone
