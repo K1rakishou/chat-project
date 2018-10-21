@@ -2,6 +2,7 @@ package ui.chat_main_window
 
 import Styles
 import controller.ChatMainWindowController
+import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.scene.control.ScrollPane
 import javafx.scene.layout.Priority
 import javafx.scene.text.Text
@@ -43,7 +44,7 @@ class ChatRoomView : BaseView() {
             BaseChatMessageItem.MessageType.ForeignTextMessage,
             BaseChatMessageItem.MessageType.SystemTextMessage -> {
               baseChatMessage as MyTextChatMessageItem
-              createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+              createTextChatMessage(widthProperty(), baseChatMessage.senderName, baseChatMessage.messageText)
             }
             else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
           }
@@ -79,9 +80,10 @@ class ChatRoomView : BaseView() {
     }
   }
 
-  private fun createTextChatMessage(senderName: String, messageText: String): Text {
+  private fun createTextChatMessage(containerWidthProperty: ReadOnlyDoubleProperty, senderName: String, messageText: String): Text {
     return Text("$senderName: $messageText\n").apply {
       id = "child_id_${childIndex.get()}"
+      wrappingWidthProperty().bind(containerWidthProperty)
     }
   }
 }

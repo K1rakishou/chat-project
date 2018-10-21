@@ -55,16 +55,6 @@ class Server(
         .bind(InetSocketAddress("127.0.0.1", 2323))
 
       //test zone
-      chatRoomManager.createChatRoom(
-        true,
-        chatRoomName = "chatroom1",
-        chatRoomImageUrl = "https://i.imgur.com/4RYOlgL.png"
-      )
-      chatRoomManager.createChatRoom(
-        true,
-        chatRoomName = "chatroom2",
-        chatRoomImageUrl = "https://i.imgur.com/4RYOlgL.png"
-      )
       //test zone
 
       println("Started server at ${server.localAddress}")

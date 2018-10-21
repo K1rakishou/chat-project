@@ -292,12 +292,15 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       currentChatRoomMessageList.clear()
 
       val chatMessageHistory = store.getChatRoomMessageHistory(roomName)
-      val lastMessage = chatMessageHistory.last {
-        it.getMessageType() == BaseChatMessageItem.MessageType.ForeignTextMessage
-          || it.getMessageType() == BaseChatMessageItem.MessageType.MyTextMessage
+      val lastMessage = chatMessageHistory.lastOrNull {
+        it.getMessageType() == BaseChatMessageItem.MessageType.ForeignTextMessage ||
+        it.getMessageType() == BaseChatMessageItem.MessageType.MyTextMessage
       }
 
-      updateLastChatRoomMessage(roomName, lastMessage)
+      if (lastMessage != null) {
+        updateLastChatRoomMessage(roomName, lastMessage)
+      }
+
       currentChatRoomMessageList.addAll(chatMessageHistory)
     }
   }
