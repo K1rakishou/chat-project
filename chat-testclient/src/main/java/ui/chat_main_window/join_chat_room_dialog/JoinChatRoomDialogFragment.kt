@@ -11,6 +11,7 @@ import javafx.geometry.Pos
 import javafx.scene.layout.Priority
 import tornadofx.*
 import ui.base.BaseFragment
+import utils.UiValidators
 
 class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   private val disableControlsFlag = SimpleBooleanProperty(false)
@@ -41,13 +42,20 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
     fieldset {
       field("Username") {
         textfield(model.userName) {
-          required()
+          validator { userName ->
+            UiValidators.validateUserName(this, userName)
+          }
+
           whenDocked { requestFocus() }
           disableWhen { disableControlsFlag }
         }
       }
       field("Room Password") {
         textfield(model.roomPassword) {
+          validator { roomPassword ->
+            UiValidators.validateRoomPassword(this, roomPassword)
+          }
+
           disableWhen { disableControlsFlag }
         }
       }
@@ -66,8 +74,6 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
 
         action {
           model.commit {
-            //TODO: add validators (text length, banned symbols, etc)
-
             controller.joinChatRoom(roomNameItem.roomName, model.userName.value, model.roomPassword.value)
           }
         }

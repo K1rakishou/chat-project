@@ -10,6 +10,7 @@ import core.model.drainable.PublicUserInChat
 import core.packet.JoinChatRoomPacket
 import core.response.JoinChatRoomResponsePayload
 import core.response.UserHasJoinedResponsePayload
+import core.utils.Validators
 import manager.ChatRoomManager
 import manager.ConnectionManager
 
@@ -39,16 +40,9 @@ class JoinChatRoomPacketHandler(
     val roomName = packet.roomName
     val roomPasswordHash = packet.roomPasswordHash
 
-    if (userName.isEmpty() || roomName.isEmpty()) {
-      if (userName.isEmpty()) {
-        println("userName is empty (${userName})")
-      }
-
-      if (roomName.isEmpty()) {
-        println("chatRoomName is empty (${roomName})")
-      }
-
-      connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.fail(Status.BadParam))
+    val status = validateV1(userName, roomName, roomPasswordHash)
+    if (status != null) {
+      connectionManager.sendResponse(clientAddress, JoinChatRoomResponsePayload.fail(status))
       return
     }
 
@@ -135,5 +129,26 @@ class JoinChatRoomPacketHandler(
     connectionManager.sendResponse(clientAddress, response)
 
     println("User (${userName}) has successfully joined room (${roomName})")
+  }
+
+  private fun validateV1(userName: String, roomName: String, roomPasswordHash: String?): Status? {
+    var status: Status? = null
+
+    status = Validators.validateUserName(userName)
+    if (status != null) {
+      return status
+    }
+
+    status = Validators.validateChatRoomName(roomName)
+    if (status != null) {
+      return status
+    }
+
+    status = Validators.validateChatRoomPasswordHash(roomPasswordHash)
+    if (status != null) {
+      return status
+    }
+
+    return null
   }
 }

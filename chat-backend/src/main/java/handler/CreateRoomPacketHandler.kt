@@ -43,9 +43,9 @@ class CreateRoomPacketHandler(
     val userName = packet.userName
     val isPublic = packet.isPublic
 
-    val response = validateV1(chatRoomName, chatRoomImageUrl, chatRoomPasswordHash, userName)
-    if (response != null) {
-      return response
+    val status = validateV1(chatRoomName, chatRoomImageUrl, chatRoomPasswordHash, userName)
+    if (status != null) {
+      return CreateRoomResponsePayload.fail(status)
     }
 
     if (chatRoomManager.exists(chatRoomName)) {
@@ -80,69 +80,27 @@ class CreateRoomPacketHandler(
     chatRoomImageUrl: String,
     chatRoomPasswordHash: String?,
     userName: String?
-  ): BaseResponse? {
-    if (chatRoomName.isBlank()) {
-      println("chatRoomName is blank: ${chatRoomName}")
-      return CreateRoomResponsePayload.fail(Status.BadParam)
+  ): Status? {
+    var status: Status? = null
+
+    status = Validators.validateChatRoomName(chatRoomName)
+    if (status != null) {
+      return status
     }
 
-    if (chatRoomImageUrl.isBlank()) {
-      println("chatRoomImageUrl is blank: ${chatRoomImageUrl}")
-      return CreateRoomResponsePayload.fail(Status.BadParam)
-    }
-
-    if (chatRoomName.length < Constants.minChatRoomNameLen) {
-      println("chatRoomName.length (${chatRoomName.length}) < Constants.minChatRoomNameLen (${Constants.minChatRoomNameLen})")
-      return CreateRoomResponsePayload.fail(Status.BadParam)
-    }
-
-    if (chatRoomName.length > Constants.maxChatRoomNameLength) {
-      println("chatRoomName.length (${chatRoomName.length}) > Constants.maxChatRoomNameLength (${Constants.maxChatRoomNameLength})")
-      return CreateRoomResponsePayload.fail(Status.BadParam)
-    }
-
-    if (chatRoomName.isBlank()) {
-      println("chatRoomName is blank ($chatRoomName)")
-      return CreateRoomResponsePayload.fail(Status.BadParam)
-    }
-
-    chatRoomPasswordHash?.let { roomPasswordHash ->
-      if (roomPasswordHash.isBlank()) {
-        println("chatRoomPasswordHash is blank ($chatRoomName)")
-        return CreateRoomResponsePayload.fail(Status.BadParam)
-      }
-
-      if (roomPasswordHash.length < Constants.minChatRoomPasswordLen) {
-        println("chatRoomPasswordHash (${roomPasswordHash.length}) < Constants.minChatRoomPasswordLen (${Constants.minChatRoomPasswordLen})")
-        return CreateRoomResponsePayload.fail(Status.BadParam)
-      }
-
-      if (roomPasswordHash.length > Constants.maxChatRoomPasswordHashLen) {
-        println("chatRoomPasswordHash (${roomPasswordHash.length}) > Constants.minChatRoomPasswordLen (${Constants.maxChatRoomPasswordHashLen})")
-        return CreateRoomResponsePayload.fail(Status.BadParam)
-      }
+    status = Validators.validateChatRoomPasswordHash(chatRoomPasswordHash)
+    if (status != null) {
+      return status
     }
 
     if (!Validators.isImageUrlValid(chatRoomImageUrl)) {
       println("chatRoomImageUrl is not valid")
-      return CreateRoomResponsePayload.fail(Status.BadParam)
+      return Status.BadParam
     }
 
-    if (userName != null) {
-      if (userName.isBlank()) {
-        println("userName is blank ($chatRoomName)")
-        return CreateRoomResponsePayload.fail(Status.BadParam)
-      }
-
-      if (userName.length < Constants.minUserNameLen) {
-        println("userName.length (${userName.length}) < Constants.minUserNameLen (${Constants.minUserNameLen})")
-        return CreateRoomResponsePayload.fail(Status.BadParam)
-      }
-
-      if (userName.length > Constants.maxUserNameLen) {
-        println("userName.length (${userName.length}) > Constants.minUserNameLen (${Constants.minUserNameLen})")
-        return CreateRoomResponsePayload.fail(Status.BadParam)
-      }
+    status = Validators.validateUserName(userName)
+    if (status != null) {
+      return status
     }
 
     return null
