@@ -22,6 +22,8 @@ import java.lang.RuntimeException
 class ChatRoomListFragment : BaseFragment() {
   private val store: Store by inject()
   private val controller: ChatMainWindowController by inject()
+  private val rightMargin = 16.0
+
   private var chatRoomListView: ListView<BaseChatRoomListItem>? = null
 
   init {
@@ -51,7 +53,7 @@ class ChatRoomListFragment : BaseFragment() {
         //This method is getting called every time a ListView item is clicked.
         graphic = when (item) {
           is PublicChatRoomItem -> createCellPublicChatRoomItem(widthProperty, item)
-          is NoRoomsNotificationItem -> createCellNoRoomsNotificationItem(widthProperty, item)
+          is NoRoomsNotificationItem -> createCellNoRoomsNotificationItem(widthProperty)
           else -> throw RuntimeException("Not implemented for ${item::class}")
         }
       }
@@ -82,15 +84,22 @@ class ChatRoomListFragment : BaseFragment() {
           findListCellInTree<BaseChatRoomListItem>(event.target as Node)?.item to false
         }
 
-        if (item != null && item is PublicChatRoomItem) {
-          controller.updateSelectedRoom(item.roomName)
+        if (item != null) {
+          when (item) {
+            is PublicChatRoomItem -> {
+              controller.updateSelectedRoom(item.roomName)
 
-          if (store.isUserInRoom(item.roomName)) {
-            if (shouldReloadRoomMessageHistory) {
-              controller.reloadRoomMessageHistory(item.roomName)
+              if (store.isUserInRoom(item.roomName)) {
+                if (shouldReloadRoomMessageHistory) {
+                  controller.reloadRoomMessageHistory(item.roomName)
+                }
+              } else {
+                fire(ChatMainWindowEvents.ShowJoinChatRoomDialogEvent(item.roomName))
+              }
             }
-          } else {
-            fire(ChatMainWindowEvents.ShowJoinChatRoomDialogEvent(item.roomName))
+            is NoRoomsNotificationItem -> {
+              //TODO: show CreateChatRoomDialogFragment
+            }
           }
         }
       }
@@ -99,13 +108,14 @@ class ChatRoomListFragment : BaseFragment() {
     return cell
   }
 
-  private fun createCellNoRoomsNotificationItem(widthProperty: ReadOnlyDoubleProperty, item: NoRoomsNotificationItem): Node {
+  private fun createCellNoRoomsNotificationItem(widthProperty: ReadOnlyDoubleProperty): Node {
     return HBox().apply {
       prefHeight = 64.0
       maxHeight = 64.0
       paddingAll = 2.0
+      cursor = Cursor.HAND
 
-      maxWidthProperty().bind(widthProperty.subtract(16.0))
+      maxWidthProperty().bind(widthProperty - rightMargin)
 
       label("No public chat rooms created yet") { minWidth = 8.0 }
     }
@@ -118,7 +128,7 @@ class ChatRoomListFragment : BaseFragment() {
       paddingAll = 2.0
       cursor = Cursor.HAND
 
-      maxWidthProperty().bind(widthProperty.subtract(16.0))
+      maxWidthProperty().bind(widthProperty - rightMargin)
 
       imageview(item.imageUrl) {
         fitHeight = 60.0
