@@ -29,6 +29,10 @@ class ChatMainWindow : BaseView("Chat") {
       find<JoinChatRoomDialogFragment>(scope).openModal(resizable = false)
     }.autoUnsubscribe()
 
+    subscribe<ChatMainWindowEvents.ShowCreateChatRoomDialogEvent> {
+      showCreateChatRoomDialog()
+    }
+
     subscribe<ChatMainWindowEvents.ChatRoomCreatedEvent> { event ->
       controller.onChatRoomCreated(event.roomName, event.userName, event.roomImageUrl)
     }.autoUnsubscribe()
@@ -60,7 +64,7 @@ class ChatMainWindow : BaseView("Chat") {
         menu("Chat") {
           item("Create Chat Room") {
             action {
-              find<CreateChatRoomDialogFragment>().openModal(resizable = false)
+              showCreateChatRoomDialog()
             }
           }
         }
@@ -95,5 +99,9 @@ class ChatMainWindow : BaseView("Chat") {
     doOnUI {
       fire(ChatRoomListFragmentEvents.SelectListViewItem(index))
     }
+  }
+
+  private fun showCreateChatRoomDialog() {
+    find<CreateChatRoomDialogFragment>().openModal(resizable = false)
   }
 }

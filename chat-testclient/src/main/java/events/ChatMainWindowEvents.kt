@@ -11,6 +11,8 @@ class ChatMainWindowEvents {
     val roomName: String
   ) : FXEvent(EventBus.RunOn.ApplicationThread)
 
+  object ShowCreateChatRoomDialogEvent : FXEvent(EventBus.RunOn.ApplicationThread)
+
   class JoinedChatRoomEvent(
     val roomName: String,
     val userName: String,

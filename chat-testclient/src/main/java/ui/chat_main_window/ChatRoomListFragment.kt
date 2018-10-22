@@ -98,7 +98,7 @@ class ChatRoomListFragment : BaseFragment() {
               }
             }
             is NoRoomsNotificationItem -> {
-              //TODO: show CreateChatRoomDialogFragment
+              fire(ChatMainWindowEvents.ShowCreateChatRoomDialogEvent)
             }
           }
         }
