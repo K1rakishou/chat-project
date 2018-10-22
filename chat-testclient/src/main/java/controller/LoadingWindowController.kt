@@ -19,8 +19,8 @@ class LoadingWindowController : BaseController<LoadingWindow>() {
     super.destroyController()
   }
 
-  fun startConnectionToServer(host: String, port: String) {
-    networkManager.doConnect(host, port.toInt())
+  fun startConnectionToServer(ip: String, port: String) {
+    networkManager.doConnect(ip, port.toInt())
 
     startListeningToPackets()
   }

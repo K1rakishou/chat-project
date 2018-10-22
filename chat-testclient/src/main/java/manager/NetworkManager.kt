@@ -86,7 +86,7 @@ class NetworkManager : CoroutineScope {
         delay(delayTime)
         println("Reconnecting")
 
-        cachedHostInfo?.let { connect(it.host, it.port) }
+        cachedHostInfo?.let { connect(it.ip, it.port) }
       }
     }
   }
@@ -99,8 +99,8 @@ class NetworkManager : CoroutineScope {
     shouldReconnectToServer.set(value)
   }
 
-  fun doConnect(host: String, port: Int) {
-    connect(host, port)
+  fun doConnect(ip: String, port: Int) {
+    connect(ip, port)
   }
 
   fun doDisconnect() {
@@ -109,7 +109,7 @@ class NetworkManager : CoroutineScope {
     disconnect()
   }
 
-  private fun connect(host: String, port: Int) {
+  private fun connect(ip: String, port: Int) {
     connectionStateObservable.onNext(ConnectionState.Uninitialized)
 
     connectionJob = launch {
@@ -136,7 +136,7 @@ class NetworkManager : CoroutineScope {
 
           val newSocket = aSocket(ActorSelectorManager(Dispatchers.IO))
             .tcp()
-            .connect(InetSocketAddress(host, port))
+            .connect(InetSocketAddress(ip, port))
 
           //check whether the user has canceled the connection
           if (connectionState is ConnectionState.Connecting) {
@@ -145,7 +145,7 @@ class NetworkManager : CoroutineScope {
             connectionState = ConnectionState.Connected
             initActors()
 
-            cachedHostInfo = HostInfo(host, port)
+            cachedHostInfo = HostInfo(ip, port)
             reconnectionAttempt.set(0)
 
             socket = newSocket
@@ -353,7 +353,7 @@ class NetworkManager : CoroutineScope {
   }
 
   data class HostInfo(
-    val host: String,
+    val ip: String,
     val port: Int
   )
 }

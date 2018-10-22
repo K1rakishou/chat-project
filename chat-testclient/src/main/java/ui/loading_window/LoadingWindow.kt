@@ -26,7 +26,7 @@ class LoadingWindow : BaseView("Chat") {
       return
     }
 
-    loadingWindowController.startConnectionToServer(hostInfoViewModel.host, hostInfoViewModel.port)
+    loadingWindowController.startConnectionToServer(hostInfoViewModel.ip, hostInfoViewModel.port)
   }
 
   override fun onUndock() {

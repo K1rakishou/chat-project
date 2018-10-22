@@ -3,16 +3,18 @@ package ui.connection_window
 import events.ConnectionWindowEvents
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
+import javafx.scene.layout.Priority
 import model.viewmodel.HostInfoViewModel
 import tornadofx.*
 import ui.base.BaseView
 import ui.loading_window.LoadingWindow
+import utils.UiValidators
 
 class ConnectionWindow : BaseView("Connection parameters") {
 
   private val model = object : ViewModel() {
-    val host = bind { SimpleStringProperty() }
-    val port = bind { SimpleStringProperty() }
+    val ip = bind { SimpleStringProperty("127.0.0.1") }
+    val port = bind { SimpleStringProperty("2323") }
   }
 
   init {
@@ -22,38 +24,43 @@ class ConnectionWindow : BaseView("Connection parameters") {
   }
 
   override val root = form {
-    prefHeight = 200.0
+    prefHeight = 150.0
     prefWidth = 350.0
     paddingAll = 10.0
 
     fieldset {
-      field("Host address") {
-        textfield(model.host) {
-          text = "127.0.0.1"
-          required()
+      field("IP Address") {
+        textfield(model.ip) {
+          validator { host ->
+            UiValidators.validateIP(this, host)
+          }
+
           whenDocked { requestFocus() }
         }
       }
       field("Port") {
         textfield(model.port) {
-          text = "2323"
-          required()
+          validator { port ->
+            UiValidators.validatePortNumber(this, port)
+          }
         }
       }
     }
+    label {
+      prefHeight = 8.0
+    }
+    hbox {
+      hboxConstraints { hgrow = Priority.ALWAYS }
+      alignment = Pos.BASELINE_RIGHT
 
-    paddingBottom = 32.0
+      button("Connect") {
+        isDefaultButton = true
+        enableWhen { model.valid }
 
-    button("Connect") {
-      alignment = Pos.CENTER
-      isDefaultButton = true
-
-      enableWhen { model.valid }
-
-      action {
-        model.commit {
-          //TODO: validate
-          showConnectionToServerWindow()
+        action {
+          model.commit {
+            showConnectionToServerWindow()
+          }
         }
       }
     }
@@ -61,7 +68,7 @@ class ConnectionWindow : BaseView("Connection parameters") {
 
   private fun showConnectionToServerWindow() {
     val newScope = Scope()
-    setInScope(HostInfoViewModel(model.host.value, model.port.value), newScope)
+    setInScope(HostInfoViewModel(model.ip.value, model.port.value), newScope)
 
     find<LoadingWindow>(newScope).openModal(resizable = false)
   }

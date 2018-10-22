@@ -89,4 +89,50 @@ object UiValidators {
     return null
   }
 
+  @ExperimentalUnsignedTypes
+  fun validateIP(context: ValidationContext, ip: String?): ValidationMessage? {
+    if (ip.isNullOrBlank()) {
+      return context.error("IP address cannot be null or empty")
+    }
+
+    val dotsCount = ip.count { it == '.' }
+    if (dotsCount != 3) {
+      return context.error("IP address must be in a format \"XXX.XXX.XXX.XXX\"")
+    }
+
+    val octets = ip.split('.')
+    if (octets.size != 4) {
+      return context.error("IP address must be in a format \"XXX.XXX.XXX.XXX\"")
+    }
+
+    for (octet in octets) {
+      try {
+        octet.toUByte()
+      } catch (error: NumberFormatException) {
+        return context.error("Bad octet. Should be in range 0..${UByte.MAX_VALUE}")
+      }
+    }
+
+    return null
+  }
+
+  @ExperimentalUnsignedTypes
+  fun validatePortNumber(context: ValidationContext, port: String?): ValidationMessage? {
+    if (port.isNullOrBlank()) {
+      return context.error("Port Number cannot be null or blank")
+    }
+
+    val portNumber = try {
+      port.toInt()
+    } catch (error: NumberFormatException) {
+      return context.error("Port Number must be numeric")
+    }
+
+    if (portNumber < 0 || portNumber > UShort.MAX_VALUE.toInt()) {
+      return context.error("Port number should be within range 0..${UShort.MAX_VALUE.toInt()}")
+    }
+
+    return null
+  }
+
 }
