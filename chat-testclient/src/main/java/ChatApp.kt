@@ -1,5 +1,6 @@
 import javafx.stage.Stage
 import manager.NetworkManager
+import store.settings.SettingsStore
 import tornadofx.App
 import tornadofx.NoPrimaryViewSpecified
 import tornadofx.find
@@ -16,5 +17,6 @@ class ChatApp : App(NoPrimaryViewSpecified::class, Styles::class) {
   companion object {
     //singleton dependencies
     val networkManager = NetworkManager()
+    val settingsStore = SettingsStore()
   }
 }

@@ -1,5 +1,6 @@
 package ui.chat_main_window
 
+import ChatApp.Companion.settingsStore
 import controller.ChatMainWindowController
 import events.ChatMainWindowEvents
 import events.ChatRoomListFragmentEvents
@@ -7,7 +8,7 @@ import javafx.geometry.Orientation
 import javafx.scene.control.SplitPane
 import javafx.scene.layout.Border
 import javafx.scene.layout.Priority
-import store.SettingsStore
+import store.settings.ChatMainWindowSettings
 import tornadofx.*
 import ui.base.BaseView
 import ui.chat_main_window.create_chat_room_dialog.CreateChatRoomDialogFragment
@@ -15,12 +16,9 @@ import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
 
 class ChatMainWindow : BaseView("Chat") {
   private val controller: ChatMainWindowController by inject()
-  private val settingsStore: SettingsStore by inject()
-  private val chatMainWindowSettings: SettingsStore.ChatMainWindowSettings by lazy { settingsStore.chatMainWindowSettings }
+  private val chatMainWindowSettings: ChatMainWindowSettings by lazy { settingsStore.chatMainWindowSettings }
 
   init {
-    settingsStore.init()
-
     subscribe<ChatMainWindowEvents.JoinedChatRoomEvent> { event ->
       controller.loadRoomInfo(event.roomName, event.userName, event.users, event.messageHistory)
     }.autoUnsubscribe()
@@ -39,23 +37,23 @@ class ChatMainWindow : BaseView("Chat") {
   override fun onDock() {
     controller.createController(this)
 
-    currentWindow?.x = chatMainWindowSettings.chatMainWindowXposition
-    currentWindow?.y = chatMainWindowSettings.chatMainWindowYposition
+    currentWindow?.x = chatMainWindowSettings.windowXposition
+    currentWindow?.y = chatMainWindowSettings.windowYposition
   }
 
   override fun onUndock() {
-    chatMainWindowSettings.setChatMainWindowXposition(currentWindow?.x)
-    chatMainWindowSettings.setChatMainWindowYposition(currentWindow?.y)
-    chatMainWindowSettings.setChatMainWindowHeight(root.height)
-    chatMainWindowSettings.setChatMainWindowWidth(root.width)
+    chatMainWindowSettings.updateWindowXposition(currentWindow?.x)
+    chatMainWindowSettings.updateWindowYposition(currentWindow?.y)
+    chatMainWindowSettings.updateWindowHeight(root.height)
+    chatMainWindowSettings.updateWindowWidth(root.width)
 
-    settingsStore.close()
+    settingsStore.save()
     controller.destroyController()
   }
 
   override val root = borderpane {
-    prefWidth = chatMainWindowSettings.chatMainWindowWidth
-    prefHeight = chatMainWindowSettings.chatMainWindowHeight
+    prefWidth = chatMainWindowSettings.windowWidth
+    prefHeight = chatMainWindowSettings.windowHeight
 
     top {
       menubar {

@@ -1,26 +1,46 @@
 package ui.connection_window
 
+import ChatApp.Companion.settingsStore
 import events.ConnectionWindowEvents
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.layout.Priority
 import model.viewmodel.HostInfoViewModel
+import store.settings.ConnectionWindowSettings
 import tornadofx.*
 import ui.base.BaseView
 import ui.loading_window.LoadingWindow
 import utils.UiValidators
 
 class ConnectionWindow : BaseView("Connection parameters") {
+  private val connectionWindowSettings: ConnectionWindowSettings by lazy { settingsStore.connectionWindowSettings }
 
   private val model = object : ViewModel() {
-    val ip = bind { SimpleStringProperty("127.0.0.1") }
-    val port = bind { SimpleStringProperty("2323") }
+    val ip = bind { SimpleStringProperty(ConnectionWindowSettings.ipAddressDefault) }
+    val port = bind { SimpleStringProperty(ConnectionWindowSettings.portDefault) }
   }
 
   init {
+    settingsStore.read()
+
+    model.ip.value = connectionWindowSettings.ipAddress
+    model.port.value = connectionWindowSettings.port
+
     subscribe<ConnectionWindowEvents.CloseConnectionWindowEvent> {
       close()
     }.autoUnsubscribe()
+  }
+
+  override fun onDock() {
+    currentWindow?.x = connectionWindowSettings.windowXposition
+    currentWindow?.y = connectionWindowSettings.windowYposition
+  }
+
+  override fun onUndock() {
+    connectionWindowSettings.updateWindowXposition(currentWindow?.x)
+    connectionWindowSettings.updateWindowYposition(currentWindow?.y)
+
+    settingsStore.save()
   }
 
   override val root = form {
@@ -59,6 +79,9 @@ class ConnectionWindow : BaseView("Connection parameters") {
 
         action {
           model.commit {
+            connectionWindowSettings.updateIpAddress(model.ip.value)
+            connectionWindowSettings.updatePort(model.port.value)
+
             showConnectionToServerWindow()
           }
         }
