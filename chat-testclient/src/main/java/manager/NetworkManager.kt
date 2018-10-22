@@ -58,8 +58,7 @@ class NetworkManager : CoroutineScope {
   val isConnected: Boolean
     get() = (connectionStateObservable.value == ConnectionState.Connected) || (connectionStateObservable.value == ConnectionState.Reconnected)
 
-  private val responsesQueue = PublishSubject.create<ResponseInfo>()
-    .toSerialized()
+  private val responsesQueue = PublishSubject.create<ResponseInfo>().toSerialized()
   val responsesFlowable: Flowable<ResponseInfo>
     get() = responsesQueue.toFlowable(BackpressureStrategy.BUFFER)
 
@@ -92,6 +91,10 @@ class NetworkManager : CoroutineScope {
     }
   }
 
+  //TODO:
+  //This may break reconnection in ChatMainWindow when user navigates to a window that sets this flag to false.
+  //We probably only need to set this flag to false in the very beginning in the connection to the server phase.
+  //After that we need reconnection to be set to true.
   fun shouldReconnectOnDisconnect(value: Boolean) {
     shouldReconnectToServer.set(value)
   }

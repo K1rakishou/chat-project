@@ -62,7 +62,6 @@ class CreateRoomPacket(
             val chatRoomImageUrl = byteSink.readString(Constants.maxImageUrlLen)
               ?: throw PacketDeserializationException("Could not read chatRoomImageUrl")
             val userName = byteSink.readString(Constants.maxUserNameLen)
-              ?: throw PacketDeserializationException("Could not read userName")
 
             return CreateRoomPacket(isPublic, chatRoomName, chatRoomPasswordHash, chatRoomImageUrl, userName)
           }

@@ -43,13 +43,13 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
     }
 
     val userNameToSend = when {
-      userName != null -> userName
+      userName != null && userName.isNotEmpty() -> userName
       store.hasUserNameByRoomName(chatRoomName) -> store.getUserName(chatRoomName)
       else -> null
     }
 
     userNameToSend?.let { name ->
-      val hashedPassword = if (roomPassword != null) {
+      val hashedPassword = if (roomPassword != null && roomPassword.isNotEmpty()) {
         SecurityUtils.Hashing.sha3(roomPassword)
       } else {
         null

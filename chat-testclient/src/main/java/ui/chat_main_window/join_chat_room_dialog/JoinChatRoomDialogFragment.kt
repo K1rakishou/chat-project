@@ -40,10 +40,15 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
     paddingAll = 10.0
 
     fieldset {
-      field("Username") {
+      field("User Name") {
         textfield(model.userName) {
           validator { userName ->
-            UiValidators.validateUserName(this, userName)
+            if (userName?.isEmpty() == true) {
+              model.userName.value = null
+              UiValidators.validateUserName(this, model.userName.value)
+            } else {
+              UiValidators.validateUserName(this, userName)
+            }
           }
 
           whenDocked { requestFocus() }
@@ -53,7 +58,12 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
       field("Room Password") {
         textfield(model.roomPassword) {
           validator { roomPassword ->
-            UiValidators.validateRoomPassword(this, roomPassword)
+            if (roomPassword?.isEmpty() == true) {
+              model.roomPassword.value = null
+              UiValidators.validateRoomPassword(this, model.roomPassword.value)
+            } else {
+              UiValidators.validateRoomPassword(this, roomPassword)
+            }
           }
 
           disableWhen { disableControlsFlag }

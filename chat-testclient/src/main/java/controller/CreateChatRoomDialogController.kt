@@ -40,14 +40,20 @@ class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragme
       return
     }
 
-    val passwordHash = if (roomPassword != null) {
+    val passwordHash = if (roomPassword != null && roomPassword.isNotEmpty()) {
       SecurityUtils.Hashing.sha3(roomPassword)
     } else {
       null
     }
 
-    roomToBeCreated = ChatRoomToBeCreatedTempInfo(roomName, passwordHash, roomImageUrl, userName, isPublic)
-    networkManager.sendPacket(CreateRoomPacket(isPublic, roomName, passwordHash, roomImageUrl, userName))
+    val name = if (userName.isNullOrEmpty()) {
+      null
+    } else {
+      userName
+    }
+
+    roomToBeCreated = ChatRoomToBeCreatedTempInfo(roomName, passwordHash, roomImageUrl, name, isPublic)
+    networkManager.sendPacket(CreateRoomPacket(isPublic, roomName, passwordHash, roomImageUrl, name))
   }
 
   private fun startListeningToPackets() {
