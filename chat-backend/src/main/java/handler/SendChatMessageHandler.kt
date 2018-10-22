@@ -66,7 +66,7 @@ class SendChatMessageHandler(
 
     val user = chatRoomManager.getUser(clientAddress, roomName, userName)
     if (user == null) {
-      println("User ($userName) does not exist in the room $roomName")
+      println("User ($userName) does not exist in the room ($roomName)")
       connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.fail(Status.UserDoesNotExistInTheRoom))
       return
     }
@@ -80,6 +80,6 @@ class SendChatMessageHandler(
     }
 
     connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.success(roomName, serverMessageId, clientMessageId))
-    println("Message ($message) has been successfully sent in room ${roomName} by user ${userName}")
+    println("Message ($message) has been successfully sent in room (${roomName}) by user (${userName})")
   }
 }
