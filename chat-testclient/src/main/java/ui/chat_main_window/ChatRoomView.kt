@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class ChatRoomView : BaseView() {
   private val delayBeforeUpdatingScrollBarPosition = 50.0
+  private val scrollbarApproxSize = 16.0
   private val childIndex = AtomicInteger(0)
   private val chatMainWindowController: ChatMainWindowController by inject()
 
@@ -37,7 +38,7 @@ class ChatRoomView : BaseView() {
       textflow {
         vboxConstraints { vGrow = Priority.ALWAYS }
         paddingLeft = 10.0
-        maxWidthProperty().bind(this@vbox.widthProperty() - 16.0)
+        maxWidthProperty().bind(this@vbox.widthProperty() - scrollbarApproxSize)
 
         bindChildren(chatMainWindowController.currentChatRoomMessageList) { baseChatMessage ->
           return@bindChildren when (baseChatMessage.getMessageType()) {
