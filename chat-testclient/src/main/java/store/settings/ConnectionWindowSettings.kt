@@ -33,10 +33,10 @@ class ConnectionWindowSettings : AppSettings() {
   }
 
   override fun read(settingLines: List<String>, settingIndex: AtomicInteger) {
-    val windowXpositionValue = getDoubleValue(settingWindowXposition, settingLines[settingIndex.getAndIncrement()])
-    val windowYpositionValue = getDoubleValue(settingWindowYposition, settingLines[settingIndex.getAndIncrement()])
-    val ipAddressValue = getStringValue(settingIpAddress, settingLines[settingIndex.getAndIncrement()])
-    val portValue = getStringValue(settingPort, settingLines[settingIndex.getAndIncrement()])
+    val windowXpositionValue = readValue(settingWindowXposition, settingLines[settingIndex.getAndIncrement()]) { it.toDouble() }
+    val windowYpositionValue = readValue(settingWindowYposition, settingLines[settingIndex.getAndIncrement()]) { it.toDouble() }
+    val ipAddressValue = readValue(settingIpAddress, settingLines[settingIndex.getAndIncrement()]) { it }
+    val portValue = readValue(settingPort, settingLines[settingIndex.getAndIncrement()]) { it }
 
     windowXposition = windowXpositionValue
     windowYposition = windowYpositionValue

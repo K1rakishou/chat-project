@@ -33,10 +33,10 @@ class ChatMainWindowSettings : AppSettings() {
   }
 
   override fun read(settingLines: List<String>, settingIndex: AtomicInteger) {
-    val windowXpositionValue = getDoubleValue(settingWindowXposition, settingLines[settingIndex.getAndIncrement()])
-    val windowYpositionValue = getDoubleValue(settingWindowYposition, settingLines[settingIndex.getAndIncrement()])
-    val windowWidthValue = getDoubleValue(settingWindowWidth, settingLines[settingIndex.getAndIncrement()])
-    val windowHeightValue = getDoubleValue(settingWindowHeight, settingLines[settingIndex.getAndIncrement()])
+    val windowXpositionValue = readValue(settingWindowXposition, settingLines[settingIndex.getAndIncrement()]) { it.toDouble() }
+    val windowYpositionValue = readValue(settingWindowYposition, settingLines[settingIndex.getAndIncrement()])  { it.toDouble() }
+    val windowWidthValue = readValue(settingWindowWidth, settingLines[settingIndex.getAndIncrement()])  { it.toDouble() }
+    val windowHeightValue = readValue(settingWindowHeight, settingLines[settingIndex.getAndIncrement()])  { it.toDouble() }
 
     windowXposition = windowXpositionValue
     windowYposition = windowYpositionValue

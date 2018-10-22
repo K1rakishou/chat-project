@@ -8,30 +8,12 @@ abstract class AppSettings {
   abstract fun read(settingLines: List<String>, settingIndex: AtomicInteger)
   abstract fun store(sb: StringBuilder)
 
-  protected fun getDoubleValue(settingName: String, setting: String): Double {
+  protected fun <T> readValue(settingName: String, setting: String, converter: (String) -> T): T {
     val (name, value) = setting.split("=")
     if (name != settingName) {
       throw RuntimeException("Unknown setting (${name}) should be (${settingName})")
     }
 
-    return value.toDouble()
-  }
-
-  protected fun getStringValue(settingName: String, setting: String): String {
-    val (name, value) = setting.split("=")
-    if (name != settingName) {
-      throw RuntimeException("Unknown setting (${name}) should be (${settingName})")
-    }
-
-    return value
-  }
-
-  protected fun getIntValue(settingName: String, setting: String): Int {
-    val (name, value) = setting.split("=")
-    if (name != settingName) {
-      throw RuntimeException("Unknown setting (${name}) should be (${settingName})")
-    }
-
-    return value.toInt()
+    return converter(value)
   }
 }

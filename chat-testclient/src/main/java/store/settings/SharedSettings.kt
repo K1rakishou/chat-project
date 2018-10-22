@@ -12,7 +12,7 @@ class SharedSettings : AppSettings() {
   }
 
   override fun read(settingLines: List<String>, settingIndex: AtomicInteger) {
-    val userNameValue = getStringValue(settingUserName, settingLines[settingIndex.getAndIncrement()])
+    val userNameValue = readValue(settingUserName, settingLines[settingIndex.getAndIncrement()]) { it }
 
     userName = userNameValue
   }
