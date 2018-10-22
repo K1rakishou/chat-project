@@ -1,5 +1,6 @@
 package ui.chat_main_window.join_chat_room_dialog
 
+import ChatApp.Companion.settingsStore
 import controller.JoinChatRoomDialogController
 import core.Status
 import core.model.drainable.PublicUserInChat
@@ -9,18 +10,19 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.layout.Priority
+import store.settings.SharedSettings
 import tornadofx.*
 import ui.base.BaseFragment
 import utils.UiValidators
 
 class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   private val disableControlsFlag = SimpleBooleanProperty(false)
-
   private val roomNameItem: RoomNameItem by inject()
   private val controller: JoinChatRoomDialogController by inject()
+  private val sharedSettings: SharedSettings by lazy { settingsStore.sharedSettings }
 
   private val model = object : ViewModel() {
-    val userName = bind { SimpleStringProperty(null) }
+    val userName = bind { SimpleStringProperty(sharedSettings.userName) }
     val roomPassword = bind { SimpleStringProperty(null) }
   }
 

@@ -56,5 +56,6 @@ class ConnectionWindowSettings : AppSettings() {
     const val windowYpositionDefault = 100.0
     const val ipAddressDefault = "127.0.0.1"
     const val portDefault = "2323"
+
   }
 }

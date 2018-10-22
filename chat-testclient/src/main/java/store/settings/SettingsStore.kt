@@ -11,6 +11,7 @@ class SettingsStore : Controller() {
   private var readSettingsFile = false
   val chatMainWindowSettings = ChatMainWindowSettings()
   val connectionWindowSettings = ConnectionWindowSettings()
+  val sharedSettings = SharedSettings()
 
   fun read() {
     if (readSettingsFile) {
@@ -48,6 +49,10 @@ class SettingsStore : Controller() {
 
     try {
       settingIndex.incrementAndGet() //skip "WARNING"
+
+      settingIndex.incrementAndGet() //skip "Shared Settings"
+      sharedSettings.read(settingLines, settingIndex)
+
       settingIndex.incrementAndGet() //skip "ChatMainWindow Settings"
       chatMainWindowSettings.read(settingLines, settingIndex)
 
@@ -62,6 +67,10 @@ class SettingsStore : Controller() {
     try {
       val string = buildString(512) {
         append("//WARNING!!! CHANGE THIS FILE ONLY IF YOU UNDERSTAND WHAT YOU ARE DOING. IF SOMETHING GOES WRONG - JUST DELETE THIS FILE\n")
+
+        append("//Shared Settings\n")
+        sharedSettings.store(this)
+
         append("//ChatMainWindow Settings\n")
         chatMainWindowSettings.store(this)
 

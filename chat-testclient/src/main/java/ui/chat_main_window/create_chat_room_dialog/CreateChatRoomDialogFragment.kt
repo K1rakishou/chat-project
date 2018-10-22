@@ -1,5 +1,6 @@
 package ui.chat_main_window.create_chat_room_dialog
 
+import ChatApp.Companion.settingsStore
 import controller.CreateChatRoomDialogController
 import core.Status
 import events.ChatMainWindowEvents
@@ -7,6 +8,7 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.layout.Priority
+import store.settings.SharedSettings
 import tornadofx.*
 import ui.base.BaseFragment
 import utils.UiValidators
@@ -14,12 +16,13 @@ import utils.UiValidators
 class CreateChatRoomDialogFragment : BaseFragment("Create Chat Room") {
   private val controller: CreateChatRoomDialogController by inject()
   private val disableControlsFlag = SimpleBooleanProperty(false)
+  private val sharedSettings: SharedSettings by lazy { settingsStore.sharedSettings }
 
   private val model = object : ViewModel() {
     val roomName = bind { SimpleStringProperty(null) }
     val roomPassword = bind { SimpleStringProperty(null) }
     val roomImageUrl = bind { SimpleStringProperty(null) }
-    val userName = bind { SimpleStringProperty(null) }
+    val userName = bind { SimpleStringProperty(sharedSettings.userName) }
     val isPublic = bind { SimpleBooleanProperty(true) }
   }
 
