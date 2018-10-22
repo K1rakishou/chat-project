@@ -17,11 +17,12 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import kotlinx.coroutines.delay
 import manager.NetworkManager
-import model.PublicChatRoomItem
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.ForeignTextChatMessageItem
 import model.chat_message.MyTextChatMessageItem
 import model.chat_message.SystemChatMessageItemMy
+import model.chat_room_list.NoRoomsNotificationItem
+import model.chat_room_list.PublicChatRoomItem
 import store.Store
 import ui.chat_main_window.ChatMainWindow
 import ui.chat_main_window.ChatRoomView
@@ -36,7 +37,6 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   lateinit var scrollToBottomFlag: SimpleIntegerProperty
 
-  val publicChatRoomList = FXCollections.observableArrayList<PublicChatRoomItem>()
   val lastChatMessageMap = FXCollections.observableHashMap<String, SimpleStringProperty>()
   val currentChatRoomMessageList = FXCollections.observableArrayList<BaseChatMessageItem>()
 
@@ -228,14 +228,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       return
     }
 
-    doOnUI {
-      store.setPublicChatRoomList(response.publicChatRoomList)
-      publicChatRoomList.addAll(store.getPublicChatRoomList())
-
-      response.publicChatRoomList.forEach { chatRoom ->
-        lastChatMessageMap[chatRoom.chatRoomName] = SimpleStringProperty("")
-      }
-    }
+    updatePublicChatRoomList(response)
   }
 
   private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem): Int {
@@ -287,6 +280,24 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     }
   }
 
+  private fun updatePublicChatRoomList(response: GetPageOfPublicRoomsResponsePayload) {
+    doOnUI {
+      if (response.publicChatRoomList.isEmpty()) {
+        store.addChatRoomListItem(NoRoomsNotificationItem())
+      } else {
+        val mappedRooms = response.publicChatRoomList
+          .map { PublicChatRoomItem.create(it.chatRoomName, it.chatRoomImageUrl) }
+
+        store.removeNoRoomsNotification()
+        store.addManyChatRoomListItem(mappedRooms)
+
+        response.publicChatRoomList.forEach { chatRoom ->
+          lastChatMessageMap[chatRoom.chatRoomName] = SimpleStringProperty("")
+        }
+      }
+    }
+  }
+
   fun reloadRoomMessageHistory(roomName: String) {
     doOnUI {
       currentChatRoomMessageList.clear()
@@ -305,12 +316,31 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     }
   }
 
-  fun loadRoomInfo(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
+  fun onChatRoomCreated(roomName: String, userName: String?, roomImageUrl: String) {
+    doOnUI {
+      lastChatMessageMap[roomName] = SimpleStringProperty()
+
+      store.removeNoRoomsNotification()
+      store.addChatRoomListItem(PublicChatRoomItem.create(roomName, roomImageUrl))
+
+      //if userName is not null that means that we need to auto join this user into the created room
+      if (userName != null) {
+        onJoinedToChatRoom(roomName, userName, emptyList(), emptyList())
+
+        view.selectRoomWithIndex(0)
+        scrollChatToBottom()
+      }
+    }
+  }
+
+  fun onJoinedToChatRoom(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
     doOnUI {
       val chatRoomViewEmpty = find<ChatRoomViewEmpty>()
       if (chatRoomViewEmpty.isDocked) {
         chatRoomViewEmpty.replaceWith<ChatRoomView>()
       }
+
+      selectedRoomName = roomName
 
       //Wait some time before ChatRoomView shows up
       delay(TimeUnit.MILLISECONDS.toMillis(delayBeforeAddFirstChatRoomMessage))
@@ -322,47 +352,6 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
       reloadRoomMessageHistory(roomName)
       addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
-    }
-  }
-
-  fun onChatRoomCreated(roomName: String, userName: String?, roomImageUrl: String) {
-    doOnUI {
-      store.addPublicChatRoom(roomName, roomImageUrl)
-
-      //if userName is not null that means that we need to auto join this user into the created room
-      if (userName != null) {
-        val chatRoomViewEmpty = find<ChatRoomViewEmpty>()
-        if (chatRoomViewEmpty.isDocked) {
-          chatRoomViewEmpty.replaceWith<ChatRoomView>()
-        }
-
-        //Wait some time before ChatRoomView shows up
-        delay(TimeUnit.MILLISECONDS.toMillis(delayBeforeAddFirstChatRoomMessage))
-
-        selectedRoomName = roomName
-
-        store.addJoinedRoom(roomName)
-        store.setChatRoomUserList(roomName, FXCollections.observableArrayList())
-        store.addUserToRoom(roomName, userName)
-
-        view.selectRoomWithIndex(0)
-      }
-
-      publicChatRoomList.add(0, PublicChatRoomItem(
-        roomName,
-        roomImageUrl,
-        FXCollections.observableArrayList(),
-        FXCollections.observableArrayList())
-      )
-
-      lastChatMessageMap[roomName] = SimpleStringProperty()
-
-      if (userName != null) {
-        reloadRoomMessageHistory(roomName)
-        addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
-
-        scrollChatToBottom()
-      }
     }
   }
 

@@ -11,15 +11,18 @@ import javafx.scene.control.*
 import javafx.scene.input.MouseButton
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
-import model.PublicChatRoomItem
+import model.chat_room_list.BaseChatRoomListItem
+import model.chat_room_list.NoRoomsNotificationItem
+import model.chat_room_list.PublicChatRoomItem
 import store.Store
 import tornadofx.*
 import ui.base.BaseFragment
+import java.lang.RuntimeException
 
 class ChatRoomListFragment : BaseFragment() {
   private val store: Store by inject()
   private val controller: ChatMainWindowController by inject()
-  private var chatRoomListView: ListView<PublicChatRoomItem>? = null
+  private var chatRoomListView: ListView<BaseChatRoomListItem>? = null
 
   init {
     subscribe<ChatRoomListFragmentEvents.SelectListViewItem> { event ->
@@ -27,16 +30,16 @@ class ChatRoomListFragment : BaseFragment() {
     }.autoUnsubscribe()
   }
 
-  override val root = listview(controller.publicChatRoomList) {
+  override val root = listview(store.getPublicChatRoomList()) {
     vboxConstraints { vGrow = Priority.ALWAYS }
 
     setCellFactory { cellFactory(widthProperty()) }
     chatRoomListView = this
   }
 
-  private fun cellFactory(widthProperty: ReadOnlyDoubleProperty): ListCell<PublicChatRoomItem> {
-    val cell = object : ListCell<PublicChatRoomItem>() {
-      override fun updateItem(item: PublicChatRoomItem?, empty: Boolean) {
+  private fun cellFactory(widthProperty: ReadOnlyDoubleProperty): ListCell<BaseChatRoomListItem> {
+    val cell = object : ListCell<BaseChatRoomListItem>() {
+      override fun updateItem(item: BaseChatRoomListItem?, empty: Boolean) {
         super.updateItem(item, empty)
 
         if (item == null) {
@@ -46,7 +49,11 @@ class ChatRoomListFragment : BaseFragment() {
 
         //TODO: Optimize.
         //This method is getting called every time a ListView item is clicked.
-        graphic = createCellItem(widthProperty, item)
+        graphic = when (item) {
+          is PublicChatRoomItem -> createCellPublicChatRoomItem(widthProperty, item)
+          is NoRoomsNotificationItem -> createCellNoRoomsNotificationItem(widthProperty, item)
+          else -> throw RuntimeException("Not implemented for ${item::class}")
+        }
       }
     }
 
@@ -64,7 +71,7 @@ class ChatRoomListFragment : BaseFragment() {
       if (event.button == MouseButton.PRIMARY && event.clickCount == 1) {
         val (item, shouldReloadRoomMessageHistory) = if (target.id == componentId) {
           //This happens normally when not selected ListView item gets selected by user
-          (target as? ListCell<PublicChatRoomItem>)?.item to true
+          (target as? ListCell<BaseChatRoomListItem>)?.item to true
         } else {
           //HACKS HACKS HACKS
           //I dunno how to do it otherwise
@@ -72,10 +79,10 @@ class ChatRoomListFragment : BaseFragment() {
           //This happens when user selects already selected ListView item
           //We should not reload roomMessageHistory in this case, but at the same time we should show JoinChatRoomDialog
           //so we return false
-          findListCellInTree<PublicChatRoomItem>(event.target as Node)?.item to false
+          findListCellInTree<BaseChatRoomListItem>(event.target as Node)?.item to false
         }
 
-        if (item != null) {
+        if (item != null && item is PublicChatRoomItem) {
           controller.updateSelectedRoom(item.roomName)
 
           if (store.isUserInRoom(item.roomName)) {
@@ -92,7 +99,19 @@ class ChatRoomListFragment : BaseFragment() {
     return cell
   }
 
-  private fun createCellItem(widthProperty: ReadOnlyDoubleProperty, item: PublicChatRoomItem): Node {
+  private fun createCellNoRoomsNotificationItem(widthProperty: ReadOnlyDoubleProperty, item: NoRoomsNotificationItem): Node {
+    return HBox().apply {
+      prefHeight = 64.0
+      maxHeight = 64.0
+      paddingAll = 2.0
+
+      maxWidthProperty().bind(widthProperty.subtract(16.0))
+
+      label("No public chat rooms created yet") { minWidth = 8.0 }
+    }
+  }
+
+  private fun createCellPublicChatRoomItem(widthProperty: ReadOnlyDoubleProperty, item: PublicChatRoomItem): Node {
     return HBox().apply {
       prefHeight = 64.0
       maxHeight = 64.0

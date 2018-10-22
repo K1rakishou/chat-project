@@ -1,19 +1,18 @@
-package model
+package model.chat_room_list
 
 import javafx.beans.property.SimpleListProperty
 import javafx.beans.property.SimpleStringProperty
+import javafx.collections.FXCollections
 import javafx.collections.ObservableList
+import model.PublicUserInChatItem
 import model.chat_message.BaseChatMessageItem
-import java.util.*
 
 class PublicChatRoomItem(
   roomName: String,
   imageUrl: String,
   userList: ObservableList<PublicUserInChatItem>,
   roomMessages: ObservableList<BaseChatMessageItem>
-) {
-  val id = UUID.randomUUID()
-
+) : BaseChatRoomListItem(ChatRoomListItemType.ChatRoomItemType) {
   private val roomNameProperty by lazy { SimpleStringProperty(roomName) }
   fun roomNameProperty() = roomNameProperty
   var roomName: String
@@ -56,5 +55,11 @@ class PublicChatRoomItem(
 
   override fun hashCode(): Int {
     return id.hashCode()
+  }
+
+  companion object {
+    fun create(roomName: String, roomImageUrl: String): PublicChatRoomItem {
+      return PublicChatRoomItem(roomName, roomImageUrl, FXCollections.observableArrayList(), FXCollections.observableArrayList())
+    }
   }
 }

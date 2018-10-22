@@ -20,7 +20,7 @@ class ChatMainWindow : BaseView("Chat") {
 
   init {
     subscribe<ChatMainWindowEvents.JoinedChatRoomEvent> { event ->
-      controller.loadRoomInfo(event.roomName, event.userName, event.users, event.messageHistory)
+      controller.onJoinedToChatRoom(event.roomName, event.userName, event.users, event.messageHistory)
     }.autoUnsubscribe()
 
     subscribe<ChatMainWindowEvents.ShowJoinChatRoomDialogEvent> { event ->

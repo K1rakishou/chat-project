@@ -9,15 +9,18 @@ import core.model.drainable.chat_message.TextChatMessage
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import manager.IdGeneratorManager
-import model.PublicChatRoomItem
+import model.chat_room_list.PublicChatRoomItem
 import model.PublicUserInChatItem
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.ForeignTextChatMessageItem
+import model.chat_room_list.BaseChatRoomListItem
+import model.chat_room_list.NoRoomsNotificationItem
 import tornadofx.Controller
+import java.lang.RuntimeException
 
 class Store : Controller() {
   private val userNameByRoomName = hashMapOf<String, String>()
-  private val publicChatRoomList: ObservableList<PublicChatRoomItem> = FXCollections.observableArrayList()
+  private val publicChatRoomList: ObservableList<BaseChatRoomListItem> = FXCollections.observableArrayList()
   private val joinedRooms: ObservableList<String> = FXCollections.observableArrayList()
 
   fun getUserName(roomName: String?): String {
@@ -45,30 +48,68 @@ class Store : Controller() {
     return joinedRooms.any { it == roomName }
   }
 
-  fun addPublicChatRoom(roomName: String, roomImageUrl: String) {
-    if (getPublicChatRoom(roomName) != null) {
-      throw IllegalStateException("Room with name ${roomName} already exists!")
-    }
+  fun addManyChatRoomListItem(chatRoomItemList: List<BaseChatRoomListItem>) {
+    for (item in chatRoomItemList) {
+      val index = if (publicChatRoomList.isEmpty()) {
+        0
+      } else {
+        publicChatRoomList.lastIndex
+      }
 
-    publicChatRoomList.add(0, PublicChatRoomItem(roomName, roomImageUrl, FXCollections.observableArrayList(), FXCollections.observableArrayList()))
+      addChatRoomListItem(item, index)
+    }
   }
 
-  fun getPublicChatRoomList(): ObservableList<PublicChatRoomItem> {
+  fun addChatRoomListItem(chatRoomItem: BaseChatRoomListItem, index: Int = 0) {
+    when (chatRoomItem) {
+      is NoRoomsNotificationItem -> {
+        if (publicChatRoomList.isNotEmpty()) {
+          throw RuntimeException("Must be empty!")
+        }
+
+        publicChatRoomList.add(0, chatRoomItem)
+      }
+      is PublicChatRoomItem -> {
+        if (getPublicChatRoom(chatRoomItem.roomName) != null) {
+          throw IllegalStateException("Room with name ${chatRoomItem.roomName} already exists!")
+        }
+
+        publicChatRoomList.add(index, chatRoomItem)
+      }
+      else -> throw RuntimeException("Not implemented for ${chatRoomItem::class}")
+    }
+  }
+
+  fun removeNoRoomsNotification() {
+    if (publicChatRoomList.isEmpty()) {
+      return
+    }
+
+    if (publicChatRoomList[0].type == BaseChatRoomListItem.ChatRoomListItemType.NoRoomsNotificationType) {
+      removeChatRoomListItem(0)
+    }
+  }
+
+  fun removeChatRoomListItem(index: Int) {
+    publicChatRoomList.removeAt(index)
+  }
+
+  fun getPublicChatRoomList(): ObservableList<BaseChatRoomListItem> {
     return publicChatRoomList
   }
 
   fun getPublicChatRoom(roomName: String): PublicChatRoomItem? {
-    return publicChatRoomList.firstOrNull { it.roomName == roomName }
-  }
+    val filtered = publicChatRoomList
+      .filterIsInstance(PublicChatRoomItem::class.java)
 
-  fun setPublicChatRoomList(list: List<PublicChatRoom>) {
-    publicChatRoomList.addAll(list.map { chatRoom ->
-      PublicChatRoomItem(chatRoom.chatRoomName, chatRoom.chatRoomImageUrl, FXCollections.observableArrayList(), FXCollections.observableArrayList())
-    })
+    return filtered.firstOrNull { it.roomName == roomName }
   }
 
   fun setChatRoomUserList(roomName: String, userList: List<PublicUserInChat>) {
-    val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
+    val filtered = publicChatRoomList
+      .filterIsInstance(PublicChatRoomItem::class.java)
+
+    val chatRoom = requireNotNull(filtered.firstOrNull { it.roomName == roomName })
     val convertedUserList = userList.map { user -> PublicUserInChatItem(user.userName) }
 
     chatRoom.userListProperty().clear()
@@ -76,7 +117,10 @@ class Store : Controller() {
   }
 
   fun loadChatRoomMessageHistory(roomName: String, messageHistory: List<BaseChatMessage>) {
-    val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
+    val filtered = publicChatRoomList
+      .filterIsInstance(PublicChatRoomItem::class.java)
+
+    val chatRoom = requireNotNull(filtered.firstOrNull { it.roomName == roomName })
     val convertedMessageList = messageHistory.map { message ->
       when (message.messageType) {
         ChatMessageType.Unknown -> throw UnknownChatMessageTypeException(message.messageType)
@@ -96,7 +140,10 @@ class Store : Controller() {
   }
 
   fun addChatRoomMessage(roomName: String, message: BaseChatMessageItem): Int {
-    val chatRoom = publicChatRoomList.firstOrNull { it.roomName == roomName }
+    val filtered = publicChatRoomList
+      .filterIsInstance(PublicChatRoomItem::class.java)
+
+    val chatRoom = filtered.firstOrNull { it.roomName == roomName }
     if (chatRoom == null) {
       return -1
     }
@@ -116,7 +163,10 @@ class Store : Controller() {
   }
 
   fun updateChatRoomMessageServerId(roomName: String, serverMessageId: Int, clientMessageId: Int) {
-    val chatRoom = publicChatRoomList.firstOrNull { it.roomName == roomName }
+    val filtered = publicChatRoomList
+      .filterIsInstance(PublicChatRoomItem::class.java)
+
+    val chatRoom = filtered.firstOrNull { it.roomName == roomName }
     if (chatRoom == null) {
       return
     }
@@ -135,7 +185,10 @@ class Store : Controller() {
   }
 
   fun getChatRoomMessageHistory(roomName: String): ObservableList<BaseChatMessageItem> {
-    val chatRoom = requireNotNull(publicChatRoomList.firstOrNull { it.roomName == roomName })
+    val filtered = publicChatRoomList
+      .filterIsInstance(PublicChatRoomItem::class.java)
+
+    val chatRoom = requireNotNull(filtered.firstOrNull { it.roomName == roomName })
     return chatRoom.roomMessagesProperty()
   }
 }

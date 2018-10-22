@@ -72,7 +72,12 @@ class ConnectionWindow : BaseView("Connection parameters") {
       field("User Name") {
         textfield(model.userName) {
           validator { userName ->
-            UiValidators.validateUserName(this, userName)
+            if (userName?.isEmpty() == true) {
+              model.userName.value = null
+              UiValidators.validateUserName(this, model.userName.value)
+            } else {
+              UiValidators.validateUserName(this, userName)
+            }
           }
 
           tooltip("If you don't want to enter your user name every time you join a chat room \n you can just do it once here")

@@ -1,0 +1,3 @@
+package model.chat_room_list
+
+class NoRoomsNotificationItem : BaseChatRoomListItem(ChatRoomListItemType.NoRoomsNotificationType)
