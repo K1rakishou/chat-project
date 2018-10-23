@@ -49,6 +49,15 @@ class PublicChatRoomItem(
     userListProperty.add(user)
   }
 
+  fun removeUser(userName: String) {
+    val containsUser = userListProperty.any { it.userName == userName }
+    if (!containsUser) {
+      throw RuntimeException("User ($userName) does not exist in room ($roomName)")
+    }
+
+    userListProperty.removeIf { it.userName == userName }
+  }
+
   fun isMyUserAdded(): Boolean {
     return userListProperty
       .any { it is MyUserItem }

@@ -1,11 +1,8 @@
 package ui.base
 
 import javafx.scene.control.Alert
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.launch
 import tornadofx.FXEventRegistration
 import tornadofx.Fragment
 import tornadofx.alert
@@ -17,6 +14,7 @@ abstract class BaseFragment(
 
   protected val job = Job()
   protected val fxEventList = mutableListOf<FXEventRegistration>()
+  private val bgThread = newFixedThreadPoolContext(1, "bg-fragment")
 
   override val coroutineContext: CoroutineContext
     get() = job
@@ -41,7 +39,7 @@ abstract class BaseFragment(
   }
 
   protected fun doOnBg(block: suspend () -> Unit) {
-    launch(coroutineContext + Dispatchers.Default) {
+    launch(coroutineContext + bgThread) {
       block()
     }
   }

@@ -2,11 +2,8 @@ package controller
 
 import io.reactivex.disposables.CompositeDisposable
 import javafx.scene.control.Alert
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.launch
 import tornadofx.Controller
 import tornadofx.alert
 import ui.base.IView
@@ -17,6 +14,7 @@ abstract class BaseController<View: IView> : Controller(), CoroutineScope {
   protected lateinit var view: View
   protected lateinit var job: Job
   protected lateinit var compositeDisposable: CompositeDisposable
+  private val bgThread = newFixedThreadPoolContext(1, "bg-controller")
 
   override val coroutineContext: CoroutineContext
     get() = job
@@ -39,7 +37,7 @@ abstract class BaseController<View: IView> : Controller(), CoroutineScope {
   }
 
   protected fun doOnBg(block: suspend () -> Unit) {
-    launch(coroutineContext + Dispatchers.Default) {
+    launch(coroutineContext + bgThread) {
       block()
     }
   }

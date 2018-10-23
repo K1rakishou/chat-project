@@ -27,6 +27,7 @@ import store.ChatRoomsStore
 import ui.chat_main_window.ChatMainWindow
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
+import java.lang.RuntimeException
 import java.util.concurrent.TimeUnit
 
 class ChatMainWindowController : BaseController<ChatMainWindow>() {
@@ -128,15 +129,93 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   private fun handleIncomingResponses(responseInfo: ResponseInfo) {
-    when (responseInfo.responseType) {
-      ResponseType.GetPageOfPublicRoomsResponseType -> handleGetPageOfPublicRoomsResponse(responseInfo)
-      ResponseType.UserHasJoinedResponseType -> handleUserHasJoinedResponse(responseInfo)
-      ResponseType.SendChatMessageResponseType -> handleSendChatMessageResponse(responseInfo)
-      ResponseType.NewChatMessageResponseType -> handleNewChatMessageResponse(responseInfo)
-      ResponseType.UserHasLeftResponseType -> handleUserHasLeftResponse(responseInfo)
-      else -> {
-        //Do nothing
+    doOnBg {
+      when (responseInfo.responseType) {
+        ResponseType.GetPageOfPublicRoomsResponseType -> handleGetPageOfPublicRoomsResponse(responseInfo)
+        ResponseType.UserHasJoinedResponseType -> handleUserHasJoinedResponse(responseInfo)
+        ResponseType.SendChatMessageResponseType -> handleSendChatMessageResponse(responseInfo)
+        ResponseType.NewChatMessageResponseType -> handleNewChatMessageResponse(responseInfo)
+        ResponseType.UserHasLeftResponseType -> handleUserHasLeftResponse(responseInfo)
+        else -> {
+          //Do nothing
+        }
       }
+    }
+  }
+
+  private fun handleNewChatMessageResponse(responseInfo: ResponseInfo) {
+    println("NewChatMessageResponseType response received")
+
+    val response = try {
+      NewChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
+    } catch (error: ResponseDeserializationException) {
+      showErrorAlert("Could not deserialize packet NewChatMessageResponse, error: ${error.message}")
+      return
+    }
+
+    if (response.status != Status.Ok) {
+      showErrorAlert("NewChatMessageResponsePayload with non ok status ${response.status}")
+      return
+    }
+
+    val userName = requireNotNull(response.userName)
+    val message = requireNotNull(response.message)
+    val roomName = requireNotNull(response.roomName)
+
+    val messageItem = ForeignTextChatMessageItem(
+      userName,
+      message
+    )
+
+    doOnUI {
+      addChatMessage(roomName, messageItem)
+    }
+  }
+
+  private fun handleSendChatMessageResponse(responseInfo: ResponseInfo) {
+    println("SendChatMessageResponseType response received")
+
+    val response = try {
+      SendChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
+    } catch (error: ResponseDeserializationException) {
+      showErrorAlert("Could not deserialize packet SendChatMessageResponse, error: ${error.message}")
+      return
+    }
+
+    if (response.status != Status.Ok) {
+      showErrorAlert("SendChatMessageResponseType with non ok status ${response.status}")
+      return
+    }
+
+    val roomName = requireNotNull(response.roomName)
+    val serverMessageId = response.serverMessageId
+    val clientMessageId = response.clientMessageId
+
+    doOnUI {
+      store.updateChatRoomMessageServerId(roomName, serverMessageId, clientMessageId)
+      //TODO: update sent message UI state here
+    }
+  }
+
+  private fun handleUserHasJoinedResponse(responseInfo: ResponseInfo) {
+    println("UserHasJoinedResponseType response received")
+
+    val response = try {
+      UserHasJoinedResponsePayload.fromByteSink(responseInfo.byteSink)
+    } catch (error: ResponseDeserializationException) {
+      showErrorAlert("Could not deserialize packet UserHasJoinedResponse, error: ${error.message}")
+      return
+    }
+    if (response.status != Status.Ok) {
+      showErrorAlert("UserHasJoinedResponsePayload with non ok status ${response.status}")
+      return
+    }
+
+    val roomName = requireNotNull(response.roomName)
+    val userName = requireNotNull(response.user).userName
+
+    doOnUI {
+      addForeignUserToChatRoom(roomName, userName)
     }
   }
 
@@ -155,71 +234,12 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       return
     }
 
-    addChatMessage(response.roomName!!, SystemChatMessageItemMy("User \"${response.userName!!}\" has left the room"))
-  }
+    val userName = requireNotNull(response.userName)
+    val roomName = requireNotNull(response.roomName)
 
-  private fun handleNewChatMessageResponse(responseInfo: ResponseInfo) {
-    println("NewChatMessageResponseType response received")
-
-    val response = try {
-      NewChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
-    } catch (error: ResponseDeserializationException) {
-      showErrorAlert("Could not deserialize packet NewChatMessageResponse, error: ${error.message}")
-      return
+    doOnUI {
+      removeForeignUserFromChatRoom(roomName, userName)
     }
-
-    if (response.status != Status.Ok) {
-      showErrorAlert("NewChatMessageResponsePayload with non ok status ${response.status}")
-      return
-    }
-
-    val message = ForeignTextChatMessageItem(
-      response.userName!!,
-      response.message!!
-    )
-
-    addChatMessage(response.roomName!!, message)
-  }
-
-  private fun handleSendChatMessageResponse(responseInfo: ResponseInfo) {
-    println("SendChatMessageResponseType response received")
-
-    val response = try {
-      SendChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
-    } catch (error: ResponseDeserializationException) {
-      showErrorAlert("Could not deserialize packet SendChatMessageResponse, error: ${error.message}")
-      return
-    }
-
-    if (response.status != Status.Ok) {
-      showErrorAlert("SendChatMessageResponseType with non ok status ${response.status}")
-      return
-    }
-
-    val roomName = response.roomName!!
-    val serverMessageId = response.serverMessageId
-    val clientMessageId = response.clientMessageId
-
-    store.updateChatRoomMessageServerId(roomName, serverMessageId, clientMessageId)
-
-    //TODO: update sent message UI state here
-  }
-
-  private fun handleUserHasJoinedResponse(responseInfo: ResponseInfo) {
-    println("UserHasJoinedResponseType response received")
-
-    val response = try {
-      UserHasJoinedResponsePayload.fromByteSink(responseInfo.byteSink)
-    } catch (error: ResponseDeserializationException) {
-      showErrorAlert("Could not deserialize packet UserHasJoinedResponse, error: ${error.message}")
-      return
-    }
-    if (response.status != Status.Ok) {
-      showErrorAlert("UserHasJoinedResponsePayload with non ok status ${response.status}")
-      return
-    }
-
-    addChatMessage(response.roomName!!, SystemChatMessageItemMy("User \"${response.user!!.userName}\" has joined to chat room"))
   }
 
   private fun handleGetPageOfPublicRoomsResponse(responseInfo: ResponseInfo) {
@@ -235,7 +255,31 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       return
     }
 
-    updatePublicChatRoomList(response)
+    doOnUI {
+      updatePublicChatRoomList(response)
+    }
+  }
+
+  private fun addForeignUserToChatRoom(roomName: String, userName: String) {
+    val chatRoom = store.getChatRoomByName(roomName)
+    if (chatRoom == null) {
+      showErrorAlert("Room ${roomName} does not exist!")
+      return
+    }
+
+    chatRoom.addForeignUser(userName)
+    addChatMessage(roomName, SystemChatMessageItemMy("User \"$userName\" has joined to chat room"))
+  }
+
+  private fun removeForeignUserFromChatRoom(roomName: String, userName: String) {
+    val chatRoom = store.getChatRoomByName(roomName)
+    if (chatRoom == null) {
+      showErrorAlert("Room ${roomName} does not exist!")
+      return
+    }
+
+    chatRoom.removeUser(userName)
+    addChatMessage(roomName, SystemChatMessageItemMy("User \"$userName\" has left the room"))
   }
 
   private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem): Int {
@@ -255,7 +299,6 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     }
 
     updateLastChatRoomMessage(roomName, chatMessage)
-
     return messageId
   }
 
@@ -288,19 +331,17 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   private fun updatePublicChatRoomList(response: GetPageOfPublicRoomsResponsePayload) {
-    doOnUI {
-      if (response.publicChatRoomList.isEmpty()) {
-        store.addChatRoomListItem(NoRoomsNotificationItem())
-      } else {
-        val mappedRooms = response.publicChatRoomList
-          .map { PublicChatRoomItem.create(it.chatRoomName, it.chatRoomImageUrl) }
+    if (response.publicChatRoomList.isEmpty()) {
+      store.addChatRoomListItem(NoRoomsNotificationItem())
+    } else {
+      val mappedRooms = response.publicChatRoomList
+        .map { PublicChatRoomItem.create(it.chatRoomName, it.chatRoomImageUrl) }
 
-        store.removeNoRoomsNotification()
-        store.addManyChatRoomListItem(mappedRooms)
+      store.removeNoRoomsNotification()
+      store.addManyChatRoomListItem(mappedRooms)
 
-        response.publicChatRoomList.forEach { chatRoom ->
-          lastChatMessageMap[chatRoom.chatRoomName] = SimpleStringProperty("")
-        }
+      response.publicChatRoomList.forEach { chatRoom ->
+        lastChatMessageMap[chatRoom.chatRoomName] = SimpleStringProperty("")
       }
     }
   }
