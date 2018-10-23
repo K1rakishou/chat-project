@@ -14,13 +14,13 @@ import javafx.scene.layout.Priority
 import model.chat_room_list.BaseChatRoomListItem
 import model.chat_room_list.NoRoomsNotificationItem
 import model.chat_room_list.PublicChatRoomItem
-import store.Store
+import store.ChatRoomsStore
 import tornadofx.*
 import ui.base.BaseFragment
 import java.lang.RuntimeException
 
 class ChatRoomListFragment : BaseFragment() {
-  private val store: Store by inject()
+  private val store: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val controller: ChatMainWindowController by inject()
   private val rightMargin = 16.0
 
@@ -32,7 +32,7 @@ class ChatRoomListFragment : BaseFragment() {
     }.autoUnsubscribe()
   }
 
-  override val root = listview(store.getPublicChatRoomList()) {
+  override val root = listview(store.publicChatRoomList) {
     vboxConstraints { vGrow = Priority.ALWAYS }
 
     setCellFactory { cellFactory(widthProperty()) }
@@ -89,7 +89,8 @@ class ChatRoomListFragment : BaseFragment() {
             is PublicChatRoomItem -> {
               controller.updateSelectedRoom(item.roomName)
 
-              if (store.isUserInRoom(item.roomName)) {
+              val isMyUserAdded = store.getChatRoomByName(item.roomName)?.isMyUserAdded() ?: false
+              if (isMyUserAdded) {
                 if (shouldReloadRoomMessageHistory) {
                   controller.reloadRoomMessageHistory(item.roomName)
                 }

@@ -1,12 +1,14 @@
-package store.settings
+package store
 
-import tornadofx.Controller
+import store.settings.ChatMainWindowSettings
+import store.settings.ConnectionWindowSettings
+import store.settings.SharedSettings
 import java.io.File
 import java.lang.RuntimeException
 import java.nio.file.Files
 import java.util.concurrent.atomic.AtomicInteger
 
-class SettingsStore : Controller() {
+class SettingsStore {
   private val settingsFile = File(System.getProperty("user.dir") + "\\settings.dat")
   private var readSettingsFile = false
   val chatMainWindowSettings = ChatMainWindowSettings()

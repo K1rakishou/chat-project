@@ -13,7 +13,7 @@ import manager.NetworkManager
 import ui.chat_main_window.create_chat_room_dialog.CreateChatRoomDialogFragment
 
 class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragment>() {
-  private val networkManager = ChatApp.networkManager
+  private val networkManager: NetworkManager by lazy { ChatApp.networkManager }
   private var roomToBeCreated: ChatRoomToBeCreatedTempInfo? = null
 
   override fun createController(viewParam: CreateChatRoomDialogFragment) {

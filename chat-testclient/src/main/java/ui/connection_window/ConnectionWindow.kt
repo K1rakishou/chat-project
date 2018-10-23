@@ -14,8 +14,8 @@ import ui.loading_window.LoadingWindow
 import utils.UiValidators
 
 class ConnectionWindow : BaseView("Connection parameters") {
-  private val connectionWindowSettings: ConnectionWindowSettings by lazy { settingsStore.connectionWindowSettings }
-  private val sharedSettings: SharedSettings by lazy { settingsStore.sharedSettings }
+  private val connectionWindowSettings: ConnectionWindowSettings by lazy { ChatApp.settingsStore.connectionWindowSettings }
+  private val sharedSettings: SharedSettings by lazy { ChatApp.settingsStore.sharedSettings }
 
   private val model = object : ViewModel() {
     val ip = bind { SimpleStringProperty(ConnectionWindowSettings.ipAddressDefault) }

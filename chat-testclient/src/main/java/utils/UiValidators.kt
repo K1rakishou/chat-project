@@ -6,10 +6,14 @@ import tornadofx.ValidationMessage
 
 object UiValidators {
 
-  fun validateUserName(context: ValidationContext, userName: String?): ValidationMessage? {
-    if (userName == null) {
-      return null
+  fun validateUserName(context: ValidationContext, userName: String?, requireUserName: Boolean = false): ValidationMessage? {
+    if (!requireUserName) {
+      if (userName == null) {
+        return null
+      }
     }
+
+    requireNotNull(userName)
 
     if (userName.isBlank()) {
       return context.error("User name cannot consist solely from whitespaces")
