@@ -102,6 +102,8 @@ class ChatMainWindow : BaseView("Chat") {
   }
 
   private fun showCreateChatRoomDialog() {
-    find<CreateChatRoomDialogFragment>().openModal(resizable = false)
+    doOnUI {
+      find<CreateChatRoomDialogFragment>().openModal(resizable = false)
+    }
   }
 }

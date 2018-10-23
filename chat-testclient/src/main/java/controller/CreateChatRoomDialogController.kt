@@ -11,6 +11,7 @@ import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import manager.NetworkManager
 import ui.chat_main_window.create_chat_room_dialog.CreateChatRoomDialogFragment
+import utils.ThreadChecker
 
 class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragment>() {
   private val networkManager: NetworkManager by lazy { ChatApp.networkManager }
@@ -86,10 +87,12 @@ class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragme
   }
 
   private fun handleIncomingResponses(responseInfo: ResponseInfo) {
-    when (responseInfo.responseType) {
-      ResponseType.CreateRoomResponseType -> handleCreateRoomResponse(responseInfo)
-      else -> {
-        //Do nothing
+    doOnBg {
+      when (responseInfo.responseType) {
+        ResponseType.CreateRoomResponseType -> handleCreateRoomResponse(responseInfo)
+        else -> {
+          //Do nothing
+        }
       }
     }
   }
@@ -97,6 +100,7 @@ class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragme
   private fun handleCreateRoomResponse(responseInfo: ResponseInfo) {
     try {
       println("CreateRoomResponseType response received")
+      ThreadChecker.throwIfOnMainThread()
 
       val response = try {
         CreateRoomResponsePayload.fromByteSink(responseInfo.byteSink)

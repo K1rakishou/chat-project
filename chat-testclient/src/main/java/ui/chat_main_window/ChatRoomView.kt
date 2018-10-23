@@ -58,6 +58,7 @@ class ChatRoomView : BaseView() {
     textfield {
       addClass(Styles.chatRoomTextField)
       promptText = "Enter your message here"
+      whenDocked { requestFocus() }
 
       setOnAction {
         if (text.isEmpty()) {

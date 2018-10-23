@@ -7,11 +7,14 @@ import model.chat_message.BaseChatMessageItem
 import model.chat_room_list.BaseChatRoomListItem
 import model.chat_room_list.NoRoomsNotificationItem
 import model.chat_room_list.PublicChatRoomItem
+import utils.ThreadChecker
 
 class ChatRoomsStore {
   val publicChatRoomList: ObservableList<BaseChatRoomListItem> = FXCollections.observableArrayList()
 
   private fun getChatRoomList(): List<PublicChatRoomItem> {
+    ThreadChecker.throwIfNotOnMainThread()
+
     return publicChatRoomList
       .filterIsInstance(PublicChatRoomItem::class.java)
   }
@@ -29,6 +32,8 @@ class ChatRoomsStore {
   }
 
   fun addChatRoomListItem(chatRoomItem: BaseChatRoomListItem, index: Int = 0) {
+    ThreadChecker.throwIfNotOnMainThread()
+
     when (chatRoomItem) {
       is NoRoomsNotificationItem -> {
         if (publicChatRoomList.isNotEmpty()) {
@@ -49,6 +54,8 @@ class ChatRoomsStore {
   }
 
   fun removeNoRoomsNotification() {
+    ThreadChecker.throwIfNotOnMainThread()
+
     if (publicChatRoomList.isEmpty()) {
       return
     }
@@ -59,10 +66,14 @@ class ChatRoomsStore {
   }
 
   fun removeChatRoomListItem(index: Int) {
+    ThreadChecker.throwIfNotOnMainThread()
+
     publicChatRoomList.removeAt(index)
   }
 
   fun getChatRoomByName(roomName: String?): PublicChatRoomItem? {
+    ThreadChecker.throwIfNotOnMainThread()
+
     if (roomName == null) {
       return null
     }
@@ -71,6 +82,8 @@ class ChatRoomsStore {
   }
 
   fun addChatRoomMessage(roomName: String, message: BaseChatMessageItem): Int {
+    ThreadChecker.throwIfNotOnMainThread()
+
     val chatRoom = getChatRoomList().firstOrNull { it.roomName == roomName }
     if (chatRoom == null) {
       return -1
@@ -91,6 +104,8 @@ class ChatRoomsStore {
   }
 
   fun updateChatRoomMessageServerId(roomName: String, serverMessageId: Int, clientMessageId: Int) {
+    ThreadChecker.throwIfNotOnMainThread()
+
     val chatRoom = getChatRoomList().firstOrNull { it.roomName == roomName }
     if (chatRoom == null) {
       return
@@ -111,6 +126,8 @@ class ChatRoomsStore {
   }
 
   fun getChatRoomMessageHistory(roomName: String): ObservableList<BaseChatMessageItem> {
+    ThreadChecker.throwIfNotOnMainThread()
+
     val chatRoom = requireNotNull(getChatRoomList().firstOrNull { it.roomName == roomName })
     return chatRoom.roomMessagesProperty
   }

@@ -27,7 +27,7 @@ import store.ChatRoomsStore
 import ui.chat_main_window.ChatMainWindow
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
-import java.lang.RuntimeException
+import utils.ThreadChecker
 import java.util.concurrent.TimeUnit
 
 class ChatMainWindowController : BaseController<ChatMainWindow>() {
@@ -62,6 +62,8 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   fun sendMessage(messageText: String) {
+    ThreadChecker.throwIfNotOnMainThread()
+
     if (!networkManager.isConnected) {
       println("Not connected")
 
@@ -94,9 +96,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       throw IllegalStateException("Could not add chat message (Probably selectedRoomName (${selectedRoomName}) refers to an unknown room)")
     }
 
-    doOnBg {
-      networkManager.sendPacket(SendChatMessagePacket(messageId, selectedRoomName!!, myUser.userName, messageText))
-    }
+    networkManager.sendPacket(SendChatMessagePacket(messageId, selectedRoomName!!, myUser.userName, messageText))
   }
 
   private fun startListeningToPackets() {
@@ -145,6 +145,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   private fun handleNewChatMessageResponse(responseInfo: ResponseInfo) {
     println("NewChatMessageResponseType response received")
+    ThreadChecker.throwIfOnMainThread()
 
     val response = try {
       NewChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
@@ -174,6 +175,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   private fun handleSendChatMessageResponse(responseInfo: ResponseInfo) {
     println("SendChatMessageResponseType response received")
+    ThreadChecker.throwIfOnMainThread()
 
     val response = try {
       SendChatMessageResponsePayload.fromByteSink(responseInfo.byteSink)
@@ -199,6 +201,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   private fun handleUserHasJoinedResponse(responseInfo: ResponseInfo) {
     println("UserHasJoinedResponseType response received")
+    ThreadChecker.throwIfOnMainThread()
 
     val response = try {
       UserHasJoinedResponsePayload.fromByteSink(responseInfo.byteSink)
@@ -221,6 +224,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   private fun handleUserHasLeftResponse(responseInfo: ResponseInfo) {
     println("UserHasLeftResponseType response received")
+    ThreadChecker.throwIfOnMainThread()
 
     val response = try {
       UserHasLeftResponsePayload.fromByteSink(responseInfo.byteSink)
@@ -243,6 +247,9 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   private fun handleGetPageOfPublicRoomsResponse(responseInfo: ResponseInfo) {
+    println("GetPageOfPublicRoomsResponseType response received")
+    ThreadChecker.throwIfOnMainThread()
+
     val response = try {
       GetPageOfPublicRoomsResponsePayload.fromByteSink(responseInfo.byteSink)
     } catch (error: ResponseDeserializationException) {

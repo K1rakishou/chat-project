@@ -105,11 +105,15 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   }
 
   fun lockControls() {
-    disableControlsFlag.set(true)
+    doOnUI {
+      disableControlsFlag.set(true)
+    }
   }
 
   fun unlockControls() {
-    disableControlsFlag.set(false)
+    doOnUI {
+      disableControlsFlag.set(false)
+    }
   }
 
   fun onJoinedToChatRoom(
@@ -118,17 +122,21 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
     users: List<PublicUserInChat>,
     messageHistory: List<BaseChatMessage>
   ) {
-    fire(ChatMainWindowEvents.JoinedChatRoomEvent(roomName, userName, users, messageHistory))
-    unlockControls()
+    doOnUI {
+      fire(ChatMainWindowEvents.JoinedChatRoomEvent(roomName, userName, users, messageHistory))
+      unlockControls()
 
-    closeFragment()
+      closeFragment()
+    }
   }
 
   fun onFailedToJoinChatRoom(status: Status) {
-    val errorMessage = status.toErrorMessage()
+    doOnUI {
+      val errorMessage = status.toErrorMessage()
 
-    showErrorAlert(errorMessage)
-    unlockControls()
+      showErrorAlert(errorMessage)
+      unlockControls()
+    }
   }
 
   fun onError(message: String) {

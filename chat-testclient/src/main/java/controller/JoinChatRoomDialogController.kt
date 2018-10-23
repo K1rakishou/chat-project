@@ -13,6 +13,7 @@ import io.reactivex.rxkotlin.subscribeBy
 import manager.NetworkManager
 import store.ChatRoomsStore
 import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
+import utils.ThreadChecker
 
 class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>() {
   private val networkManager: NetworkManager by lazy { ChatApp.networkManager }
@@ -89,16 +90,19 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
   }
 
   private fun handleIncomingResponses(responseInfo: ResponseInfo) {
-    when (responseInfo.responseType) {
-      ResponseType.JoinChatRoomResponseType -> handleJoinChatRoomResponse(responseInfo)
-      else -> {
-        //Do nothing
+    doOnBg {
+      when (responseInfo.responseType) {
+        ResponseType.JoinChatRoomResponseType -> handleJoinChatRoomResponse(responseInfo)
+        else -> {
+          //Do nothing
+        }
       }
     }
   }
 
   private fun handleJoinChatRoomResponse(responseInfo: ResponseInfo) {
     println("JoinChatRoomResponseType response received")
+    ThreadChecker.throwIfOnMainThread()
 
     val response = try {
       JoinChatRoomResponsePayload.fromByteSink(responseInfo.byteSink)
