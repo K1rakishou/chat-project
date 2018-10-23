@@ -1,15 +1,10 @@
-package model
+package model.user
 
-import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleStringProperty
-import tornadofx.ItemViewModel
-import java.util.*
 
-class PublicUserInChatItem(
+abstract class BaseUserItem(
   userName: String
 ) {
-  val id = UUID.randomUUID()
-
   private val userNameProperty by lazy { SimpleStringProperty(userName) }
   fun userNameProperty() = userNameProperty
   var userName: String
@@ -21,7 +16,7 @@ class PublicUserInChatItem(
       return false
     }
 
-    if (other !is PublicUserInChatItem) {
+    if (other !is BaseUserItem) {
       return false
     }
 
@@ -29,10 +24,10 @@ class PublicUserInChatItem(
       return true
     }
 
-    return id == other.id
+    return userName == other.userName
   }
 
   override fun hashCode(): Int {
-    return id.hashCode()
+    return userName.hashCode()
   }
 }

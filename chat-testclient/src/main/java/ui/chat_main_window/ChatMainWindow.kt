@@ -16,7 +16,7 @@ import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
 
 class ChatMainWindow : BaseView("Chat") {
   private val controller: ChatMainWindowController by inject()
-  private val chatMainWindowSettings: ChatMainWindowSettings by lazy { settingsStore.chatMainWindowSettings }
+  private val chatMainWindowSettings: ChatMainWindowSettings by lazy { ChatApp.settingsStore.chatMainWindowSettings }
 
   init {
     subscribe<ChatMainWindowEvents.JoinedChatRoomEvent> { event ->

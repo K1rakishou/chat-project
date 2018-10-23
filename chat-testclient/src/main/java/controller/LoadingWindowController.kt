@@ -4,12 +4,10 @@ import ChatApp
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import manager.NetworkManager
-import store.Store
 import ui.loading_window.LoadingWindow
 
 class LoadingWindowController : BaseController<LoadingWindow>() {
-  private val networkManager = ChatApp.networkManager
-  val store: Store by inject()
+  private val networkManager: NetworkManager by lazy { ChatApp.networkManager }
 
   override fun createController(viewParam: LoadingWindow) {
     super.createController(viewParam)

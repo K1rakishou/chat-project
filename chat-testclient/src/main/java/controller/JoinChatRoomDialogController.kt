@@ -11,12 +11,12 @@ import core.security.SecurityUtils
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import manager.NetworkManager
-import store.Store
+import store.ChatRoomsStore
 import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
 
 class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>() {
-  private val networkManager = ChatApp.networkManager
-  private val store: Store by inject()
+  private val networkManager: NetworkManager by lazy { ChatApp.networkManager }
+  private val store: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
 
   override fun createController(viewParam: JoinChatRoomDialogFragment) {
     super.createController(viewParam)
@@ -29,12 +29,15 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
     super.destroyController()
   }
 
-  fun joinChatRoom(chatRoomName: String, userName: String? = null, roomPassword: String? = null) {
+  fun joinChatRoom(chatRoomName: String, userName: String, roomPassword: String? = null) {
     view.lockControls()
 
-    if (store.isUserInRoom(chatRoomName)) {
-      view.onError("Already in the room. Should not happen")
-      return
+    val chatRoom = store.getChatRoomByName(chatRoomName)
+    if (chatRoom != null) {
+      if (chatRoom.isMyUserAdded()) {
+        view.onError("Already in the room. Should not happen")
+        return
+      }
     }
 
     if (!networkManager.isConnected) {
@@ -42,26 +45,18 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
       return
     }
 
-    val userNameToSend = when {
-      userName != null && userName.isNotEmpty() -> userName
-      store.hasUserNameByRoomName(chatRoomName) -> store.getUserName(chatRoomName)
-      else -> null
+    val hashedPassword = if (roomPassword != null && roomPassword.isNotEmpty()) {
+      SecurityUtils.Hashing.sha3(roomPassword)
+    } else {
+      null
     }
 
-    userNameToSend?.let { name ->
-      val hashedPassword = if (roomPassword != null && roomPassword.isNotEmpty()) {
-        SecurityUtils.Hashing.sha3(roomPassword)
-      } else {
-        null
-      }
+    val packet = JoinChatRoomPacket(
+      userName,
+      chatRoomName,
+      hashedPassword)
 
-      val packet = JoinChatRoomPacket(
-        name,
-        chatRoomName,
-        hashedPassword)
-
-      networkManager.sendPacket(packet)
-    }
+    networkManager.sendPacket(packet)
   }
 
   private fun startListeningToPackets() {

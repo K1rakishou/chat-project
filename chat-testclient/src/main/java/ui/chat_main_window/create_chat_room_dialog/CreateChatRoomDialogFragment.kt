@@ -16,7 +16,7 @@ import utils.UiValidators
 class CreateChatRoomDialogFragment : BaseFragment("Create Chat Room") {
   private val controller: CreateChatRoomDialogController by inject()
   private val disableControlsFlag = SimpleBooleanProperty(false)
-  private val sharedSettings: SharedSettings by lazy { settingsStore.sharedSettings }
+  private val sharedSettings: SharedSettings by lazy { ChatApp.settingsStore.sharedSettings }
 
   private val model = object : ViewModel() {
     val roomName = bind { SimpleStringProperty(null) }

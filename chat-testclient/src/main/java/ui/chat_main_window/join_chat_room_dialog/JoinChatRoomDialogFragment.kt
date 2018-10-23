@@ -19,7 +19,7 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   private val disableControlsFlag = SimpleBooleanProperty(false)
   private val roomNameItem: RoomNameItem by inject()
   private val controller: JoinChatRoomDialogController by inject()
-  private val sharedSettings: SharedSettings by lazy { settingsStore.sharedSettings }
+  private val sharedSettings: SharedSettings by lazy { ChatApp.settingsStore.sharedSettings }
 
   private val model = object : ViewModel() {
     val userName = bind { SimpleStringProperty(sharedSettings.userName) }
@@ -45,12 +45,7 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
       field("User Name") {
         textfield(model.userName) {
           validator { userName ->
-            if (userName?.isEmpty() == true) {
-              model.userName.value = null
-              UiValidators.validateUserName(this, model.userName.value)
-            } else {
-              UiValidators.validateUserName(this, userName)
-            }
+            UiValidators.validateUserName(this, userName, requireUserName = true)
           }
 
           whenDocked { requestFocus() }

@@ -23,15 +23,15 @@ import model.chat_message.MyTextChatMessageItem
 import model.chat_message.SystemChatMessageItemMy
 import model.chat_room_list.NoRoomsNotificationItem
 import model.chat_room_list.PublicChatRoomItem
-import store.Store
+import store.ChatRoomsStore
 import ui.chat_main_window.ChatMainWindow
 import ui.chat_main_window.ChatRoomView
 import ui.chat_main_window.ChatRoomViewEmpty
 import java.util.concurrent.TimeUnit
 
 class ChatMainWindowController : BaseController<ChatMainWindow>() {
-  private val networkManager = ChatApp.networkManager
-  private val store: Store by inject()
+  private val networkManager: NetworkManager by lazy { ChatApp.networkManager }
+  private val store: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val delayBeforeAddFirstChatRoomMessage = 250L
   private var selectedRoomName: String? = null
 
@@ -76,18 +76,25 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       return
     }
 
-    if (!store.isUserInRoom(selectedRoomName!!)) {
+    val chatRoom = store.getChatRoomByName(selectedRoomName)
+    if (chatRoom == null) {
+      println("Cannot send a message because chat room (${selectedRoomName}) does not exist")
+      return
+    }
+
+    val myUser = chatRoom.getMyUser()
+    if (myUser == null) {
       println("Cannot send a message because user does not exist in the room")
       return
     }
 
-    val messageId = addChatMessage(selectedRoomName!!, MyTextChatMessageItem(store.getUserName(selectedRoomName), messageText))
+    val messageId = addChatMessage(selectedRoomName!!, MyTextChatMessageItem(myUser.userName, messageText))
     if (messageId == -1) {
       throw IllegalStateException("Could not add chat message (Probably selectedRoomName (${selectedRoomName}) refers to an unknown room)")
     }
 
     doOnBg {
-      networkManager.sendPacket(SendChatMessagePacket(messageId, selectedRoomName!!, store.getUserName(selectedRoomName), messageText))
+      networkManager.sendPacket(SendChatMessagePacket(messageId, selectedRoomName!!, myUser.userName, messageText))
     }
   }
 
@@ -345,10 +352,10 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       //Wait some time before ChatRoomView shows up
       delay(TimeUnit.MILLISECONDS.toMillis(delayBeforeAddFirstChatRoomMessage))
 
-      store.addJoinedRoom(roomName)
-      store.setChatRoomUserList(roomName, users)
-      store.loadChatRoomMessageHistory(roomName, messageHistory)
-      store.addUserToRoom(roomName, userName)
+      val chatRoom = requireNotNull(store.getChatRoomByName(roomName))
+      chatRoom.replaceUserList(users)
+      chatRoom.addMyUser(userName)
+      chatRoom.replaceChatRoomHistory(messageHistory)
 
       reloadRoomMessageHistory(roomName)
       addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
