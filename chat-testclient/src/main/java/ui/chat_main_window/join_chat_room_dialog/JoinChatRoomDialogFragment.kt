@@ -1,11 +1,12 @@
 package ui.chat_main_window.join_chat_room_dialog
 
-import ChatApp.Companion.settingsStore
+import ChatApp
 import controller.JoinChatRoomDialogController
 import core.Status
 import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
 import events.ChatMainWindowEvents
+import events.ChatRoomListFragmentEvents
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
@@ -21,6 +22,8 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   private val controller: JoinChatRoomDialogController by inject()
   private val sharedSettings: SharedSettings by lazy { ChatApp.settingsStore.sharedSettings }
 
+  private var clearSelection = true
+
   private val model = object : ViewModel() {
     val userName = bind { SimpleStringProperty(sharedSettings.userName) }
     val roomPassword = bind { SimpleStringProperty(null) }
@@ -32,6 +35,10 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
   }
 
   override fun onUndock() {
+    if (clearSelection) {
+      fire(ChatRoomListFragmentEvents.ClearSelection)
+    }
+
     controller.destroyController()
     super.onUndock()
   }
@@ -126,6 +133,7 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
       fire(ChatMainWindowEvents.JoinedChatRoomEvent(roomName, userName, users, messageHistory))
       unlockControls()
 
+      clearSelection = false
       closeFragment()
     }
   }

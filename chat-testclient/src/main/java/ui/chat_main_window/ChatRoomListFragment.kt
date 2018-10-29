@@ -30,8 +30,11 @@ class ChatRoomListFragment : BaseFragment() {
   private val rightMargin = 16.0
 
   init {
-    subscribe<ChatRoomListFragmentEvents.SelectListViewItem> { event ->
+    subscribe<ChatRoomListFragmentEvents.SelectItem> { event ->
       virtualListView.selectItem(event.itemIndex)
+    }.autoUnsubscribe()
+    subscribe<ChatRoomListFragmentEvents.ClearSelection> { _ ->
+      virtualListView.clearSelection()
     }.autoUnsubscribe()
   }
 

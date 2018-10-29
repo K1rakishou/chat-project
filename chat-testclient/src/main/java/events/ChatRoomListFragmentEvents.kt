@@ -5,5 +5,6 @@ import tornadofx.FXEvent
 
 
 class ChatRoomListFragmentEvents {
-  class SelectListViewItem(val itemIndex: Int) : FXEvent(EventBus.RunOn.ApplicationThread)
+  class SelectItem(val itemIndex: Int) : FXEvent(EventBus.RunOn.ApplicationThread)
+  object ClearSelection : FXEvent(EventBus.RunOn.ApplicationThread)
 }

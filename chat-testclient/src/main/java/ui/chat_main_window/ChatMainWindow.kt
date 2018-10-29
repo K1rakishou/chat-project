@@ -102,7 +102,7 @@ class ChatMainWindow : BaseView("Chat") {
 
   fun selectRoomWithIndex(index: Int) {
     doOnUI {
-      fire(ChatRoomListFragmentEvents.SelectListViewItem(index))
+      fire(ChatRoomListFragmentEvents.SelectItem(index))
     }
   }
 
