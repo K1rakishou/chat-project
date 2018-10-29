@@ -12,17 +12,12 @@ abstract class BaseChatMessageItem(
 
   fun shouldUpdateIds(): Boolean {
     return when (getMessageType()) {
-      MessageType.MyTextMessage -> true
+      MessageType.MyTextMessage,
+      MessageType.MyImageMessage -> true
       MessageType.SystemTextMessage,
       MessageType.ForeignTextMessage -> false
       else -> throw IllegalStateException("Not implemented for ${this::class}")
     }
-  }
-
-  enum class MessageType {
-    MyTextMessage,
-    ForeignTextMessage,
-    SystemTextMessage
   }
 
   companion object {
@@ -40,6 +35,11 @@ abstract class BaseChatMessageItem(
         is SystemChatMessageItemMy -> SystemChatMessageItemMy(
           oldChatMessageItem.messageText,
           oldChatMessageItem.serverMessageId,
+          clientMessage
+        )
+        is MyImageChatMessage -> MyImageChatMessage(
+          oldChatMessageItem.senderName,
+          oldChatMessageItem.imageFile,
           clientMessage
         )
         else -> throw IllegalArgumentException("Not implemented for ${oldChatMessageItem::class}")

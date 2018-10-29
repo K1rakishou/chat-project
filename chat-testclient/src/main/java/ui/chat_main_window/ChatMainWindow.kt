@@ -7,7 +7,9 @@ import events.ChatRoomListFragmentEvents
 import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.geometry.Orientation
 import javafx.scene.control.SplitPane
+import javafx.scene.input.TransferMode
 import javafx.scene.layout.Border
+import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Priority
 import store.settings.ChatMainWindowSettings
 import tornadofx.*

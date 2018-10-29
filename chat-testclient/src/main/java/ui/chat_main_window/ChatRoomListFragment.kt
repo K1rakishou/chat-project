@@ -101,6 +101,7 @@ class ChatRoomListFragment : BaseFragment() {
       maxWidthProperty().bind(widthProperty - rightMargin)
 
       imageview(item.imageUrl) {
+        minHeight = 60.0
         fitHeight = 60.0
         isPreserveRatio = true
         isSmooth = true
@@ -112,7 +113,7 @@ class ChatRoomListFragment : BaseFragment() {
         label(item.roomName) {
           textOverrun = OverrunStyle.ELLIPSIS
         }
-//        label(controller.lastChatMessageMap[item.roomName]) {
+//        label(controller.lastChatMessageMap[item.roomName]!!) {
 //          textOverrun = OverrunStyle.ELLIPSIS
 //        }
       }

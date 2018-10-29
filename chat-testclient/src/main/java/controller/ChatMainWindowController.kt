@@ -17,10 +17,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import kotlinx.coroutines.delay
 import manager.NetworkManager
-import model.chat_message.BaseChatMessageItem
-import model.chat_message.ForeignTextChatMessageItem
-import model.chat_message.MyTextChatMessageItem
-import model.chat_message.SystemChatMessageItemMy
+import model.chat_message.*
 import model.chat_room_list.NoRoomsNotificationItem
 import model.chat_room_list.PublicChatRoomItem
 import store.ChatRoomsStore
@@ -289,6 +286,11 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     addChatMessage(roomName, SystemChatMessageItemMy("User \"$userName\" has left the room"))
   }
 
+  //TODO
+  fun addChatMessage(chatMessage: BaseChatMessageItem): Int {
+    return addChatMessage(selectedRoomName!!, chatMessage)
+  }
+
   private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem): Int {
     val messageId = store.addChatRoomMessage(roomName, chatMessage)
     if (messageId == -1) {
@@ -311,15 +313,15 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   private fun updateLastChatRoomMessage(roomName: String, chatMessage: BaseChatMessageItem) {
     when (chatMessage.getMessageType()) {
-      BaseChatMessageItem.MessageType.MyTextMessage,
-      BaseChatMessageItem.MessageType.ForeignTextMessage -> {
+      MessageType.MyTextMessage,
+      MessageType.ForeignTextMessage -> {
         doOnUI {
           val lastMessageText = when (chatMessage.getMessageType()) {
-            BaseChatMessageItem.MessageType.MyTextMessage -> {
+            MessageType.MyTextMessage -> {
               chatMessage as MyTextChatMessageItem
               "${chatMessage.senderName}: ${chatMessage.messageText}"
             }
-            BaseChatMessageItem.MessageType.ForeignTextMessage -> {
+            MessageType.ForeignTextMessage -> {
               chatMessage as ForeignTextChatMessageItem
               "${chatMessage.senderName}: ${chatMessage.messageText}"
             }
@@ -359,8 +361,8 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
       val chatMessageHistory = store.getChatRoomMessageHistory(roomName)
       val lastMessage = chatMessageHistory.lastOrNull {
-        it.getMessageType() == BaseChatMessageItem.MessageType.ForeignTextMessage ||
-        it.getMessageType() == BaseChatMessageItem.MessageType.MyTextMessage
+        it.getMessageType() == MessageType.ForeignTextMessage ||
+        it.getMessageType() == MessageType.MyTextMessage
       }
 
       if (lastMessage != null) {

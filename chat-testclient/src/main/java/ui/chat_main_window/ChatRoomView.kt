@@ -2,14 +2,21 @@ package ui.chat_main_window
 
 import Styles
 import controller.ChatMainWindowController
+import javafx.scene.Cursor
+import javafx.scene.Node
 import javafx.scene.control.ScrollPane
-import javafx.scene.layout.Priority
+import javafx.scene.image.Image
+import javafx.scene.input.TransferMode
+import javafx.scene.layout.VBox
 import javafx.scene.text.Text
+import javafx.scene.text.TextFlow
 import kotlinx.coroutines.delay
-import model.chat_message.BaseChatMessageItem
+import model.chat_message.MessageType
+import model.chat_message.MyImageChatMessage
 import model.chat_message.MyTextChatMessageItem
 import tornadofx.*
 import ui.base.BaseView
+import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 
@@ -17,36 +24,39 @@ class ChatRoomView : BaseView() {
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val scrollbarApproxSize = 16.0
   private val childIndex = AtomicInteger(0)
-  private val chatMainWindowController: ChatMainWindowController by inject()
+  private val controller: ChatMainWindowController by inject()
 
   private lateinit var scrollPane: ScrollPane
 
   init {
-    chatMainWindowController.scrollToBottomFlag.addListener { _, _, _ ->
+    controller.scrollToBottomFlag.addListener { _, _, _ ->
       scrollToBottom()
     }
   }
 
   override val root = vbox {
-    vboxConstraints { vGrow = Priority.ALWAYS }
-
     scrollPane = scrollpane {
       hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
       vbarPolicy = ScrollPane.ScrollBarPolicy.ALWAYS
-      vboxConstraints { vGrow = Priority.ALWAYS }
 
       textflow {
-        vboxConstraints { vGrow = Priority.ALWAYS }
-        paddingLeft = 10.0
-        maxWidthProperty().bind(this@vbox.widthProperty() - scrollbarApproxSize)
+        //TODO:
+        setPrefSize(1000.0, 1000.0)
 
-        bindChildren(chatMainWindowController.currentChatRoomMessageList) { baseChatMessage ->
+        handleDragAndDrop(this)
+        paddingLeft = 10.0
+
+        bindChildren(controller.currentChatRoomMessageList) { baseChatMessage ->
           return@bindChildren when (baseChatMessage.getMessageType()) {
-            BaseChatMessageItem.MessageType.MyTextMessage,
-            BaseChatMessageItem.MessageType.ForeignTextMessage,
-            BaseChatMessageItem.MessageType.SystemTextMessage -> {
+            MessageType.MyTextMessage,
+            MessageType.ForeignTextMessage,
+            MessageType.SystemTextMessage -> {
               baseChatMessage as MyTextChatMessageItem
               createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+            }
+            MessageType.MyImageMessage -> {
+              baseChatMessage as MyImageChatMessage
+              createImageChatMessage(baseChatMessage.senderName, baseChatMessage.imageFile)
             }
             else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
           }
@@ -65,12 +75,30 @@ class ChatRoomView : BaseView() {
           return@setOnAction
         }
 
-        chatMainWindowController.sendMessage(text)
+        controller.sendMessage(text)
 
         clear()
         requestFocus()
       }
     }
+  }
+
+
+  private fun handleDragAndDrop(textFlow: TextFlow) {
+    textFlow.setOnDragOver { event ->
+      if (event.dragboard.hasFiles()) {
+        event.acceptTransferModes(*TransferMode.ANY)
+      }
+    }
+
+    textFlow.setOnDragDropped { event ->
+      event.dragboard.files.forEach {
+        println("file = ${it.absolutePath}")
+
+        controller.addChatMessage(MyImageChatMessage("test", it))
+      }
+    }
+
   }
 
   fun scrollToBottom() {
@@ -83,7 +111,22 @@ class ChatRoomView : BaseView() {
     }
   }
 
-  private fun createTextChatMessage(senderName: String, messageText: String): Text {
+  private fun createImageChatMessage(senderName: String, imageFile: File): Node {
+    return VBox().apply {
+      id = "child_id_${childIndex.get()}"
+      cursor = Cursor.HAND
+
+      text(senderName)
+
+      val image = imageFile.inputStream().use { stream -> Image(stream) }
+      imageview(image) {
+        fitWidth = 128.0
+        fitHeight = 128.0
+      }
+    }
+  }
+
+  private fun createTextChatMessage(senderName: String, messageText: String): Node {
     return Text("$senderName: $messageText\n").apply {
       id = "child_id_${childIndex.get()}"
     }
