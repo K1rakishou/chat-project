@@ -77,7 +77,7 @@ class NetworkManager : CoroutineScope {
     connectionState = ConnectionState.Disconnected
 
     //actor for reconnection
-    //it will wait delayTime milliseconds and the try to connect to the server again
+    //it will wait delayTime milliseconds and then will try to connect to the server again
     reconnectionActor = actor(capacity = 1) {
       for (event in channel) {
         val delayTime = 5000L
@@ -94,7 +94,7 @@ class NetworkManager : CoroutineScope {
   //TODO:
   //This may break reconnection in ChatMainWindow when user navigates to a window that sets this flag to false.
   //We probably only need to set this flag to false in the very beginning in the connection to the server phase.
-  //After that we need reconnection to be set to true.
+  //After that we need reconnection to always be set to true.
   fun shouldReconnectOnDisconnect(value: Boolean) {
     shouldReconnectToServer.set(value)
   }

@@ -4,6 +4,7 @@ import ChatApp.Companion.settingsStore
 import controller.ChatMainWindowController
 import events.ChatMainWindowEvents
 import events.ChatRoomListFragmentEvents
+import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.geometry.Orientation
 import javafx.scene.control.SplitPane
 import javafx.scene.layout.Border
@@ -83,7 +84,11 @@ class ChatMainWindow : BaseView("Chat") {
           minWidth = 200.0
           border = Border.EMPTY
 
-          add(ChatRoomListFragment::class)
+          val params = ChatRoomListFragmentParams(this@vbox.widthProperty(), this@vbox.heightProperty(), controller)
+
+          val scope = Scope()
+          setInScope(params, scope)
+          add(find<ChatRoomListFragment>(scope))
         }
 
         vbox {
@@ -106,4 +111,10 @@ class ChatMainWindow : BaseView("Chat") {
       find<CreateChatRoomDialogFragment>().openModal(resizable = false)
     }
   }
+
+  class ChatRoomListFragmentParams(
+    val widthProperty: ReadOnlyDoubleProperty,
+    val heightProperty: ReadOnlyDoubleProperty,
+    val controller: ChatMainWindowController
+  ) : ViewModel()
 }
