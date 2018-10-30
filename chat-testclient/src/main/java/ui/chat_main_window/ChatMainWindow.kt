@@ -21,6 +21,8 @@ class ChatMainWindow : BaseView("Chat") {
   private val controller: ChatMainWindowController by inject()
   private val chatMainWindowSettings: ChatMainWindowSettings by lazy { ChatApp.settingsStore.chatMainWindowSettings }
 
+  private lateinit var rightPartSizeParams: ChatRoomListFragmentParams
+
   init {
     subscribe<ChatMainWindowEvents.JoinedChatRoomEvent> { event ->
       controller.onJoinedToChatRoom(event.roomName, event.userName, event.users, event.messageHistory)
@@ -86,15 +88,17 @@ class ChatMainWindow : BaseView("Chat") {
           minWidth = 200.0
           border = Border.EMPTY
 
-          val params = ChatRoomListFragmentParams(this@vbox.widthProperty(), this@vbox.heightProperty(), controller)
+          val params = mutableMapOf(
+            WIDTH_PROPERTY to this@vbox.widthProperty(),
+            HEIGHT_PROPERTY to this@vbox.heightProperty()
+          )
 
-          val scope = Scope()
-          setInScope(params, scope)
-          add(find<ChatRoomListFragment>(scope))
+          add(find<ChatRoomListFragment>(params = params))
         }
 
         vbox {
           border = Border.EMPTY
+          rightPartSizeParams = ChatRoomListFragmentParams(this@vbox.widthProperty(), this@vbox.heightProperty())
 
           add(ChatRoomViewEmpty::class)
         }
@@ -114,9 +118,27 @@ class ChatMainWindow : BaseView("Chat") {
     }
   }
 
+  fun showChatRoomView() {
+    doOnUI {
+      val chatRoomViewEmpty = find<ChatRoomViewEmpty>()
+      if (chatRoomViewEmpty.isDocked) {
+        val params = mutableMapOf(
+          WIDTH_PROPERTY to rightPartSizeParams.widthProperty,
+          HEIGHT_PROPERTY to rightPartSizeParams.heightProperty
+        )
+
+        chatRoomViewEmpty.replaceWith(find<ChatRoomView>(params = params))
+      }
+    }
+  }
+
   class ChatRoomListFragmentParams(
     val widthProperty: ReadOnlyDoubleProperty,
-    val heightProperty: ReadOnlyDoubleProperty,
-    val controller: ChatMainWindowController
+    val heightProperty: ReadOnlyDoubleProperty
   ) : ViewModel()
+
+  companion object {
+    const val WIDTH_PROPERTY = "width_property"
+    const val HEIGHT_PROPERTY = "height_property"
+  }
 }

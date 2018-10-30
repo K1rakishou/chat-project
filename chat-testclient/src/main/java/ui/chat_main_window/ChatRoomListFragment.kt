@@ -24,10 +24,15 @@ import ui.base.BaseFragment
 import ui.widgets.VirtualListView
 
 class ChatRoomListFragment : BaseFragment() {
+  private val rightMargin = 16.0
+
   private val store: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val controller: ChatMainWindowController by inject()
-  private val chatMainWindowSize: ChatMainWindow.ChatRoomListFragmentParams by inject()
-  private val rightMargin = 16.0
+
+  private val chatMainWindowSize = ChatMainWindow.ChatRoomListFragmentParams(
+    params[ChatMainWindow.WIDTH_PROPERTY] as ReadOnlyDoubleProperty,
+    params[ChatMainWindow.HEIGHT_PROPERTY] as ReadOnlyDoubleProperty
+  )
 
   init {
     subscribe<ChatRoomListFragmentEvents.SelectItem> { event ->

@@ -2,14 +2,15 @@ package ui.chat_main_window
 
 import Styles
 import controller.ChatMainWindowController
+import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.scene.Cursor
 import javafx.scene.Node
 import javafx.scene.control.ScrollPane
 import javafx.scene.image.Image
 import javafx.scene.input.TransferMode
+import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import javafx.scene.text.Text
-import javafx.scene.text.TextFlow
 import kotlinx.coroutines.delay
 import model.chat_message.MessageType
 import model.chat_message.MyImageChatMessage
@@ -24,9 +25,15 @@ class ChatRoomView : BaseView() {
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val scrollbarApproxSize = 16.0
   private val childIndex = AtomicInteger(0)
+
   private val controller: ChatMainWindowController by inject()
 
   private lateinit var scrollPane: ScrollPane
+
+  private val chatMainWindowSize = ChatMainWindow.ChatRoomListFragmentParams(
+    params[ChatMainWindow.WIDTH_PROPERTY] as ReadOnlyDoubleProperty,
+    params[ChatMainWindow.HEIGHT_PROPERTY] as ReadOnlyDoubleProperty
+  )
 
   init {
     controller.scrollToBottomFlag.addListener { _, _, _ ->
@@ -35,16 +42,18 @@ class ChatRoomView : BaseView() {
   }
 
   override val root = vbox {
+    handleDragAndDrop(this)
+
     scrollPane = scrollpane {
       hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
       vbarPolicy = ScrollPane.ScrollBarPolicy.ALWAYS
 
-      textflow {
-        //TODO:
-        setPrefSize(1000.0, 1000.0)
+      prefHeightProperty().bind(chatMainWindowSize.heightProperty)
 
-        handleDragAndDrop(this)
+      textflow {
         paddingLeft = 10.0
+        prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+        vgrow = Priority.ALWAYS
 
         bindChildren(controller.currentChatRoomMessageList) { baseChatMessage ->
           return@bindChildren when (baseChatMessage.getMessageType()) {
@@ -84,14 +93,14 @@ class ChatRoomView : BaseView() {
   }
 
 
-  private fun handleDragAndDrop(textFlow: TextFlow) {
-    textFlow.setOnDragOver { event ->
+  private fun handleDragAndDrop(node: Node) {
+    node.setOnDragOver { event ->
       if (event.dragboard.hasFiles()) {
         event.acceptTransferModes(*TransferMode.ANY)
       }
     }
 
-    textFlow.setOnDragDropped { event ->
+    node.setOnDragDropped { event ->
       event.dragboard.files.forEach {
         println("file = ${it.absolutePath}")
 

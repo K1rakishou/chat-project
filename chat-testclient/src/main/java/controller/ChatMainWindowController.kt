@@ -392,10 +392,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   fun onJoinedToChatRoom(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
     doOnUI {
-      val chatRoomViewEmpty = find<ChatRoomViewEmpty>()
-      if (chatRoomViewEmpty.isDocked) {
-        chatRoomViewEmpty.replaceWith<ChatRoomView>()
-      }
+      view.showChatRoomView()
 
       selectedRoomName = roomName
 
