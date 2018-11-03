@@ -31,12 +31,8 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   private val networkManager: NetworkManager by lazy { ChatApp.networkManager }
   private val store: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val delayBeforeAddFirstChatRoomMessage = 250L
-  private var selectedRoomName: String? = null
 
   lateinit var scrollToBottomFlag: SimpleIntegerProperty
-
-  val lastChatMessageMap = FXCollections.observableHashMap<String, SimpleStringProperty>()
-  val currentChatRoomMessageList = FXCollections.observableArrayList<BaseChatMessageItem>()
 
   override fun createController(viewParam: ChatMainWindow) {
     super.createController(viewParam)
@@ -49,36 +45,22 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   }
 
   override fun destroyController() {
-    selectedRoomName = null
-
     super.destroyController()
   }
 
-  fun updateSelectedRoom(roomName: String) {
-    selectedRoomName = roomName
-  }
-
-  fun sendMessage(messageText: String) {
+  fun sendMessage(selectedChatRoomName: String, messageText: String) {
     ThreadChecker.throwIfNotOnMainThread()
 
     if (!networkManager.isConnected) {
       println("Not connected")
 
-      selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, SystemChatMessageItemMy("Not connected to the server"))
-      }
-
+      addChatMessage(selectedChatRoomName, SystemChatMessageItemMy("Not connected to the server"))
       return
     }
 
-    if (selectedRoomName == null) {
-      println("Cannot send a message because no room is selected")
-      return
-    }
-
-    val chatRoom = store.getChatRoomByName(selectedRoomName)
+    val chatRoom = store.getChatRoomByName(selectedChatRoomName)
     if (chatRoom == null) {
-      println("Cannot send a message because chat room (${selectedRoomName}) does not exist")
+      println("Cannot send a message because chat room (${selectedChatRoomName}) does not exist")
       return
     }
 
@@ -88,12 +70,12 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       return
     }
 
-    val messageId = addChatMessage(selectedRoomName!!, MyTextChatMessageItem(myUser.userName, messageText))
+    val messageId = addChatMessage(selectedChatRoomName, MyTextChatMessageItem(myUser.userName, messageText))
     if (messageId == -1) {
-      throw IllegalStateException("Could not add chat message (Probably selectedRoomName (${selectedRoomName}) refers to an unknown room)")
+      throw IllegalStateException("Could not add chat message (Probably selectedRoomName (${selectedChatRoomName}) refers to an unknown room)")
     }
 
-    networkManager.sendPacket(SendChatMessagePacket(messageId, selectedRoomName!!, myUser.userName, messageText))
+    networkManager.sendPacket(SendChatMessagePacket(messageId, selectedChatRoomName, myUser.userName, messageText))
   }
 
   private fun startListeningToPackets() {
@@ -286,57 +268,19 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     addChatMessage(roomName, SystemChatMessageItemMy("User \"$userName\" has left the room"))
   }
 
-  //TODO
-  fun addChatMessage(chatMessage: BaseChatMessageItem): Int {
-    return addChatMessage(selectedRoomName!!, chatMessage)
-  }
-
-  private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem): Int {
+  //TODO: make private
+  fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem): Int {
     val messageId = store.addChatRoomMessage(roomName, chatMessage)
     if (messageId == -1) {
       println("Could not add chat room message to room with name $roomName")
       return -1
     }
 
-    selectedRoomName?.let { name ->
-      if (name == roomName) {
-        doOnUI {
-          currentChatRoomMessageList.add(chatMessage)
-          scrollChatToBottom()
-        }
-      }
+    doOnUI {
+      scrollChatToBottom()
     }
 
-    updateLastChatRoomMessage(roomName, chatMessage)
     return messageId
-  }
-
-  private fun updateLastChatRoomMessage(roomName: String, chatMessage: BaseChatMessageItem) {
-    when (chatMessage.getMessageType()) {
-      MessageType.MyTextMessage,
-      MessageType.ForeignTextMessage -> {
-        doOnUI {
-          val lastMessageText = when (chatMessage.getMessageType()) {
-            MessageType.MyTextMessage -> {
-              chatMessage as MyTextChatMessageItem
-              "${chatMessage.senderName}: ${chatMessage.messageText}"
-            }
-            MessageType.ForeignTextMessage -> {
-              chatMessage as ForeignTextChatMessageItem
-              "${chatMessage.senderName}: ${chatMessage.messageText}"
-            }
-            else -> null
-          }
-
-          if (lastMessageText != null) {
-            lastChatMessageMap[roomName]!!.set(lastMessageText)
-          }
-        }
-      }
-      else -> {
-        //do nothing
-      }
-    }
   }
 
   private fun updatePublicChatRoomList(response: GetPageOfPublicRoomsResponsePayload) {
@@ -348,35 +292,11 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
       store.removeNoRoomsNotification()
       store.addManyChatRoomListItem(mappedRooms)
-
-      response.publicChatRoomList.forEach { chatRoom ->
-        lastChatMessageMap[chatRoom.chatRoomName] = SimpleStringProperty("")
-      }
-    }
-  }
-
-  fun reloadRoomMessageHistory(roomName: String) {
-    doOnUI {
-      currentChatRoomMessageList.clear()
-
-      val chatMessageHistory = store.getChatRoomMessageHistory(roomName)
-      val lastMessage = chatMessageHistory.lastOrNull {
-        it.getMessageType() == MessageType.ForeignTextMessage ||
-        it.getMessageType() == MessageType.MyTextMessage
-      }
-
-      if (lastMessage != null) {
-        updateLastChatRoomMessage(roomName, lastMessage)
-      }
-
-      currentChatRoomMessageList.addAll(chatMessageHistory)
     }
   }
 
   fun onChatRoomCreated(roomName: String, userName: String?, roomImageUrl: String) {
     doOnUI {
-      lastChatMessageMap[roomName] = SimpleStringProperty()
-
       store.removeNoRoomsNotification()
       store.addChatRoomListItem(PublicChatRoomItem.create(roomName, roomImageUrl))
 
@@ -392,9 +312,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   fun onJoinedToChatRoom(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
     doOnUI {
-      view.showChatRoomView()
-
-      selectedRoomName = roomName
+      view.showChatRoomView(roomName)
 
       //Wait some time before ChatRoomView shows up
       delay(TimeUnit.MILLISECONDS.toMillis(delayBeforeAddFirstChatRoomMessage))
@@ -404,7 +322,6 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       chatRoom.addMyUser(userName)
       chatRoom.replaceChatRoomHistory(messageHistory)
 
-      reloadRoomMessageHistory(roomName)
       addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
     }
   }
@@ -418,26 +335,29 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   private fun onDisconnected() {
     doOnUI {
-      selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, SystemChatMessageItemMy("Disconnected from the server"))
-      }
+      //TODO
+//      selectedRoomName?.let { roomName ->
+//        addChatMessage(roomName, SystemChatMessageItemMy("Disconnected from the server"))
+//      }
     }
   }
 
   private fun onReconnected() {
     doOnUI {
-      selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, SystemChatMessageItemMy("Reconnected"))
-      }
+      //TODO
+//      selectedRoomName?.let { roomName ->
+//        addChatMessage(roomName, SystemChatMessageItemMy("Reconnected"))
+//      }
     }
   }
 
   private fun onErrorWhileTryingToConnect(error: Throwable?) {
     doOnUI {
-      selectedRoomName?.let { roomName ->
-        addChatMessage(roomName, SystemChatMessageItemMy("Error while trying to reconnect: ${error?.message
-          ?: "No error message"}"))
-      }
+      //TODO
+//      selectedRoomName?.let { roomName ->
+//        addChatMessage(roomName, SystemChatMessageItemMy("Error while trying to reconnect: ${error?.message
+//          ?: "No error message"}"))
+//      }
     }
   }
 

@@ -8,11 +8,15 @@ import core.model.drainable.chat_message.TextChatMessage
 import javafx.beans.property.SimpleListProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
+import javafx.collections.ListChangeListener
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.ForeignTextChatMessageItem
+import model.chat_message.MessageType
+import model.chat_message.MyTextChatMessageItem
 import model.user.BaseUserItem
 import model.user.ForeignUserItem
 import model.user.MyUserItem
+import tornadofx.onChange
 import java.lang.RuntimeException
 
 class PublicChatRoomItem(
@@ -26,8 +30,27 @@ class PublicChatRoomItem(
     get() = imageUrlProperty.get()
     set(value) = imageUrlProperty.set(value)
 
-  val userListProperty = SimpleListProperty<BaseUserItem>(FXCollections.observableArrayList())
-  val roomMessagesProperty = SimpleListProperty<BaseChatMessageItem>(FXCollections.observableArrayList())
+  val lastMessageProperty = SimpleStringProperty("")
+  val userListProperty = FXCollections.observableArrayList<BaseUserItem>()
+  val roomMessagesProperty = FXCollections.observableArrayList<BaseChatMessageItem>()
+
+  init {
+    roomMessagesProperty.onChange { change ->
+      while (change.next()) {
+        val lastElement = if (change.wasAdded()) {
+          change.addedSubList.lastOrNull()
+        } else {
+          change.list.lastOrNull()
+        }
+
+        if (lastElement != null) {
+          lastMessageProperty.set(lastElement.toTextMessage())
+        } else {
+          lastMessageProperty.set("")
+        }
+      }
+    }
+  }
 
   fun addMyUser(userName: String) {
     val user = MyUserItem(userName)

@@ -2,7 +2,8 @@ package ui.chat_main_window
 
 import Styles
 import controller.ChatMainWindowController
-import javafx.beans.property.ReadOnlyDoubleProperty
+import events.ChatRoomViewEvents
+import javafx.collections.FXCollections
 import javafx.scene.Cursor
 import javafx.scene.Node
 import javafx.scene.control.ScrollPane
@@ -12,9 +13,11 @@ import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import javafx.scene.text.Text
 import kotlinx.coroutines.delay
+import model.chat_message.BaseChatMessageItem
 import model.chat_message.MessageType
 import model.chat_message.MyImageChatMessage
 import model.chat_message.MyTextChatMessageItem
+import store.ChatRoomsStore
 import tornadofx.*
 import ui.base.BaseView
 import java.io.File
@@ -22,20 +25,44 @@ import java.util.concurrent.atomic.AtomicInteger
 
 
 class ChatRoomView : BaseView() {
+  private lateinit var scrollPane: ScrollPane
+
+  private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val scrollbarApproxSize = 16.0
   private val childIndex = AtomicInteger(0)
-
   private val controller: ChatMainWindowController by inject()
 
-  private lateinit var scrollPane: ScrollPane
+  private var selectedChatRoomName: String = ""
+  private var currentChatRoomMessagesProperty = FXCollections.observableArrayList<BaseChatMessageItem>()
+  private var chatMainWindowSize = params[ChatMainWindow.CHAT_ROOM_VIEW_SIZE] as ChatMainWindow.ChatRoomViewSizeParams
 
-  private val chatMainWindowSize = ChatMainWindow.ChatRoomListFragmentParams(
-    params[ChatMainWindow.WIDTH_PROPERTY] as ReadOnlyDoubleProperty,
-    params[ChatMainWindow.HEIGHT_PROPERTY] as ReadOnlyDoubleProperty
-  )
+  private val roomMessagePropertyListener = ListConversionListener<BaseChatMessageItem, BaseChatMessageItem>(currentChatRoomMessagesProperty) { it }
 
   init {
+    subscribe<ChatRoomViewEvents.ChangeSelectedRoom> { event ->
+      if (event.selectedRoomName == selectedChatRoomName) {
+        return@subscribe
+      }
+
+      val oldSelectedChatRoomName = selectedChatRoomName
+      selectedChatRoomName = event.selectedRoomName
+
+      val oldRoomMessageProperty = chatRoomsStore.getChatRoomByName(oldSelectedChatRoomName)?.roomMessagesProperty
+      val newRoomMessageProperty = chatRoomsStore.getChatRoomByName(selectedChatRoomName)!!.roomMessagesProperty
+      val messageHistory = newRoomMessageProperty ?: emptyList<BaseChatMessageItem>()
+
+      //remove old listener if it's not null
+      oldRoomMessageProperty?.removeListener(roomMessagePropertyListener)
+
+      //reload message history for the selected chat room
+      currentChatRoomMessagesProperty.clear()
+      currentChatRoomMessagesProperty.addAll(messageHistory)
+
+      //add new listener
+      newRoomMessageProperty!!.addListener(roomMessagePropertyListener)
+    }
+
     controller.scrollToBottomFlag.addListener { _, _, _ ->
       scrollToBottom()
     }
@@ -50,12 +77,13 @@ class ChatRoomView : BaseView() {
 
       prefHeightProperty().bind(chatMainWindowSize.heightProperty)
 
+      //TODO: remove TextFlow
       textflow {
         paddingLeft = 10.0
         prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
         vgrow = Priority.ALWAYS
 
-        bindChildren(controller.currentChatRoomMessageList) { baseChatMessage ->
+        bindChildren(currentChatRoomMessagesProperty) { baseChatMessage ->
           return@bindChildren when (baseChatMessage.getMessageType()) {
             MessageType.MyTextMessage,
             MessageType.ForeignTextMessage,
@@ -84,14 +112,13 @@ class ChatRoomView : BaseView() {
           return@setOnAction
         }
 
-        controller.sendMessage(text)
+        controller.sendMessage(selectedChatRoomName, text)
 
         clear()
         requestFocus()
       }
     }
   }
-
 
   private fun handleDragAndDrop(node: Node) {
     node.setOnDragOver { event ->
@@ -104,10 +131,10 @@ class ChatRoomView : BaseView() {
       event.dragboard.files.forEach {
         println("file = ${it.absolutePath}")
 
-        controller.addChatMessage(MyImageChatMessage("test", it))
+        //TODO
+        controller.addChatMessage(selectedChatRoomName, MyImageChatMessage("test", it))
       }
     }
-
   }
 
   fun scrollToBottom() {

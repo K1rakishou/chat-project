@@ -10,6 +10,8 @@ abstract class BaseChatMessageItem(
 
   abstract fun getMessageType(): MessageType
 
+  abstract fun toTextMessage(): String
+
   fun shouldUpdateIds(): Boolean {
     return when (getMessageType()) {
       MessageType.MyTextMessage,

@@ -14,6 +14,10 @@ class MyImageChatMessage(
 
   override fun getMessageType(): MessageType = MessageType.MyImageMessage
 
+  override fun toTextMessage(): String {
+    return "$senderName sent an image"
+  }
+
   val id = UUID.randomUUID()
 
   private val senderNameProperty by lazy { SimpleStringProperty(senderName) }

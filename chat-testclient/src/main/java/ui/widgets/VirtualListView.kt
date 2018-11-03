@@ -47,6 +47,9 @@ class VirtualListView<T>(
 
   fun getVirtualFlow() = virtualFlow
 
+  //TODO: this won't work when a new item is added to the list with index less than selectedItemIndex.
+  //Should either use some kind of key to search for the item's index or update selectedItemIndex
+  //whenever someone adds (or removes) items to the list
   fun selectItem(index: Int): T? {
     if (index < 0 || index > items.size) {
       throw ArrayIndexOutOfBoundsException("index ($index) if out of bounds 0..${items.size}")

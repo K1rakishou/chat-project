@@ -7,6 +7,10 @@ import tornadofx.FXEvent
 
 class ChatMainWindowEvents {
 
+  class ShowChatRoomViewEvent(
+    val selectedRoomName: String
+  ) : FXEvent(EventBus.RunOn.ApplicationThread)
+
   class ShowJoinChatRoomDialogEvent(
     val roomName: String
   ) : FXEvent(EventBus.RunOn.ApplicationThread)

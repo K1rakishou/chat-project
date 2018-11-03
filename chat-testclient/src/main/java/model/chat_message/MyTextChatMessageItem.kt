@@ -12,6 +12,10 @@ open class MyTextChatMessageItem(
 
   override fun getMessageType(): MessageType = MessageType.MyTextMessage
 
+  override fun toTextMessage(): String {
+    return "$senderName: $messageText"
+  }
+
   val id = UUID.randomUUID()
 
   private val senderNameProperty by lazy { SimpleStringProperty(senderName) }

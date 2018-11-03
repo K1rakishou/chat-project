@@ -8,4 +8,7 @@ class SystemChatMessageItemMy(
 
   override fun getMessageType(): MessageType = MessageType.SystemTextMessage
 
+  override fun toTextMessage(): String {
+    return ""
+  }
 }

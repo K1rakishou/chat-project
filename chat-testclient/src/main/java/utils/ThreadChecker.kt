@@ -3,7 +3,7 @@ package utils
 import java.lang.RuntimeException
 
 object ThreadChecker {
-  const val mainThreadName = "JavaFX Application Thread"
+  private const val mainThreadName = "JavaFX Application Thread"
 
   fun throwIfNotOnMainThread() {
     val currentThreadName = Thread.currentThread().name

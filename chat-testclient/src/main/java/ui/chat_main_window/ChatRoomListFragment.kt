@@ -1,7 +1,6 @@
 package ui.chat_main_window
 
 import ChatApp
-import controller.ChatMainWindowController
 import events.ChatMainWindowEvents
 import events.ChatRoomListFragmentEvents
 import javafx.beans.property.ReadOnlyDoubleProperty
@@ -24,15 +23,12 @@ import ui.base.BaseFragment
 import ui.widgets.VirtualListView
 
 class ChatRoomListFragment : BaseFragment() {
+  private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
+
+  private var lastSelectedChatRoomName: String? = null
   private val rightMargin = 16.0
 
-  private val store: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
-  private val controller: ChatMainWindowController by inject()
-
-  private val chatMainWindowSize = ChatMainWindow.ChatRoomListFragmentParams(
-    params[ChatMainWindow.WIDTH_PROPERTY] as ReadOnlyDoubleProperty,
-    params[ChatMainWindow.HEIGHT_PROPERTY] as ReadOnlyDoubleProperty
-  )
+  private val chatMainWindowSize = params[ChatMainWindow.CHAT_ROOM_LIST_VIEW_SIZE] as ChatMainWindow.ChatRoomViewSizeParams
 
   init {
     subscribe<ChatRoomListFragmentEvents.SelectItem> { event ->
@@ -43,7 +39,7 @@ class ChatRoomListFragment : BaseFragment() {
     }.autoUnsubscribe()
   }
 
-  private val virtualListView = VirtualListView(store.publicChatRoomList, { item ->
+  private val virtualListView = VirtualListView(chatRoomsStore.publicChatRoomList, { item ->
     println("Constructing a node for a room with name ${item.roomName}")
 
     return@VirtualListView when (item) {
@@ -63,13 +59,11 @@ class ChatRoomListFragment : BaseFragment() {
   private fun onItemSelected(item: BaseChatRoomListItem) {
     when (item) {
       is PublicChatRoomItem -> {
-        controller.updateSelectedRoom(item.roomName)
-
-        val isMyUserAdded = store.getChatRoomByName(item.roomName)?.isMyUserAdded() ?: false
+        val isMyUserAdded = chatRoomsStore.getChatRoomByName(item.roomName)?.isMyUserAdded() ?: false
         if (isMyUserAdded) {
-          val selectedItem =  virtualListView.getSelectedItem()
-          if (selectedItem == null || selectedItem.roomName != item.roomName) {
-            controller.reloadRoomMessageHistory(item.roomName)
+          if (lastSelectedChatRoomName == null || lastSelectedChatRoomName != item.roomName) {
+            lastSelectedChatRoomName = item.roomName
+            fire(ChatMainWindowEvents.ShowChatRoomViewEvent(item.roomName))
           }
         } else {
           fire(ChatMainWindowEvents.ShowJoinChatRoomDialogEvent(item.roomName))
@@ -118,9 +112,11 @@ class ChatRoomListFragment : BaseFragment() {
         label(item.roomName) {
           textOverrun = OverrunStyle.ELLIPSIS
         }
-//        label(controller.lastChatMessageMap[item.roomName]!!) {
-//          textOverrun = OverrunStyle.ELLIPSIS
-//        }
+        label {
+          textProperty().bind(chatRoomsStore.getChatRoomByName(item.roomName)!!.lastMessageProperty)
+
+          textOverrun = OverrunStyle.ELLIPSIS
+        }
       }
     }
   }

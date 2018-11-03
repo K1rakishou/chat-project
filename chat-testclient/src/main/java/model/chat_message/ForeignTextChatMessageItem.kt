@@ -6,4 +6,8 @@ class ForeignTextChatMessageItem(
 ) : MyTextChatMessageItem(senderName, messageText, -1, FOREIGN_MESSAGE_ID) {
 
   override fun getMessageType(): MessageType = MessageType.ForeignTextMessage
+
+  override fun toTextMessage(): String {
+    return "$senderName: $messageText"
+  }
 }
