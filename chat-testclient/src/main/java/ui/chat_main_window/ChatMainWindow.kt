@@ -115,9 +115,9 @@ class ChatMainWindow : BaseView("Chat") {
     }
   }
 
-  fun selectRoomWithIndex(index: Int) {
+  fun selectRoomWithName(roomName: String) {
     doOnUI {
-      fire(ChatRoomListFragmentEvents.SelectItem(index))
+      fire(ChatRoomListFragmentEvents.SelectItem(roomName))
     }
   }
 

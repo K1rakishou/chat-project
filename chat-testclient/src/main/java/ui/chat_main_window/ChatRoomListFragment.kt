@@ -32,7 +32,7 @@ class ChatRoomListFragment : BaseFragment() {
 
   init {
     subscribe<ChatRoomListFragmentEvents.SelectItem> { event ->
-      virtualListView.selectItem(event.itemIndex)
+      virtualListView.selectItemByKey(event.key)
     }.autoUnsubscribe()
     subscribe<ChatRoomListFragmentEvents.ClearSelection> { _ ->
       virtualListView.clearSelection()
@@ -47,6 +47,8 @@ class ChatRoomListFragment : BaseFragment() {
       is NoRoomsNotificationItem -> createCellNoRoomsNotificationItem(chatMainWindowSize.widthProperty)
       else -> throw RuntimeException("Not implemented for ${item::class}")
     }
+  }, { item ->
+    item.roomName
   }, { selectedItem ->
     onItemSelected(selectedItem)
   })

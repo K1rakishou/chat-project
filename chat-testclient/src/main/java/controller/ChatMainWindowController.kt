@@ -304,7 +304,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       if (userName != null) {
         onJoinedToChatRoom(roomName, userName, emptyList(), emptyList())
 
-        view.selectRoomWithIndex(0)
+        view.selectRoomWithName(roomName)
         scrollChatToBottom()
       }
     }

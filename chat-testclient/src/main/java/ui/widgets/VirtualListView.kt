@@ -13,10 +13,12 @@ import org.fxmisc.flowless.Cell
 import org.fxmisc.flowless.VirtualFlow
 import tornadofx.addChildIfPossible
 import tornadofx.onChange
+import utils.VirtualListViewUtils
 
 class VirtualListView<T>(
   private val items: ObservableList<T>,
   private val cellFactory: (T) -> Node,
+  private val keySelector: (T) -> String,
   private val onClick: (T) -> Unit
 ) {
   private var selectedItemIndex = -1
@@ -28,9 +30,29 @@ class VirtualListView<T>(
   init {
     virtualFlow.setOnMouseClicked(this::onMouseClick)
 
-    items.onChange {
-      if (it.list.isEmpty()) {
-        clearSelection()
+    items.onChange { change ->
+      while (change.next()) {
+        if (change.list.isEmpty()) {
+          clearSelection()
+        }
+
+        val range = change.from..change.to
+        val count = (change.to - change.from)
+
+        if (change.wasRemoved()) {
+          if (selectedItemIndex in range) {
+            clearSelection()
+          }
+        }
+
+        selectedItemIndex = VirtualListViewUtils.correctSelectedItemIndex(
+          selectedItemIndex,
+          change.wasAdded(),
+          change.wasRemoved(),
+          change.to,
+          range,
+          count
+        )
       }
     }
   }
@@ -38,7 +60,7 @@ class VirtualListView<T>(
   private fun onMouseClick(event: MouseEvent) {
     val hitResult = virtualFlow.hit(event.x, event.y)
     if (hitResult.isCellHit) {
-      val selectedItem = selectItem(hitResult.cellIndex)
+      val selectedItem = selectItemInternal(hitResult.cellIndex)
       if (selectedItem != null) {
         onClick(selectedItem)
       }
@@ -47,10 +69,17 @@ class VirtualListView<T>(
 
   fun getVirtualFlow() = virtualFlow
 
-  //TODO: this won't work when a new item is added to the list with index less than selectedItemIndex.
-  //Should either use some kind of key to search for the item's index or update selectedItemIndex
-  //whenever someone adds (or removes) items to the list
-  fun selectItem(index: Int): T? {
+  fun selectItemByKey(key: String) {
+    val index = items.indexOfFirst { keySelector(it) == key }
+    if (index == -1) {
+      println("No item found with key ($key)")
+      return
+    }
+
+    selectItemInternal(index)
+  }
+
+  private fun selectItemInternal(index: Int): T? {
     if (index < 0 || index > items.size) {
       throw ArrayIndexOutOfBoundsException("index ($index) if out of bounds 0..${items.size}")
     }
