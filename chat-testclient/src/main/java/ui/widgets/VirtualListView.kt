@@ -21,7 +21,8 @@ class VirtualListView<T>(
   private val keySelector: (T) -> String,
   private val onClick: (T) -> Unit
 ) {
-  private var selectedItemIndex = -1
+  private val noSelection = -1
+  private var selectedItemIndex = noSelection
 
   private val virtualFlow = VirtualFlow.createVertical(items) { item ->
     Cell.wrapNode(SelectableNode.wrapNode(cellFactory(item)))
@@ -32,26 +33,23 @@ class VirtualListView<T>(
 
     items.onChange { change ->
       while (change.next()) {
+        if (selectedItemIndex == noSelection) {
+          break
+        }
+
         if (change.list.isEmpty()) {
           clearSelection()
         }
 
-        val range = change.from..change.to
-        val count = (change.to - change.from)
-
         if (change.wasRemoved()) {
-          if (selectedItemIndex in range) {
+          if (selectedItemIndex in change.from..change.to) {
             clearSelection()
           }
         }
 
         selectedItemIndex = VirtualListViewUtils.correctSelectedItemIndex(
           selectedItemIndex,
-          change.wasAdded(),
-          change.wasRemoved(),
-          change.to,
-          range,
-          count
+          change
         )
       }
     }
@@ -110,12 +108,12 @@ class VirtualListView<T>(
   }
 
   fun clearSelection() {
-    if (selectedItemIndex == -1) {
+    if (selectedItemIndex == noSelection) {
       return
     }
 
     if (items.isEmpty()) {
-      selectedItemIndex = -1
+      selectedItemIndex = noSelection
       return
     }
 
@@ -125,7 +123,7 @@ class VirtualListView<T>(
     }
 
     cell.node.clearSelection()
-    selectedItemIndex = -1
+    selectedItemIndex = noSelection
   }
 
   class SelectableNode private constructor(
