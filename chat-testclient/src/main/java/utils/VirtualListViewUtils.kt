@@ -1,10 +1,10 @@
 package utils
 
 import javafx.collections.ListChangeListener
+import java.lang.IllegalStateException
 
 object VirtualListViewUtils {
 
-  //TODO: tests
   fun <T> correctSelectedItemIndex(
     oldSelectedIndex: Int,
     change: ListChangeListener.Change<out T>
@@ -17,15 +17,15 @@ object VirtualListViewUtils {
     // sv - selected inserted item
 
     if (change.wasReplaced()) {
-      TODO("Not implemented yet")
+      return newSelectedIndex
     }
 
     if (change.wasPermutated()) {
-      TODO("Not implemented yet")
+      throw IllegalStateException("Permutation should not happen")
     }
 
     if (change.wasUpdated()) {
-      TODO("Not implemented yet")
+      throw IllegalStateException("Update event should not happen")
     }
 
     if (change.wasAdded()) {

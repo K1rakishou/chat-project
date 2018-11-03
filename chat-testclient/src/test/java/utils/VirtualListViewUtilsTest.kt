@@ -114,4 +114,22 @@ class VirtualListViewUtilsTest {
 
     list.addAll(list.size, listOf(5, 6, 7))
   }
+
+  @Test
+  fun `test replace at the beginning`() {
+    val list = FXCollections.observableArrayList(4, 4, 3, 4, 5, 6, 7)
+
+    list.onChange { change ->
+      while (change.next()) {
+        val newSelectedItemIndex = VirtualListViewUtils.correctSelectedItemIndex<Int>(
+          6,
+          change
+        )
+
+        assertEquals(6, newSelectedItemIndex)
+      }
+    }
+
+    list.set(0, 1)
+  }
 }
