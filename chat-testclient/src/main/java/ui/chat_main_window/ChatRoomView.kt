@@ -1,32 +1,35 @@
 package ui.chat_main_window
 
+import ChatApp
 import Styles
 import controller.ChatMainWindowController
 import events.ChatRoomViewEvents
 import javafx.collections.FXCollections
+import javafx.geometry.Insets
 import javafx.scene.Cursor
 import javafx.scene.Node
-import javafx.scene.control.ScrollPane
 import javafx.scene.image.Image
+import javafx.scene.input.KeyEvent
 import javafx.scene.input.TransferMode
-import javafx.scene.layout.Priority
+import javafx.scene.layout.Background
+import javafx.scene.layout.BackgroundFill
+import javafx.scene.layout.CornerRadii
 import javafx.scene.layout.VBox
-import javafx.scene.text.Text
+import javafx.scene.paint.Paint
 import kotlinx.coroutines.delay
 import model.chat_message.BaseChatMessageItem
-import model.chat_message.MessageType
 import model.chat_message.MyImageChatMessage
 import model.chat_message.MyTextChatMessageItem
+import org.fxmisc.flowless.VirtualizedScrollPane
 import store.ChatRoomsStore
 import tornadofx.*
 import ui.base.BaseView
+import ui.widgets.VirtualMultiSelectListView
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 
 class ChatRoomView : BaseView() {
-  private lateinit var scrollPane: ScrollPane
-
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val scrollbarApproxSize = 16.0
@@ -39,7 +42,16 @@ class ChatRoomView : BaseView() {
 
   private val roomMessagePropertyListener = ListConversionListener<BaseChatMessageItem, BaseChatMessageItem>(currentChatRoomMessagesProperty) { it }
 
+  private val testItems = FXCollections.observableArrayList<BaseChatMessageItem>()
+
   init {
+    testItems.add(MyTextChatMessageItem("test", "1"))
+    testItems.add(MyTextChatMessageItem("test", "2"))
+    testItems.add(MyTextChatMessageItem("test", "3"))
+    testItems.add(MyTextChatMessageItem("test", "4"))
+    testItems.add(MyTextChatMessageItem("test", "5"))
+    testItems.add(MyTextChatMessageItem("test", "6"))
+
     subscribe<ChatRoomViewEvents.ChangeSelectedRoom> { event ->
       if (event.selectedRoomName == selectedChatRoomName) {
         return@subscribe
@@ -68,40 +80,29 @@ class ChatRoomView : BaseView() {
     }
   }
 
+  private val virtualListView = VirtualMultiSelectListView(testItems) { baseChatMessage ->
+    baseChatMessage as MyTextChatMessageItem
+    createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+  }
+
   override val root = vbox {
+    addEventFilter(KeyEvent.KEY_PRESSED) { event ->
+      virtualListView.updateKeyState(event.isShiftDown, event.isControlDown)
+    }
+    addEventFilter(KeyEvent.KEY_RELEASED) { event ->
+      virtualListView.updateKeyState(event.isShiftDown, event.isControlDown)
+    }
+
     handleDragAndDrop(this)
 
-    scrollPane = scrollpane {
-      hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
-      vbarPolicy = ScrollPane.ScrollBarPolicy.ALWAYS
+    add(VirtualizedScrollPane(virtualListView.getVirtualFlow().apply {
+      paddingLeft = 10.0
 
+      prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
       prefHeightProperty().bind(chatMainWindowSize.heightProperty)
 
-      //TODO: remove TextFlow
-      textflow {
-        paddingLeft = 10.0
-        prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
-        vgrow = Priority.ALWAYS
-
-        bindChildren(currentChatRoomMessagesProperty) { baseChatMessage ->
-          return@bindChildren when (baseChatMessage.getMessageType()) {
-            MessageType.MyTextMessage,
-            MessageType.ForeignTextMessage,
-            MessageType.SystemTextMessage -> {
-              baseChatMessage as MyTextChatMessageItem
-              createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
-            }
-            MessageType.MyImageMessage -> {
-              baseChatMessage as MyImageChatMessage
-              createImageChatMessage(baseChatMessage.senderName, baseChatMessage.imageFile)
-            }
-            else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
-          }
-        }
-
-        addClass(Styles.chatRoomTextArea)
-      }
-    }
+      background = Background(BackgroundFill(Paint.valueOf("#ffffff"), CornerRadii.EMPTY, Insets.EMPTY))
+    }))
     textfield {
       addClass(Styles.chatRoomTextField)
       promptText = "Enter your message here"
@@ -143,7 +144,7 @@ class ChatRoomView : BaseView() {
     //currentItemPosition-1 and not to the last one because it needs some time to calculate that item's size
     doOnUI {
       delay(delayBeforeUpdatingScrollBarPosition.toLong())
-      scrollPane.vvalue = 1.0
+//      scrollPane.vvalue = 1.0
     }
   }
 
@@ -163,8 +164,10 @@ class ChatRoomView : BaseView() {
   }
 
   private fun createTextChatMessage(senderName: String, messageText: String): Node {
-    return Text("$senderName: $messageText\n").apply {
-      id = "child_id_${childIndex.get()}"
+    return hbox {
+      label("$senderName: $messageText\n").apply {
+        id = "child_id_${childIndex.get()}"
+      }
     }
   }
 }
