@@ -2,117 +2,144 @@ package manager
 
 import core.Connection
 import core.Constants
-import core.Packet
 import core.byte_sink.InMemoryByteSink
 import core.extensions.forEachChunkAsync
-import core.extensions.myWithLock
 import core.response.BaseResponse
 import core.response.ResponseBuilder
 import core.response.UserHasLeftResponsePayload
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.io.ByteWriteChannel
-import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.channels.consumeEach
 import kotlin.coroutines.CoroutineContext
 
 class ConnectionManager(
   private val chatRoomManager: ChatRoomManager,
-  private val responseBuilder: ResponseBuilder
+  private val responseBuilder: ResponseBuilder,
+  private val dispatcher: CoroutineDispatcher = newFixedThreadPoolContext(2, "connection-manager")
 ) : CoroutineScope {
   private val job = Job()
-  private val connections = mutableMapOf<String, Connection>()
-  private val mutex = Mutex()
   private val sendActorChannelCapacity = 2048
-  private val sendPacketsActor: SendChannel<Pair<Connection, BaseResponse>>
+  private val connectionActor: SendChannel<ActorAction>
 
   override val coroutineContext: CoroutineContext
-    get() = job
+    get() = job + dispatcher
 
   init {
-    sendPacketsActor = actor(capacity = sendActorChannelCapacity) {
-      for (data in channel) {
-        val (connection, response) = data
+    connectionActor = actor(capacity = sendActorChannelCapacity) {
+      val connections = mutableMapOf<String, Connection>()
 
-        try {
-          if (connection.writeChannel.isClosedForWrite) {
-            println("Could not send response because channel with clientId: ${connection.clientId} is closed for writing")
-            continue
+      consumeEach { action ->
+        when (action) {
+          is ActorAction.AddConnection -> {
+            val isOk = addConnectionInternal(connections, action.clientId, action.connection)
+            action.result.complete(isOk)
           }
-
-          connection.writeChannel.let { wc ->
-            writeToOutputChannel(wc, responseBuilder.buildResponse(response, InMemoryByteSink.createWithInitialSize()))
-            wc.flush()
-          }
-
-        } catch (error: Throwable) {
-          println("Client's connection was closed while trying to write data into it")
-          removeConnection(connection.clientId)
+          is ActorAction.RemoveConnection -> removeConnectionInternal(connections, action.clientId)
+          is ActorAction.SendResponse -> sendResponseInternal(connections, action.clientId, action.response)
         }
       }
     }
-  }
-
-  private suspend fun writeToOutputChannel(writeChannel: ByteWriteChannel, packet: Packet) {
-    writeChannel.writeInt(packet.magicNumber)
-    writeChannel.writeInt(packet.bodySize)
-    writeChannel.writeShort(packet.type)
-
-    val streamSize = packet.bodyByteSink.getWriterPosition()
-
-    packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, streamSize) { chunk ->
-      writeChannel.writeFully(chunk, 0, chunk.size)
-    }
-  }
-
-  suspend fun sendResponse(clientId: String, response: BaseResponse) {
-    val connection = mutex.myWithLock { connections[clientId] }
-    if (connection == null) {
-      println("Could not send response because connection with clientId: $clientId does not exist")
-      return
-    }
-
-    sendPacketsActor.send(Pair(connection, response))
   }
 
   suspend fun addConnection(clientId: String, connection: Connection): Boolean {
-    return mutex.myWithLock {
-      if (connections.containsKey(clientId)) {
-        println("Already contains clientId: $clientId")
-        return@myWithLock false
-      }
-
-      connections[clientId] = connection
-      println("Added connection for client $clientId")
-
-      return@myWithLock true
-    }
+    val result = CompletableDeferred<Boolean>()
+    connectionActor.send(ActorAction.AddConnection(clientId, connection, result))
+    return result.await()
   }
 
   suspend fun removeConnection(clientId: String) {
-    mutex.myWithLock {
-      if (!connections.containsKey(clientId)) {
-        println("Does not contain clientId: $clientId")
-        return@myWithLock
+    connectionActor.send(ActorAction.RemoveConnection(clientId))
+  }
+
+  suspend fun sendResponse(clientId: String, response: BaseResponse) {
+    connectionActor.send(ActorAction.SendResponse(clientId, response))
+  }
+
+  private suspend fun sendResponseInternal(
+    connections: MutableMap<String, Connection>,
+    clientId: String,
+    response: BaseResponse
+  ) {
+    val connection = connections[clientId]
+
+    try {
+      if (connection == null) {
+        println("Could not find connection for clientId ($clientId)")
+        return
       }
 
-      try {
-        val roomsWithUserNames = chatRoomManager.leaveAllRooms(clientId)
+      connection.writeChannel.let { wc ->
+        val packet = responseBuilder.buildResponse(response, InMemoryByteSink.createWithInitialSize())
 
-        roomsWithUserNames.forEach { (roomName, userName) ->
-          val room = chatRoomManager.getChatRoom(roomName)
-          if (room != null) {
-            for (userInRoom in room.getEveryone()) {
-              sendResponse(userInRoom.user.clientId, UserHasLeftResponsePayload.success(roomName, userName))
-            }
+        wc.writeInt(packet.magicNumber)
+        wc.writeInt(packet.bodySize)
+        wc.writeShort(packet.type)
+
+        val streamSize = packet.bodyByteSink.getWriterPosition()
+
+        packet.bodyByteSink.getStream().forEachChunkAsync(0, Constants.maxInMemoryByteSinkSize, streamSize) { chunk ->
+          wc.writeFully(chunk, 0, chunk.size)
+        }
+
+        wc.flush()
+      }
+
+    } catch (error: Throwable) {
+      println("Client's connection was closed while trying to write data into it")
+      removeConnectionInternal(connections, clientId)
+    }
+  }
+
+  private suspend fun addConnectionInternal(
+    connections: MutableMap<String, Connection>,
+    clientId: String,
+    newConnection: Connection
+  ): Boolean {
+    if (connections.containsKey(clientId)) {
+      println("Already contains clientId: $clientId")
+      return false
+    }
+
+    connections[clientId] = newConnection
+    println("Added new connection for client $clientId")
+
+    return true
+  }
+
+  private suspend fun removeConnectionInternal(connections: MutableMap<String, Connection>, clientId: String) {
+    if (!connections.containsKey(clientId)) {
+      println("Does not contain clientId: $clientId")
+      return
+    }
+
+    try {
+      val roomsWithUserNames = chatRoomManager.leaveAllRooms(clientId)
+
+      roomsWithUserNames.forEach { (roomName, userName) ->
+        val room = chatRoomManager.getChatRoom(roomName)
+        if (room != null) {
+          for (userInRoom in room.getEveryone()) {
+            sendResponseInternal(connections, userInRoom.user.clientId, UserHasLeftResponsePayload.success(roomName, userName))
           }
         }
-      } finally {
-        connections[clientId]?.dispose()
-        connections.remove(clientId)
       }
+    } finally {
+      connections[clientId]?.dispose()
+      connections.remove(clientId)
     }
+
     println("Removed connection for client $clientId")
+  }
+
+  sealed class ActorAction {
+    class AddConnection(val clientId: String,
+                        val connection: Connection,
+                        val result: CompletableDeferred<Boolean>) : ActorAction()
+
+    class RemoveConnection(val clientId: String) : ActorAction()
+
+    class SendResponse(val clientId: String,
+                       val response: BaseResponse) : ActorAction()
   }
 }
