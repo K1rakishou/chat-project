@@ -112,10 +112,11 @@ class PublicChatRoomItem(
         ChatMessageType.Text -> {
           message as TextChatMessage
 
-          //TODO: check every message's clientId whether it exists in the roomMessages list.
-          //Depending on it - create either ForeignTextChatMessageItem (if it does not exists there)
-          //or MyTextChatMessageItem (if it does)
-          ForeignTextChatMessageItem(message.senderName, message.message)
+          if (message.isMyMessage) {
+            MyTextChatMessageItem(message.senderName, message.message)
+          } else {
+            ForeignTextChatMessageItem(message.senderName, message.message)
+          }
         }
       }
     }

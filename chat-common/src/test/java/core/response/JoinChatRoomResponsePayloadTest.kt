@@ -17,10 +17,10 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
     val roomName = "121314"
     val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
-      TextChatMessage(0, 0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
-      TextChatMessage(1, 1, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
-      TextChatMessage(2, 2, "6ase46", "wwwwwwwwwwwwwwwwwwwwww"),
-      TextChatMessage(3, 3, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
+      TextChatMessage(false, 0, 0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(true, 1, 1, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(false, 2, 2, "6ase46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(true, 3, 3, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
     )
     val usersInChatRoom = listOf(
       PublicUserInChat("test1")
@@ -41,6 +41,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
         assertEquals(expectedMessage.clientMessageId, actualMessage.clientMessageId)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
+        assertEquals(expectedMessage.isMyMessage, actualMessage.isMyMessage)
       }
 
       for (i in 0 until usersInChatRoom.size) {
@@ -82,6 +83,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
         assertEquals(expectedMessage.clientMessageId, actualMessage.clientMessageId)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
+        assertEquals(expectedMessage.isMyMessage, actualMessage.isMyMessage)
       }
 
       for (i in 0 until usersInChatRoom.size) {
@@ -95,7 +97,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
     val roomName = "121314"
     val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
-      TextChatMessage(0, 1, SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10), "wwwwwwwwwwwwwwwwwwwwww")
+      TextChatMessage(false, 0, 1, SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10), "wwwwwwwwwwwwwwwwwwwwww")
     )
     val usersInChatRoom = listOf(
       PublicUserInChat("test1")
@@ -116,6 +118,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
         assertEquals(expectedMessage.clientMessageId, actualMessage.clientMessageId)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
+        assertEquals(expectedMessage.isMyMessage, actualMessage.isMyMessage)
       }
 
       for (i in 0 until usersInChatRoom.size) {
@@ -129,7 +132,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
     val roomName = "121314"
     val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
-      TextChatMessage(0, 1, "e5we6s76", SecurityUtils.Generator.generateRandomString(Constants.maxTextMessageLen + 10))
+      TextChatMessage(true, 0, 1, "e5we6s76", SecurityUtils.Generator.generateRandomString(Constants.maxTextMessageLen + 10))
     )
     val usersInChatRoom = listOf(
       PublicUserInChat("test1")
@@ -150,6 +153,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
         assertEquals(expectedMessage.clientMessageId, actualMessage.clientMessageId)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
+        assertEquals(expectedMessage.isMyMessage, actualMessage.isMyMessage)
       }
 
       for (i in 0 until usersInChatRoom.size) {
@@ -163,7 +167,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
     val roomName = "121314"
     val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
-      TextChatMessage(0, 1, "e5we6s76", "45346347")
+      TextChatMessage(false, 0, 1, "e5we6s76", "45346347")
     )
     val usersInChatRoom = listOf(
       PublicUserInChat(SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10))
@@ -184,6 +188,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
         assertEquals(expectedMessage.clientMessageId, actualMessage.clientMessageId)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
+        assertEquals(expectedMessage.isMyMessage, actualMessage.isMyMessage)
       }
 
       for (i in 0 until usersInChatRoom.size) {
@@ -197,10 +202,10 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
     val roomName = "121314"
     val userName = SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10)
     val messageHistory = listOf<BaseChatMessage>(
-      TextChatMessage(0, 0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
-      TextChatMessage(1, 1, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
-      TextChatMessage(2, 2, "6ase46", "wwwwwwwwwwwwwwwwwwwwww"),
-      TextChatMessage(3, 3, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
+      TextChatMessage(true, 0, 0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(true, 1, 1, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(false, 2, 2, "6ase46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(false, 3, 3, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
     )
     val usersInChatRoom = listOf(
       PublicUserInChat("test1")
@@ -221,6 +226,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
         assertEquals(expectedMessage.clientMessageId, actualMessage.clientMessageId)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
+        assertEquals(expectedMessage.isMyMessage, actualMessage.isMyMessage)
       }
 
       for (i in 0 until usersInChatRoom.size) {
@@ -240,7 +246,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
     for (i in 0 until 100) {
       val message = SecurityUtils.Generator.generateRandomString(1024)
-      messageHistory += TextChatMessage(i, i, "test sender", message)
+      messageHistory += TextChatMessage(false, i, i, "test sender", message)
     }
 
     testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
@@ -258,6 +264,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
         assertEquals(expectedMessage.clientMessageId, actualMessage.clientMessageId)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
+        assertEquals(expectedMessage.isMyMessage, actualMessage.isMyMessage)
       }
 
       for (i in 0 until usersInChatRoom.size) {

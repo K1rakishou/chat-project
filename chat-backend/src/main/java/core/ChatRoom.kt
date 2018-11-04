@@ -3,6 +3,7 @@ package core
 import core.collections.RingBuffer
 import core.extensions.myWithLock
 import core.model.drainable.chat_message.BaseChatMessage
+import core.model.drainable.chat_message.ChatMessageType
 import kotlinx.coroutines.sync.Mutex
 import repository.mapper.BaseChatMessageMapper
 import repository.model.BaseChatMessageData
@@ -28,13 +29,22 @@ data class ChatRoom(
     mutex.myWithLock { userList.removeIf { it.user.userName == userName } }
   }
 
-  suspend fun addMessage(clientId: String, chatMessage: BaseChatMessage): Int {
-    if (chatMessage.serverMessageId != -1) {
-      throw IllegalStateException("serverMessageId should be initialized here!")
-    }
-
+  suspend fun addMessage(
+    clientId: String,
+    messageType: ChatMessageType,
+    clientMessageId: Int,
+    senderName: String,
+    messageText: String
+  ): Int {
     val serverMessageId = messageIdCounter.getAndIncrement()
-    val chatMessageData = BaseChatMessageMapper.FromBaseChatMessage.toBaseChatMessageData(clientId, serverMessageId, chatMessage)
+    val chatMessageData = BaseChatMessageMapper.FromBaseChatMessage.toBaseChatMessageData(
+      clientId,
+      serverMessageId,
+      messageType,
+      clientMessageId,
+      senderName,
+      messageText
+    )
 
     mutex.myWithLock { messageHistory.add(chatMessageData) }
     return serverMessageId

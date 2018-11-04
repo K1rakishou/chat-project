@@ -4,7 +4,7 @@ import core.Status
 import core.byte_sink.ByteSink
 import core.exception.PacketDeserializationException
 import core.exception.UnknownPacketVersionException
-import core.model.drainable.chat_message.TextChatMessage
+import core.model.drainable.chat_message.ChatMessageType
 import core.packet.SendChatMessagePacket
 import core.response.NewChatMessageResponsePayload
 import core.response.SendChatMessageResponsePayload
@@ -71,8 +71,7 @@ class SendChatMessageHandler(
       return
     }
 
-    //-1 here will be filled in the addMessage function by messageIdCounter
-    val serverMessageId = chatRoom.addMessage(clientId, TextChatMessage(-1, clientMessageId, userName, message))
+    val serverMessageId = chatRoom.addMessage(clientId, ChatMessageType.Text, clientMessageId, userName, message)
     val response = NewChatMessageResponsePayload.success(serverMessageId, clientMessageId, roomName, userName, message)
 
     for (userInRoom in chatRoom.getEveryoneExcept(userName)) {

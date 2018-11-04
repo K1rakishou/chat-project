@@ -1,6 +1,7 @@
 import core.Connection
 import core.Packet
 import core.PacketType
+import core.extensions.extractIpAddress
 import core.extensions.readPacketInfo
 import core.extensions.toHex
 import core.response.ResponseBuilder
@@ -26,19 +27,20 @@ import java.security.Security
 
 
 fun main(args: Array<String>) {
-  if (args.size != 1) {
+  if (args.size != 2) {
     println()
-    println("Please, provide a path to a directory where ByteSink cache will be created")
+    println("first parameter: \"Path to byte sink cache directory\", second parameter: \"Is debug run?\"")
     return
   }
 
   Security.addProvider(BouncyCastleProvider())
 
-  Server(args[0]).run()
+  Server(args[0], args[1].toBoolean()).run()
 }
 
 class Server(
-  private val byteSinkFileCachePath: String
+  private val byteSinkFileCachePath: String,
+  private val isDebug: Boolean
 ) {
   private val responseBuilder = ResponseBuilder()
   private val chatRoomManager = ChatRoomManager()
@@ -65,7 +67,7 @@ class Server(
 
         launch {
           clientSocket.use { socket ->
-            val clientId = SecurityUtils.Hashing.sha3(socket.remoteAddress.toString())
+            val clientId = SecurityUtils.Hashing.sha3(socket.remoteAddress.extractIpAddress(isDebug))
             val connection = Connection(clientId, socket)
 
             try {
