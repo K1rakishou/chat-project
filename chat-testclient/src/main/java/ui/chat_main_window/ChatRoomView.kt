@@ -57,7 +57,7 @@ class ChatRoomView : BaseView() {
       MessageType.ForeignTextMessage,
       MessageType.SystemTextMessage -> {
         baseChatMessage as MyTextChatMessageItem
-        createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+        createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText, baseChatMessage.getMessageType())
       }
       else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
     }
@@ -171,12 +171,29 @@ class ChatRoomView : BaseView() {
 //    }
 //  }
 
-  private fun createTextChatMessage(senderName: String, messageText: String): Node {
+  private fun createTextChatMessage(senderName: String, messageText: String, messageType: MessageType): Node {
     return hbox {
-      label("$senderName: $messageText\n").apply {
-        addClass(Styles.textChatMessage)
+      paddingTop = 2.0
+      paddingBottom = 2.0
+      paddingLeft = 4.0
+      paddingRight = 4.0
 
-        id = "child_id_${childIndex.get()}"
+      prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+      id = "child_id_${childIndex.get()}"
+
+      vbox {
+        label(senderName) {
+          if (messageType == MessageType.MyTextMessage) {
+            addClass(Styles.senderName)
+          } else {
+            addClass(Styles.receiverName)
+          }
+        }
+        text(messageText) {
+          wrappingWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+
+          addClass(Styles.textChatMessage)
+        }
       }
     }
   }
