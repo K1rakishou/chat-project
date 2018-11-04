@@ -1,7 +1,6 @@
 import core.Connection
 import core.Packet
 import core.PacketType
-import core.extensions.extractIpAddress
 import core.extensions.readPacketInfo
 import core.extensions.toHex
 import core.response.ResponseBuilder
@@ -11,6 +10,7 @@ import handler.GetPageOfPublicRoomsHandler
 import handler.JoinChatRoomPacketHandler
 import handler.SendChatMessageHandler
 import io.ktor.network.selector.ActorSelectorManager
+import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
@@ -67,7 +67,7 @@ class Server(
 
         launch {
           clientSocket.use { socket ->
-            val clientId = SecurityUtils.Hashing.sha3(socket.remoteAddress.extractIpAddress(isDebug))
+            val clientId = calculateClientId(socket, isDebug)
             val connection = Connection(clientId, socket)
 
             try {
@@ -82,6 +82,16 @@ class Server(
           }
         }
       }
+    }
+  }
+
+  private fun calculateClientId(socket: Socket, isDebug: Boolean): String {
+    val address = (socket.remoteAddress as InetSocketAddress)
+
+    return if (isDebug) {
+      socket.toString()
+    } else {
+      SecurityUtils.Hashing.sha3(address.hostName)
     }
   }
 
