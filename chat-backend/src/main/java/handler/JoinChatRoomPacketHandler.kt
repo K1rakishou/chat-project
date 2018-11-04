@@ -47,13 +47,13 @@ class JoinChatRoomPacketHandler(
 
     println("User (${userName}) trying to join room (${roomName})")
 
-    if (!chatRoomManager.exists(roomName)) {
+    if (!chatRoomManager.roomExists(roomName)) {
       println("Room with name (${roomName}) does not exist")
       connectionManager.sendResponse(clientId, JoinChatRoomResponsePayload.fail(Status.ChatRoomDoesNotExist))
       return
     }
 
-    if (chatRoomManager.alreadyJoined(clientId, roomName, userName)) {
+    if (chatRoomManager.userAlreadyJoinedRoom(clientId, roomName, userName)) {
       //we have already joined this room, no need to add the user in the room second time and notify everyone in the room about it
       println("User (${userName}) has already joined room (${roomName})")
 
@@ -82,7 +82,7 @@ class JoinChatRoomPacketHandler(
       return
     }
 
-    if (chatRoomManager.hasPassword(roomName)) {
+    if (chatRoomManager.roomHasPassword(roomName)) {
       if (roomPasswordHash == null || roomPasswordHash.isEmpty()) {
         println("Room with name (${roomName}) is password protected and user has not provided password (${roomPasswordHash})")
         connectionManager.sendResponse(clientId, JoinChatRoomResponsePayload.fail(Status.BadParam))

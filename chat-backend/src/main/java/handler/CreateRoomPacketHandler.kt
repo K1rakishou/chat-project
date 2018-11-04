@@ -47,7 +47,7 @@ class CreateRoomPacketHandler(
       return CreateRoomResponsePayload.fail(status)
     }
 
-    if (chatRoomManager.exists(chatRoomName)) {
+    if (chatRoomManager.roomExists(chatRoomName)) {
       println("ChatRoom with name $chatRoomName already exists")
       return CreateRoomResponsePayload.fail(Status.ChatRoomAlreadyExists)
     }

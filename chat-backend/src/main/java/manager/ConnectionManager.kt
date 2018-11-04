@@ -16,11 +16,11 @@ import kotlin.coroutines.CoroutineContext
 class ConnectionManager(
   private val chatRoomManager: ChatRoomManager,
   private val responseBuilder: ResponseBuilder,
-  private val dispatcher: CoroutineDispatcher = newFixedThreadPoolContext(Runtime.getRuntime().availableProcessors(), "connection-manager")
+  private val dispatcher: CoroutineDispatcher = newFixedThreadPoolContext(2, "connection-manager")
 ) : CoroutineScope {
   private val job = Job()
   private val sendActorChannelCapacity = 2048
-  private val connectionActor: SendChannel<ConnectionActorAction>
+  private val connectionActor: SendChannel<ActorAction>
 
   override val coroutineContext: CoroutineContext
     get() = job + dispatcher
@@ -31,12 +31,12 @@ class ConnectionManager(
 
       consumeEach { action ->
         when (action) {
-          is ConnectionActorAction.AddConnection -> {
+          is ActorAction.AddConnection -> {
             val isOk = addConnectionInternal(connections, action.clientId, action.connection)
             action.result.complete(isOk)
           }
-          is ConnectionActorAction.RemoveConnection -> removeConnectionInternal(connections, action.clientId)
-          is ConnectionActorAction.SendResponse -> sendResponseInternal(connections, action.clientId, action.response)
+          is ActorAction.RemoveConnection -> removeConnectionInternal(connections, action.clientId)
+          is ActorAction.SendResponse -> sendResponseInternal(connections, action.clientId, action.response)
         }
       }
     }
@@ -44,16 +44,16 @@ class ConnectionManager(
 
   suspend fun addConnection(clientId: String, connection: Connection): Boolean {
     val result = CompletableDeferred<Boolean>()
-    connectionActor.send(ConnectionActorAction.AddConnection(clientId, connection, result))
+    connectionActor.send(ActorAction.AddConnection(clientId, connection, result))
     return result.await()
   }
 
   suspend fun removeConnection(clientId: String) {
-    connectionActor.send(ConnectionActorAction.RemoveConnection(clientId))
+    connectionActor.send(ActorAction.RemoveConnection(clientId))
   }
 
   suspend fun sendResponse(clientId: String, response: BaseResponse) {
-    connectionActor.send(ConnectionActorAction.SendResponse(clientId, response))
+    connectionActor.send(ActorAction.SendResponse(clientId, response))
   }
 
   private suspend fun sendResponseInternal(
@@ -132,14 +132,14 @@ class ConnectionManager(
     println("Removed connection for client $clientId")
   }
 
-  sealed class ConnectionActorAction {
+  sealed class ActorAction {
     class AddConnection(val clientId: String,
                         val connection: Connection,
-                        val result: CompletableDeferred<Boolean>) : ConnectionActorAction()
+                        val result: CompletableDeferred<Boolean>) : ActorAction()
 
-    class RemoveConnection(val clientId: String) : ConnectionActorAction()
+    class RemoveConnection(val clientId: String) : ActorAction()
 
     class SendResponse(val clientId: String,
-                       val response: BaseResponse) : ConnectionActorAction()
+                       val response: BaseResponse) : ActorAction()
   }
 }

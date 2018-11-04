@@ -36,7 +36,7 @@ class ChatRoomManagerTest {
         assertEquals(userName1, userInRoom!!.user.userName)
         assertEquals(clientId1, userInRoom.user.clientId)
 
-        val roomsJoinedByUser = chatRoomManager.__getClientIdToRoomNameCache()[clientId1]
+        val roomsJoinedByUser = chatRoomManager.__getUserJoinedRooms()[clientId1]
         assertNotNull(roomsJoinedByUser)
 
         assertEquals(1, roomsJoinedByUser!!.size)
@@ -53,7 +53,7 @@ class ChatRoomManagerTest {
         assertEquals(userName2, userInRoom!!.user.userName)
         assertEquals(clientId2, userInRoom.user.clientId)
 
-        val roomsJoinedByUser = chatRoomManager.__getClientIdToRoomNameCache()[clientId2]
+        val roomsJoinedByUser = chatRoomManager.__getUserJoinedRooms()[clientId2]
         assertNotNull(roomsJoinedByUser)
 
         assertEquals(1, roomsJoinedByUser!!.size)
@@ -68,7 +68,7 @@ class ChatRoomManagerTest {
     runBlocking {
       assertNull(chatRoomManager.joinRoom(clientId1, "non existing room", user1))
       assertNull(chatRoomManager.__getChatRooms()["non existing room"])
-      assertTrue(chatRoomManager.__getClientIdToRoomNameCache().isEmpty())
+      assertTrue(chatRoomManager.__getUserJoinedRooms().isEmpty())
     }
   }
 
@@ -81,7 +81,7 @@ class ChatRoomManagerTest {
       assertNull(chatRoomManager.joinRoom(clientId1, chatRoomName, user1))
 
       assertTrue(chatRoomManager.__getChatRooms()[chatRoomName]!!.containsUser(userName1))
-      assertEquals(1, chatRoomManager.__getClientIdToRoomNameCache().size)
+      assertEquals(1, chatRoomManager.__getUserJoinedRooms().size)
     }
   }
 
@@ -95,16 +95,16 @@ class ChatRoomManagerTest {
 
       assertTrue(chatRoomManager.leaveRoom(clientId1, chatRoomName, user1))
       assertFalse(chatRoomManager.__getChatRooms()[chatRoomName]!!.containsUser(userName1))
-      assertNull(chatRoomManager.__getClientIdToRoomNameCache()[clientId1])
+      assertNull(chatRoomManager.__getUserJoinedRooms()[clientId1])
 
       assertTrue(chatRoomManager.__getChatRooms()[chatRoomName]!!.containsUser(userName2))
 
       assertTrue(chatRoomManager.leaveRoom(clientId2, chatRoomName, user2))
       assertFalse(chatRoomManager.__getChatRooms()[chatRoomName]!!.containsUser(userName2))
-      assertNull(chatRoomManager.__getClientIdToRoomNameCache()[clientId2])
+      assertNull(chatRoomManager.__getUserJoinedRooms()[clientId2])
 
       assertTrue(chatRoomManager.__getChatRooms()[chatRoomName]!!.userList.isEmpty())
-      assertTrue(chatRoomManager.__getClientIdToRoomNameCache().isEmpty())
+      assertTrue(chatRoomManager.__getUserJoinedRooms().isEmpty())
     }
   }
 }
