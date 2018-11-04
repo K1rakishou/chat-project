@@ -12,13 +12,13 @@ class ChatRoomManagerTest {
   val chatRoomImageUrl = "imgur.com/123.jpg"
   val chatRoomImageUrl2 = "imgur.com/234.jpg"
 
-  val clientAddress1 = "127.0.0.1"
+  val clientId1 = "127.0.0.1"
   val userName1 = "test user"
-  val user1 = User(userName1, clientAddress1)
+  val user1 = User(userName1, clientId1)
 
-  val clientAddress2 = "127.0.0.2"
+  val clientId2 = "127.0.0.2"
   val userName2 = "test user2"
-  val user2 = User(userName2, clientAddress2)
+  val user2 = User(userName2, clientId2)
 
   val chatRoomManager = ChatRoomManager()
 
@@ -28,15 +28,15 @@ class ChatRoomManagerTest {
       kotlin.run {
         chatRoomManager.createChatRoom(chatRoomName = chatRoomName, chatRoomImageUrl = chatRoomImageUrl)
 
-        assertNotNull(chatRoomManager.joinRoom(clientAddress1, chatRoomName, user1))
+        assertNotNull(chatRoomManager.joinRoom(clientId1, chatRoomName, user1))
 
         val userInRoom = chatRoomManager.__getChatRooms()[chatRoomName]!!.getUser(userName1)
         assertNotNull(user1)
 
         assertEquals(userName1, userInRoom!!.user.userName)
-        assertEquals(clientAddress1, userInRoom.user.clientAddress)
+        assertEquals(clientId1, userInRoom.user.clientId)
 
-        val roomsJoinedByUser = chatRoomManager.__getClientAddressToRoomNameCache()[clientAddress1]
+        val roomsJoinedByUser = chatRoomManager.__getClientIdToRoomNameCache()[clientId1]
         assertNotNull(roomsJoinedByUser)
 
         assertEquals(1, roomsJoinedByUser!!.size)
@@ -45,15 +45,15 @@ class ChatRoomManagerTest {
       }
 
       kotlin.run {
-        assertNotNull(chatRoomManager.joinRoom(clientAddress2, chatRoomName, user2))
+        assertNotNull(chatRoomManager.joinRoom(clientId2, chatRoomName, user2))
 
         val userInRoom = chatRoomManager.__getChatRooms()[chatRoomName]!!.getUser(userName2)
         assertNotNull(user2)
 
         assertEquals(userName2, userInRoom!!.user.userName)
-        assertEquals(clientAddress2, userInRoom.user.clientAddress)
+        assertEquals(clientId2, userInRoom.user.clientId)
 
-        val roomsJoinedByUser = chatRoomManager.__getClientAddressToRoomNameCache()[clientAddress2]
+        val roomsJoinedByUser = chatRoomManager.__getClientIdToRoomNameCache()[clientId2]
         assertNotNull(roomsJoinedByUser)
 
         assertEquals(1, roomsJoinedByUser!!.size)
@@ -66,9 +66,9 @@ class ChatRoomManagerTest {
   @Test
   fun `should not be able to join non-existing room`() {
     runBlocking {
-      assertNull(chatRoomManager.joinRoom(clientAddress1, "non existing room", user1))
+      assertNull(chatRoomManager.joinRoom(clientId1, "non existing room", user1))
       assertNull(chatRoomManager.__getChatRooms()["non existing room"])
-      assertTrue(chatRoomManager.__getClientAddressToRoomNameCache().isEmpty())
+      assertTrue(chatRoomManager.__getClientIdToRoomNameCache().isEmpty())
     }
   }
 
@@ -77,11 +77,11 @@ class ChatRoomManagerTest {
     runBlocking {
       chatRoomManager.createChatRoom(chatRoomName = chatRoomName, chatRoomImageUrl = chatRoomImageUrl)
 
-      assertNotNull(chatRoomManager.joinRoom(clientAddress1, chatRoomName, user1))
-      assertNull(chatRoomManager.joinRoom(clientAddress1, chatRoomName, user1))
+      assertNotNull(chatRoomManager.joinRoom(clientId1, chatRoomName, user1))
+      assertNull(chatRoomManager.joinRoom(clientId1, chatRoomName, user1))
 
       assertTrue(chatRoomManager.__getChatRooms()[chatRoomName]!!.containsUser(userName1))
-      assertEquals(1, chatRoomManager.__getClientAddressToRoomNameCache().size)
+      assertEquals(1, chatRoomManager.__getClientIdToRoomNameCache().size)
     }
   }
 
@@ -90,21 +90,21 @@ class ChatRoomManagerTest {
     runBlocking {
       chatRoomManager.createChatRoom(chatRoomName = chatRoomName, chatRoomImageUrl = chatRoomImageUrl)
 
-      assertNotNull(chatRoomManager.joinRoom(clientAddress1, chatRoomName, user1))
-      assertNotNull(chatRoomManager.joinRoom(clientAddress2, chatRoomName, user2))
+      assertNotNull(chatRoomManager.joinRoom(clientId1, chatRoomName, user1))
+      assertNotNull(chatRoomManager.joinRoom(clientId2, chatRoomName, user2))
 
-      assertTrue(chatRoomManager.leaveRoom(clientAddress1, chatRoomName, user1))
+      assertTrue(chatRoomManager.leaveRoom(clientId1, chatRoomName, user1))
       assertFalse(chatRoomManager.__getChatRooms()[chatRoomName]!!.containsUser(userName1))
-      assertNull(chatRoomManager.__getClientAddressToRoomNameCache()[clientAddress1])
+      assertNull(chatRoomManager.__getClientIdToRoomNameCache()[clientId1])
 
       assertTrue(chatRoomManager.__getChatRooms()[chatRoomName]!!.containsUser(userName2))
 
-      assertTrue(chatRoomManager.leaveRoom(clientAddress2, chatRoomName, user2))
+      assertTrue(chatRoomManager.leaveRoom(clientId2, chatRoomName, user2))
       assertFalse(chatRoomManager.__getChatRooms()[chatRoomName]!!.containsUser(userName2))
-      assertNull(chatRoomManager.__getClientAddressToRoomNameCache()[clientAddress2])
+      assertNull(chatRoomManager.__getClientIdToRoomNameCache()[clientId2])
 
       assertTrue(chatRoomManager.__getChatRooms()[chatRoomName]!!.userList.isEmpty())
-      assertTrue(chatRoomManager.__getClientAddressToRoomNameCache().isEmpty())
+      assertTrue(chatRoomManager.__getClientIdToRoomNameCache().isEmpty())
     }
   }
 }

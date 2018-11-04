@@ -4,6 +4,7 @@ import core.PacketType
 import core.extensions.readPacketInfo
 import core.extensions.toHex
 import core.response.ResponseBuilder
+import core.security.SecurityUtils
 import handler.CreateRoomPacketHandler
 import handler.GetPageOfPublicRoomsHandler
 import handler.JoinChatRoomPacketHandler
@@ -64,17 +65,17 @@ class Server(
 
         launch {
           clientSocket.use { socket ->
-            val clientAddress = socket.remoteAddress.toString()
-            val connection = Connection(clientAddress, socket)
+            val clientId = SecurityUtils.Hashing.sha3(socket.remoteAddress.toString())
+            val connection = Connection(clientId, socket)
 
             try {
-              if (connectionManager.addConnection(clientAddress, connection)) {
-                listenClient(isActive, connection, clientAddress)
+              if (connectionManager.addConnection(clientId, connection)) {
+                listenClient(isActive, connection, clientId)
               }
             } catch (error: Throwable) {
-              printException(error, clientAddress)
+              printException(error, clientId)
             } finally {
-              connectionManager.removeConnection(clientAddress)
+              connectionManager.removeConnection(clientId)
             }
           }
         }
@@ -82,21 +83,21 @@ class Server(
     }
   }
 
-  private fun printException(error: Throwable, clientAddress: String) {
+  private fun printException(error: Throwable, clientId: String) {
     //TODO: probably should log it somewhere
     when (error) {
       is ClosedReceiveChannelException -> {
-        println("ReceiveChannel has been closed for client ${clientAddress} ")
+        println("ReceiveChannel has been closed for client ${clientId} ")
       }
       is IOException -> {
-        println("Client: ${clientAddress} forcibly closed the connection")
+        println("Client: ${clientId} forcibly closed the connection")
       }
       else -> error.printStackTrace()
     }
   }
 
-  private suspend fun listenClient(isActive: Boolean, connection: Connection, clientAddress: String) {
-    println("Start listening to the client ${clientAddress}")
+  private suspend fun listenClient(isActive: Boolean, connection: Connection, clientId: String) {
+    println("Start listening to the client ${clientId}")
 
     while (isActive && !connection.isDisposed) {
       if (!readMagicNumber(connection.readChannel)) {
@@ -109,22 +110,22 @@ class Server(
       packetInfo.byteSink.use { byteSink ->
         when (packetInfo.packetType) {
           PacketType.CreateRoomPacketType -> {
-            createRoomPacketHandler.handle(byteSink, clientAddress)
+            createRoomPacketHandler.handle(byteSink, clientId)
           }
           PacketType.GetPageOfPublicRoomsPacketType -> {
-            getPageOfPublicChatRoomsHandler.handle(byteSink, clientAddress)
+            getPageOfPublicChatRoomsHandler.handle(byteSink, clientId)
           }
           PacketType.JoinRoomPacketType -> {
-            joinRoomPacketHandler.handle(byteSink, clientAddress)
+            joinRoomPacketHandler.handle(byteSink, clientId)
           }
           PacketType.SendChatMessagePacketType -> {
-            sendChatMessageHandler.handle(byteSink, clientAddress)
+            sendChatMessageHandler.handle(byteSink, clientId)
           }
         }
       }
     }
 
-    println("Stop listening to the client ${clientAddress}")
+    println("Stop listening to the client ${clientId}")
   }
 
   private suspend fun readMagicNumber(readChannel: ByteReadChannel): Boolean {

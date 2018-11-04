@@ -9,7 +9,7 @@ import kotlinx.coroutines.io.ByteWriteChannel
 import java.util.concurrent.atomic.AtomicBoolean
 
 class Connection(
-  val clientAddress: String,
+  val clientId: String,
   val socket: Socket,
   val readChannel: ByteReadChannel = socket.openReadChannel(),
   val writeChannel: ByteWriteChannel = socket.openWriteChannel(autoFlush = false)

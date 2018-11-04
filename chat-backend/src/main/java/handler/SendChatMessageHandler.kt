@@ -16,23 +16,23 @@ class SendChatMessageHandler(
   private val chatRoomManager: ChatRoomManager
 ) : BasePacketHandler() {
 
-  override suspend fun handle(byteSink: ByteSink, clientAddress: String) {
+  override suspend fun handle(byteSink: ByteSink, clientId: String) {
     val packet = try {
       SendChatMessagePacket.fromByteSink(byteSink)
     } catch (error: PacketDeserializationException) {
       error.printStackTrace()
-      connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.fail(Status.BadPacket))
+      connectionManager.sendResponse(clientId, SendChatMessageResponsePayload.fail(Status.BadPacket))
       return
     }
 
     val packetVersion = SendChatMessagePacket.PacketVersion.fromShort(packet.getPacketVersion())
     when (packetVersion) {
-      SendChatMessagePacket.PacketVersion.V1 -> handleInternalV1(packet, clientAddress)
+      SendChatMessagePacket.PacketVersion.V1 -> handleInternalV1(packet, clientId)
       SendChatMessagePacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
   }
 
-  private suspend fun handleInternalV1(packet: SendChatMessagePacket, clientAddress: String) {
+  private suspend fun handleInternalV1(packet: SendChatMessagePacket, clientId: String) {
     val clientMessageId = packet.clientMessageId
     val roomName = packet.roomName
     val userName = packet.userName
@@ -51,7 +51,7 @@ class SendChatMessageHandler(
         println("message is empty")
       }
 
-      connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.fail(Status.BadParam))
+      connectionManager.sendResponse(clientId, SendChatMessageResponsePayload.fail(Status.BadParam))
       return
     }
 
@@ -60,14 +60,14 @@ class SendChatMessageHandler(
     val chatRoom = chatRoomManager.getChatRoom(roomName)
     if (chatRoom == null) {
       println("Room with name (${roomName}) does not exist")
-      connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.fail(Status.ChatRoomDoesNotExist))
+      connectionManager.sendResponse(clientId, SendChatMessageResponsePayload.fail(Status.ChatRoomDoesNotExist))
       return
     }
 
-    val user = chatRoomManager.getUser(clientAddress, roomName, userName)
+    val user = chatRoomManager.getUser(clientId, roomName, userName)
     if (user == null) {
       println("User ($userName) does not exist in the room ($roomName)")
-      connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.fail(Status.UserDoesNotExistInTheRoom))
+      connectionManager.sendResponse(clientId, SendChatMessageResponsePayload.fail(Status.UserDoesNotExistInTheRoom))
       return
     }
 
@@ -76,10 +76,10 @@ class SendChatMessageHandler(
     val response = NewChatMessageResponsePayload.success(serverMessageId, clientMessageId, roomName, userName, message)
 
     for (userInRoom in chatRoom.getEveryoneExcept(userName)) {
-      connectionManager.sendResponse(userInRoom.user.clientAddress, response)
+      connectionManager.sendResponse(userInRoom.user.clientId, response)
     }
 
-    connectionManager.sendResponse(clientAddress, SendChatMessageResponsePayload.success(roomName, serverMessageId, clientMessageId))
+    connectionManager.sendResponse(clientId, SendChatMessageResponsePayload.success(roomName, serverMessageId, clientMessageId))
     println("Message ($message) has been successfully sent in room (${roomName}) by user (${userName})")
   }
 }

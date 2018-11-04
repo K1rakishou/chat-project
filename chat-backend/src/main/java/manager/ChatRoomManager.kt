@@ -11,11 +11,11 @@ import kotlinx.coroutines.sync.Mutex
 
 class ChatRoomManager {
   private val mutex = Mutex()
-  private val clientAddressToRoomNameCache = mutableMapOf<String, MutableList<RoomNameUserNamePair>>()
+  private val clientIdToRoomNameCache = mutableMapOf<String, MutableList<RoomNameUserNamePair>>()
   private val chatRooms = mutableMapOf<String, ChatRoom>()
 
   @Deprecated(message = "For tests only!")
-  fun __getClientAddressToRoomNameCache() = clientAddressToRoomNameCache
+  fun __getClientIdToRoomNameCache() = clientIdToRoomNameCache
   @Deprecated(message = "For tests only!")
   fun __getChatRooms() = chatRooms
 
@@ -38,7 +38,7 @@ class ChatRoomManager {
   }
 
   suspend fun joinRoom(
-    clientAddress: String,
+    clientId: String,
     chatRoomName: String,
     user: User
   ): ChatRoom? {
@@ -56,15 +56,15 @@ class ChatRoomManager {
         return@myWithLock null
       }
 
-      clientAddressToRoomNameCache.putIfAbsent(clientAddress, mutableListOf())
-      clientAddressToRoomNameCache[clientAddress]!!.add(RoomNameUserNamePair(chatRoomName, user.userName))
+      clientIdToRoomNameCache.putIfAbsent(clientId, mutableListOf())
+      clientIdToRoomNameCache[clientId]!!.add(RoomNameUserNamePair(chatRoomName, user.userName))
 
       return@myWithLock chatRoom
     }
   }
 
   suspend fun leaveRoom(
-    clientAddress: String,
+    clientId: String,
     chatRoomName: String,
     user: User
   ): Boolean {
@@ -78,9 +78,9 @@ class ChatRoomManager {
         return@myWithLock false
       }
 
-      clientAddressToRoomNameCache[clientAddress]!!.remove(RoomNameUserNamePair(chatRoomName, user.userName))
-      if (clientAddressToRoomNameCache[clientAddress]!!.isEmpty()) {
-        clientAddressToRoomNameCache.remove(clientAddress)
+      clientIdToRoomNameCache[clientId]!!.remove(RoomNameUserNamePair(chatRoomName, user.userName))
+      if (clientIdToRoomNameCache[clientId]!!.isEmpty()) {
+        clientIdToRoomNameCache.remove(clientId)
       }
 
       chatRoom.removeUser(user.userName)
@@ -88,32 +88,32 @@ class ChatRoomManager {
     }
   }
 
-  suspend fun leaveAllRooms(clientAddress: String): List<RoomNameUserNamePair> {
+  suspend fun leaveAllRooms(clientId: String): List<RoomNameUserNamePair> {
     return mutex.myWithLock {
       val list = mutableListOf<RoomNameUserNamePair>()
 
-      if (clientAddressToRoomNameCache[clientAddress] == null) {
+      if (clientIdToRoomNameCache[clientId] == null) {
         return@myWithLock list
       }
 
-      if (clientAddressToRoomNameCache[clientAddress]!!.isEmpty()) {
-        clientAddressToRoomNameCache.remove(clientAddress)
+      if (clientIdToRoomNameCache[clientId]!!.isEmpty()) {
+        clientIdToRoomNameCache.remove(clientId)
         return@myWithLock list
       }
 
-      for ((roomName, userName) in clientAddressToRoomNameCache[clientAddress]!!) {
+      for ((roomName, userName) in clientIdToRoomNameCache[clientId]!!) {
         chatRooms[roomName]?.removeUser(userName)
         list += RoomNameUserNamePair(roomName, userName)
       }
 
-      clientAddressToRoomNameCache.remove(clientAddress)
+      clientIdToRoomNameCache.remove(clientId)
       return@myWithLock list
     }
   }
 
-  suspend fun alreadyJoined(clientAddress: String, chatRoomName: String, userName: String): Boolean {
+  suspend fun alreadyJoined(clientId: String, chatRoomName: String, userName: String): Boolean {
     return mutex.myWithLock {
-      val cacheEntry = clientAddressToRoomNameCache[clientAddress]
+      val cacheEntry = clientIdToRoomNameCache[clientId]
       if (cacheEntry == null) {
         return@myWithLock false
       }
@@ -166,9 +166,9 @@ class ChatRoomManager {
     }
   }
 
-  suspend fun getUser(clientAddress: String, roomName: String, userName: String): UserInRoom? {
+  suspend fun getUser(clientId: String, roomName: String, userName: String): UserInRoom? {
     return mutex.myWithLock {
-      val joinedRoom = clientAddressToRoomNameCache[clientAddress]
+      val joinedRoom = clientIdToRoomNameCache[clientId]
         ?.any { it.roomName == roomName && it.userName == userName }
         ?: false
 

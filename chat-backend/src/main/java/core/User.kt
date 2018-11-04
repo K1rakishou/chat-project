@@ -2,7 +2,7 @@ package core
 
 class User(
   val userName: String,
-  val clientAddress: String
+  val clientId: String
 ) {
 
   override fun equals(other: Any?): Boolean {

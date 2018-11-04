@@ -18,12 +18,12 @@ class GetPageOfPublicRoomsHandler(
   private val minimumRoomsPerPage = 10
   private val maximumRoomsPerPage = 50
 
-  override suspend fun handle(byteSink: ByteSink, clientAddress: String) {
+  override suspend fun handle(byteSink: ByteSink, clientId: String) {
     val packet = try {
       GetPageOfPublicRoomsPacket.fromByteSink(byteSink)
     } catch (error: PacketDeserializationException) {
       error.printStackTrace()
-      connectionManager.sendResponse(clientAddress, GetPageOfPublicRoomsResponsePayload.fail(Status.BadPacket))
+      connectionManager.sendResponse(clientId, GetPageOfPublicRoomsResponsePayload.fail(Status.BadPacket))
       return
     }
 
@@ -33,7 +33,7 @@ class GetPageOfPublicRoomsHandler(
       GetPageOfPublicRoomsPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
 
-    connectionManager.sendResponse(clientAddress, response)
+    connectionManager.sendResponse(clientId, response)
   }
 
   private suspend fun handleInternalV1(packet: GetPageOfPublicRoomsPacket): BaseResponse {

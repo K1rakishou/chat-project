@@ -17,25 +17,25 @@ class CreateRoomPacketHandler(
   private val chatRoomManager: ChatRoomManager
 ) : BasePacketHandler() {
 
-  override suspend fun handle(byteSink: ByteSink, clientAddress: String) {
+  override suspend fun handle(byteSink: ByteSink, clientId: String) {
     val packet = try {
       CreateRoomPacket.fromByteSink(byteSink)
     } catch (error: PacketDeserializationException) {
       error.printStackTrace()
-      connectionManager.sendResponse(clientAddress, CreateRoomResponsePayload.fail(Status.BadPacket))
+      connectionManager.sendResponse(clientId, CreateRoomResponsePayload.fail(Status.BadPacket))
       return
     }
 
     val packetVersion = CreateRoomPacket.PacketVersion.fromShort(packet.getPacketVersion())
     val response = when (packetVersion) {
-      CreateRoomPacket.PacketVersion.V1 -> handleInternalV1(packet, clientAddress)
+      CreateRoomPacket.PacketVersion.V1 -> handleInternalV1(packet, clientId)
       CreateRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
     }
 
-    connectionManager.sendResponse(clientAddress, response)
+    connectionManager.sendResponse(clientId, response)
   }
 
-  private suspend fun handleInternalV1(packet: CreateRoomPacket, clientAddress: String): BaseResponse {
+  private suspend fun handleInternalV1(packet: CreateRoomPacket, clientId: String): BaseResponse {
     val chatRoomName = packet.chatRoomName!!
     val chatRoomImageUrl = packet.chatRoomImageUrl!!
     val chatRoomPasswordHash = packet.chatRoomPasswordHash
@@ -62,11 +62,11 @@ class CreateRoomPacketHandler(
     println("ChatRoom ${chatRoom} has been successfully created!")
 
     if (userName != null) {
-      val newUser = User(userName, clientAddress)
-      val joinedChatRoom = chatRoomManager.joinRoom(clientAddress, chatRoomName, newUser)
+      val newUser = User(userName, clientId)
+      val joinedChatRoom = chatRoomManager.joinRoom(clientId, chatRoomName, newUser)
 
       if (joinedChatRoom == null) {
-        println("Could not join the room (${joinedChatRoom}) by user (${newUser.clientAddress}, ${newUser.userName})")
+        println("Could not join the room (${joinedChatRoom}) by user (${newUser.clientId}, ${newUser.userName})")
         return CreateRoomResponsePayload.fail(Status.CouldNotJoinChatRoom)
       }
     }

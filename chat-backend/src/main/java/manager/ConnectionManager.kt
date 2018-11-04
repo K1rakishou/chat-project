@@ -38,7 +38,7 @@ class ConnectionManager(
 
         try {
           if (connection.writeChannel.isClosedForWrite) {
-            println("Could not send response because channel with clientAddress: ${connection.clientAddress} is closed for writing")
+            println("Could not send response because channel with clientId: ${connection.clientId} is closed for writing")
             continue
           }
 
@@ -49,7 +49,7 @@ class ConnectionManager(
 
         } catch (error: Throwable) {
           println("Client's connection was closed while trying to write data into it")
-          removeConnection(connection.clientAddress)
+          removeConnection(connection.clientId)
         }
       }
     }
@@ -67,53 +67,53 @@ class ConnectionManager(
     }
   }
 
-  suspend fun sendResponse(clientAddress: String, response: BaseResponse) {
-    val connection = mutex.tryWithLock { connections[clientAddress] }
+  suspend fun sendResponse(clientId: String, response: BaseResponse) {
+    val connection = mutex.tryWithLock { connections[clientId] }
     if (connection == null) {
-      println("Could not send response because connection with clientAddress: $clientAddress does not exist")
+      println("Could not send response because connection with clientId: $clientId does not exist")
       return
     }
 
     sendPacketsActor.send(Pair(connection, response))
   }
 
-  suspend fun addConnection(clientAddress: String, connection: Connection): Boolean {
+  suspend fun addConnection(clientId: String, connection: Connection): Boolean {
     return mutex.myWithLock {
-      if (connections.containsKey(clientAddress)) {
-        println("Already contains clientAddress: $clientAddress")
+      if (connections.containsKey(clientId)) {
+        println("Already contains clientId: $clientId")
         return@myWithLock false
       }
 
-      connections[clientAddress] = connection
-      println("Added connection for client $clientAddress")
+      connections[clientId] = connection
+      println("Added connection for client $clientId")
 
       return@myWithLock true
     }
   }
 
-  suspend fun removeConnection(clientAddress: String) {
+  suspend fun removeConnection(clientId: String) {
     mutex.myWithLock {
-      if (!connections.containsKey(clientAddress)) {
-        println("Does not contain clientAddress: $clientAddress")
+      if (!connections.containsKey(clientId)) {
+        println("Does not contain clientId: $clientId")
         return@myWithLock
       }
 
       try {
-        val roomsWithUserNames = chatRoomManager.leaveAllRooms(clientAddress)
+        val roomsWithUserNames = chatRoomManager.leaveAllRooms(clientId)
 
         roomsWithUserNames.forEach { (roomName, userName) ->
           val room = chatRoomManager.getChatRoom(roomName)
           if (room != null) {
             for (userInRoom in room.getEveryone()) {
-              sendResponse(userInRoom.user.clientAddress, UserHasLeftResponsePayload.success(roomName, userName))
+              sendResponse(userInRoom.user.clientId, UserHasLeftResponsePayload.success(roomName, userName))
             }
           }
         }
       } finally {
-        connections[clientAddress]?.dispose()
-        connections.remove(clientAddress)
+        connections[clientId]?.dispose()
+        connections.remove(clientId)
       }
     }
-    println("Removed connection for client $clientAddress")
+    println("Removed connection for client $clientId")
   }
 }
