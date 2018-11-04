@@ -21,32 +21,25 @@ class VirtualMultiSelectListView<T>(
 ) {
   private var selectedItemIndexes = TreeSet<Int>()
 
-  private var shiftDown = false
-  private var ctrlDown = false
-
   private val virtualFlow = VirtualFlow.createVertical(items) { item ->
     Cell.wrapNode(SelectableNode.wrapNode(cellFactory(item)))
   }
 
-  init {
-    virtualFlow.setOnMouseClicked(this::onMouseClick)
-  }
-
-  fun updateKeyState(shiftDown: Boolean, controlDown: Boolean) {
-    this.shiftDown = shiftDown
-    this.ctrlDown =controlDown
-  }
-
-  private fun onMouseClick(event: MouseEvent) {
-    if (event.isPrimaryButtonDown) {
-      val hitResult = virtualFlow.hit(event.x, event.y)
-      if (hitResult.isCellHit) {
-        selectedItemIndexes = processSelection(selectedItemIndexes, hitResult)
-      }
+  fun onMouseClick(event: MouseEvent) {
+    val hitResult = virtualFlow.hit(event.x, event.y)
+    if (hitResult.isCellHit) {
+      selectedItemIndexes = processSelection(event.isShiftDown, event.isControlDown, selectedItemIndexes, hitResult)
+    } else {
+      clearSelection()
     }
   }
 
-  private fun processSelection(selectedIndexes: TreeSet<Int>, hitResult: VirtualFlowHit<Cell<T, SelectableNode>>): TreeSet<Int> {
+  private fun processSelection(
+    shiftDown: Boolean,
+    ctrlDown: Boolean,
+    selectedIndexes: TreeSet<Int>,
+    hitResult: VirtualFlowHit<Cell<T, SelectableNode>>
+  ): TreeSet<Int> {
     val cellIndex = hitResult.cellIndex
 
     when {
@@ -114,6 +107,10 @@ class VirtualMultiSelectListView<T>(
       .forEach { cell -> cell.node.clearSelection() }
 
     selectedItemIndexes.clear()
+  }
+
+  fun getLastItemIndex(): Int {
+    return items.size
   }
 
   class SelectableNode private constructor(
