@@ -9,9 +9,10 @@ import java.lang.IllegalArgumentException
 object BaseChatMessageMapper {
 
   object FromBaseChatMessage {
-    fun toBaseChatMessageData(serverMessageId: Int, baseChatMessage: BaseChatMessage): BaseChatMessageData {
+    fun toBaseChatMessageData(clientId: String, serverMessageId: Int, baseChatMessage: BaseChatMessage): BaseChatMessageData {
       return when (baseChatMessage) {
         is TextChatMessage -> TextChatMessageData(
+          clientId,
           serverMessageId,
           baseChatMessage.clientMessageId,
           baseChatMessage.senderName,

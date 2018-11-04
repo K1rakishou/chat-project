@@ -28,13 +28,13 @@ data class ChatRoom(
     mutex.myWithLock { userList.removeIf { it.user.userName == userName } }
   }
 
-  suspend fun addMessage(chatMessage: BaseChatMessage): Int {
+  suspend fun addMessage(clientId: String, chatMessage: BaseChatMessage): Int {
     if (chatMessage.serverMessageId != -1) {
       throw IllegalStateException("serverMessageId should be initialized here!")
     }
 
     val serverMessageId = messageIdCounter.getAndIncrement()
-    val chatMessageData = BaseChatMessageMapper.FromBaseChatMessage.toBaseChatMessageData(serverMessageId, chatMessage)
+    val chatMessageData = BaseChatMessageMapper.FromBaseChatMessage.toBaseChatMessageData(clientId, serverMessageId, chatMessage)
 
     mutex.myWithLock { messageHistory.add(chatMessageData) }
     return serverMessageId

@@ -72,7 +72,7 @@ class SendChatMessageHandler(
     }
 
     //-1 here will be filled in the addMessage function by messageIdCounter
-    val serverMessageId = chatRoom.addMessage(TextChatMessage(-1, clientMessageId, userName, message))
+    val serverMessageId = chatRoom.addMessage(clientId, TextChatMessage(-1, clientMessageId, userName, message))
     val response = NewChatMessageResponsePayload.success(serverMessageId, clientMessageId, roomName, userName, message)
 
     for (userInRoom in chatRoom.getEveryoneExcept(userName)) {
