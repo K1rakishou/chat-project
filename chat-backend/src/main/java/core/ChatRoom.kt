@@ -86,9 +86,10 @@ data class ChatRoom(
     }
   }
 
-  suspend fun getMessageHistory(): List<BaseChatMessage> {
+  suspend fun getMessageHistory(clientId: String): List<BaseChatMessage> {
     return mutex.myWithLock {
-      return@myWithLock BaseChatMessageMapper.FromBaseChatMessageData.toBaseChatMessageList(messageHistory.getAll())
+      return@myWithLock BaseChatMessageMapper.FromBaseChatMessageData
+        .toBaseChatMessageList(clientId, messageHistory.getAll())
     }
   }
 

@@ -24,9 +24,12 @@ object BaseChatMessageMapper {
   }
 
   object FromBaseChatMessageData {
-    fun toBaseChatMessage(baseChatMessageData: BaseChatMessageData): BaseChatMessage {
+    fun toBaseChatMessage(clientId: String, baseChatMessageData: BaseChatMessageData): BaseChatMessage {
+      val isMyMessage = clientId == baseChatMessageData.clientId
+
       return when (baseChatMessageData) {
         is TextChatMessageData -> TextChatMessage(
+          isMyMessage,
           baseChatMessageData.serverMessageId,
           baseChatMessageData.clientMessageId,
           baseChatMessageData.senderName,
@@ -36,8 +39,8 @@ object BaseChatMessageMapper {
       }
     }
 
-    fun toBaseChatMessageList(baseChatMessageDataList: List<BaseChatMessageData>): List<BaseChatMessage> {
-      return baseChatMessageDataList.map { toBaseChatMessage(it) }
+    fun toBaseChatMessageList(clientId: String, baseChatMessageDataList: List<BaseChatMessageData>): List<BaseChatMessage> {
+      return baseChatMessageDataList.map { toBaseChatMessage(clientId, it) }
     }
   }
 

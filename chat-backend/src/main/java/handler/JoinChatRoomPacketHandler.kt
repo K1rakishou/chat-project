@@ -69,7 +69,7 @@ class JoinChatRoomPacketHandler(
       val publicUserInChatList = usersInRoom
         .map { userInRoom -> PublicUserInChat(userInRoom.user.userName) }
 
-      val messageHistory = chatRoom.getMessageHistory()
+      val messageHistory = chatRoom.getMessageHistory(clientId)
       val response = JoinChatRoomResponsePayload.success(chatRoom.chatRoomName, userName, messageHistory, publicUserInChatList)
 
       connectionManager.sendResponse(clientId, response)
@@ -123,7 +123,7 @@ class JoinChatRoomPacketHandler(
     }
 
     //send back list of users in the chat room
-    val messageHistory = chatRoom.getMessageHistory()
+    val messageHistory = chatRoom.getMessageHistory(clientId)
     val response = JoinChatRoomResponsePayload.success(chatRoom.chatRoomName, userName, messageHistory, publicUserInChatList)
     connectionManager.sendResponse(clientId, response)
 

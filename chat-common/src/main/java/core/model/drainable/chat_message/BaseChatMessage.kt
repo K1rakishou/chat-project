@@ -12,17 +12,19 @@ import core.sizeof
 abstract class BaseChatMessage(
   val serverMessageId: Int,
   val clientMessageId: Int,
-  val messageType: ChatMessageType
+  val messageType: ChatMessageType,
+  val isMyMessage: Boolean
 ) : CanBeDrainedToSink, CanMeasureSizeOfFields {
 
   override fun getSize(): Int {
-    return sizeof(serverMessageId) + sizeof(clientMessageId) + sizeof(messageType.value)
+    return sizeof(serverMessageId) + sizeof(clientMessageId) + sizeof(messageType.value) + sizeof(isMyMessage)
   }
 
   override fun serialize(sink: ByteSink) {
     sink.writeInt(serverMessageId)
     sink.writeInt(clientMessageId)
     sink.writeByte(messageType.value)
+    sink.writeBoolean(isMyMessage)
   }
 
   companion object : CanBeRestoredFromSink {
@@ -30,6 +32,7 @@ abstract class BaseChatMessage(
       val serverMessageId = byteSink.readInt()
       val clientMessageId = byteSink.readInt()
       val messageType = ChatMessageType.fromByte(byteSink.readByte())
+      val isMyMessage = byteSink.readBoolean()
 
       when (messageType) {
         ChatMessageType.Text -> {
@@ -38,7 +41,7 @@ abstract class BaseChatMessage(
           val message = byteSink.readString(Constants.maxTextMessageLen)
             ?: throw ResponseDeserializationException("Could not read BaseChatMessage.message")
 
-          return TextChatMessage(serverMessageId, clientMessageId, senderName, message) as T
+          return TextChatMessage(isMyMessage, serverMessageId, clientMessageId, senderName, message) as T
         }
         ChatMessageType.Unknown -> throw UnknownChatMessageTypeException(messageType)
       }
