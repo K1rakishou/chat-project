@@ -91,12 +91,8 @@ class NetworkManager : CoroutineScope {
     }
   }
 
-  //TODO:
-  //This may break reconnection in ChatMainWindow when user navigates to a window that sets this flag to false.
-  //We probably only need to set this flag to false in the very beginning in the connection to the server phase.
-  //After that we need reconnection to always be set to true.
-  fun shouldReconnectOnDisconnect(value: Boolean) {
-    shouldReconnectToServer.set(value)
+  fun shouldReconnectOnDisconnect() {
+    shouldReconnectToServer.set(true)
   }
 
   fun doConnect(ip: String, port: Int) {
@@ -174,6 +170,7 @@ class NetworkManager : CoroutineScope {
           }
         }
       } catch (error: Throwable) {
+        error.printStackTrace()
         println("Error while trying to connect to the server: ${error.message ?: "no error message"}")
 
         connectionState = ConnectionState.Disconnected
@@ -230,6 +227,7 @@ class NetworkManager : CoroutineScope {
           startReconnectingIfCan()
         }
       } catch (error: Throwable) {
+        error.printStackTrace()
         println("Error while disconnecting: ${error.message ?: "no error message"}")
       }
     }

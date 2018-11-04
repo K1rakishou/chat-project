@@ -6,7 +6,6 @@ import core.Packet
 import core.byte_sink.InMemoryByteSink
 import core.extensions.forEachChunkAsync
 import core.extensions.myWithLock
-import core.extensions.tryWithLock
 import core.response.BaseResponse
 import core.response.ResponseBuilder
 import core.response.UserHasLeftResponsePayload
@@ -68,7 +67,7 @@ class ConnectionManager(
   }
 
   suspend fun sendResponse(clientId: String, response: BaseResponse) {
-    val connection = mutex.tryWithLock { connections[clientId] }
+    val connection = mutex.myWithLock { connections[clientId] }
     if (connection == null) {
       println("Could not send response because connection with clientId: $clientId does not exist")
       return

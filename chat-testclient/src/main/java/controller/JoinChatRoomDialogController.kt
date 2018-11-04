@@ -23,7 +23,6 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
     super.createController(viewParam)
 
     startListeningToPackets()
-    networkManager.shouldReconnectOnDisconnect(true)
   }
 
   override fun destroyController() {

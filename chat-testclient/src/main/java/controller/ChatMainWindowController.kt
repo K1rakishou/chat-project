@@ -40,7 +40,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     scrollToBottomFlag = SimpleIntegerProperty(0)
 
     startListeningToPackets()
-    networkManager.shouldReconnectOnDisconnect(true)
+    networkManager.shouldReconnectOnDisconnect()
     networkManager.sendPacket(GetPageOfPublicRoomsPacket(0, 20))
   }
 

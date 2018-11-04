@@ -21,7 +21,6 @@ class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragme
     super.createController(viewParam)
 
     startListeningToPackets()
-    networkManager.shouldReconnectOnDisconnect(true)
   }
 
   override fun destroyController() {
