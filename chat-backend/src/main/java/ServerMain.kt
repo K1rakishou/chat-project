@@ -87,7 +87,7 @@ class Server(
     val address = (socket.remoteAddress as InetSocketAddress)
 
     return if (isDebug) {
-      socket.toString()
+      socket.remoteAddress.toString()
     } else {
       SecurityUtils.Hashing.sha3(address.hostName)
     }
