@@ -6,7 +6,8 @@ enum class PacketType(val value: Short) {
   CreateRoomPacketType(0),
   GetPageOfPublicRoomsPacketType(1),
   JoinRoomPacketType(2),
-  SendChatMessagePacketType(3);
+  SendChatMessagePacketType(3),
+  SearchChatRoomPacketType(4);
 
   companion object {
     fun fromShort(type: Short): PacketType {

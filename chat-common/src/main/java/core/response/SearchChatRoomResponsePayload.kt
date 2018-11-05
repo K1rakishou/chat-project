@@ -5,21 +5,20 @@ import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
 import core.exception.*
-import core.sizeof
+import core.model.drainable.PublicChatRoom
+import core.sizeofList
 
-class SendChatMessageResponsePayload private constructor(
+class SearchChatRoomResponsePayload private constructor(
   status: Status,
-  val roomName: String? = null,
-  val serverMessageId: Int = -1,
-  val clientMessageId: Int = -1
+  val foundChatRooms: List<PublicChatRoom>
 ) : BaseResponse(status) {
 
-  override fun getResponseType(): ResponseType = ResponseType.SendChatMessageResponseType
+  override fun getResponseType(): ResponseType = ResponseType.SearchChatRoomResponseType
   override fun getResponseVersion(): Short = CURRENT_RESPONSE_VERSION.value
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + when (status) {
-      Status.Ok -> sizeof(roomName) + sizeof(serverMessageId) + sizeof(clientMessageId)
+    return super.getPayloadSize() + when(status) {
+      Status.Ok -> sizeofList(foundChatRooms)
       else -> 0
     }
   }
@@ -32,9 +31,7 @@ class SendChatMessageResponsePayload private constructor(
         byteSink.writeShort(status.value)
 
         if (status == Status.Ok) {
-          byteSink.writeString(roomName)
-          byteSink.writeInt(serverMessageId)
-          byteSink.writeInt(clientMessageId)
+          byteSink.writeList(foundChatRooms)
         }
       }
       ResponseVersion.Unknown -> throw UnknownPacketVersionException(CURRENT_RESPONSE_VERSION.value)
@@ -55,41 +52,30 @@ class SendChatMessageResponsePayload private constructor(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
-    fun success(roomName: String, serverMessageId: Int, clientMessageId: Int): SendChatMessageResponsePayload {
-      return SendChatMessageResponsePayload(Status.Ok, roomName, serverMessageId, clientMessageId)
+    fun success(foundChatRooms: List<PublicChatRoom>): SearchChatRoomResponsePayload {
+      return SearchChatRoomResponsePayload(Status.Ok, foundChatRooms)
     }
 
-    fun fail(status: Status): SendChatMessageResponsePayload {
-      return SendChatMessageResponsePayload(status)
+    fun fail(status: Status): SearchChatRoomResponsePayload {
+      return SearchChatRoomResponsePayload(status, emptyList())
     }
 
     @Throws(ResponseDeserializationException::class)
-    fun fromByteSink(byteSink: ByteSink): SendChatMessageResponsePayload {
+    fun fromByteSink(byteSink: ByteSink): SearchChatRoomResponsePayload {
       try {
         val responseVersion = ResponseVersion.fromShort(byteSink.readShort())
         when (responseVersion) {
-          SendChatMessageResponsePayload.ResponseVersion.V1 -> {
+          ResponseVersion.V1 -> {
             val status = Status.fromShort(byteSink.readShort())
             if (status != Status.Ok) {
               return fail(status)
             }
 
-            val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
-              ?: throw ResponseDeserializationException("Could not read roomName")
+            val foundChatRooms = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, Constants.maxFoundChatRooms)
 
-            val serverMessageId = byteSink.readInt()
-            if (serverMessageId == -1) {
-              throw ResponseDeserializationException("Could not read serverMessageId")
-            }
-
-            val clientMessageId = byteSink.readInt()
-            if (clientMessageId == -1) {
-              throw ResponseDeserializationException("Could not read clientMessageId")
-            }
-
-            return success(roomName, serverMessageId, clientMessageId)
+            return success(foundChatRooms)
           }
-          SendChatMessageResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
+          ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)
         }
       } catch (error: Throwable) {
         when (error) {
@@ -105,4 +91,5 @@ class SendChatMessageResponsePayload private constructor(
       }
     }
   }
+
 }

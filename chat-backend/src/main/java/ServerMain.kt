@@ -5,10 +5,7 @@ import core.extensions.readPacketInfo
 import core.extensions.toHex
 import core.response.ResponseBuilder
 import core.security.SecurityUtils
-import handler.CreateRoomPacketHandler
-import handler.GetPageOfPublicRoomsHandler
-import handler.JoinChatRoomPacketHandler
-import handler.SendChatMessageHandler
+import handler.*
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
@@ -50,6 +47,7 @@ class Server(
   private val getPageOfPublicChatRoomsHandler = GetPageOfPublicRoomsHandler(connectionManager, chatRoomManager)
   private val joinRoomPacketHandler = JoinChatRoomPacketHandler(connectionManager, chatRoomManager)
   private val sendChatMessageHandler = SendChatMessageHandler(connectionManager, chatRoomManager)
+  private val searchChatRoomHandler = SearchChatRoomPacketHandler(connectionManager, chatRoomManager)
 
   fun run() {
     runBlocking {
@@ -132,6 +130,9 @@ class Server(
           }
           PacketType.SendChatMessagePacketType -> {
             sendChatMessageHandler.handle(byteSink, clientId)
+          }
+          PacketType.SearchChatRoomPacketType -> {
+            searchChatRoomHandler.handle(byteSink, clientId)
           }
         }
       }

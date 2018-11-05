@@ -1,6 +1,7 @@
 package ui.chat_main_window
 
 import ChatApp
+import controller.ChatRoomListFragmentController
 import utils.helper.DebouncedSearchHelper
 import events.ChatMainWindowEvents
 import events.ChatRoomListFragmentEvents
@@ -27,6 +28,7 @@ import ui.base.BaseFragment
 import ui.widgets.VirtualListView
 
 class ChatRoomListFragment : BaseFragment() {
+  private val controller: ChatRoomListFragmentController by inject()
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val searchChatRoomsStore: SearchChatRoomsStore by lazy { ChatApp.searchChatRoomsStore }
 
@@ -89,9 +91,9 @@ class ChatRoomListFragment : BaseFragment() {
     }))
   }
 
-  private fun performSearch(text: String) {
+  private fun performSearch(chatRoomName: String) {
     doOnUI {
-      val newListState = ListState.fromText(text)
+      val newListState = ListState.fromText(chatRoomName)
       if (currentListState == newListState) {
         return@doOnUI
       }
@@ -99,6 +101,8 @@ class ChatRoomListFragment : BaseFragment() {
       currentListState = newListState
       reloadChatRoomsList(currentListState)
     }
+
+    controller.sendSearchRequest(chatRoomName)
   }
 
   private fun reloadChatRoomsList(listState: ListState) {

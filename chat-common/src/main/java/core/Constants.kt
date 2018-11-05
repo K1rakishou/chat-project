@@ -17,6 +17,7 @@ object Constants {
   const val maxUserNameLen = 64
   const val maxTextMessageLen = 2048
   const val maxImageUrlLen = 64
+  const val maxFoundChatRooms = 10
 
   const val ivLen = 24
   const val randomBytesLen = 16

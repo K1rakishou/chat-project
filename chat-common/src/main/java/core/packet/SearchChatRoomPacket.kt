@@ -6,17 +6,15 @@ import core.byte_sink.ByteSink
 import core.exception.*
 import core.sizeof
 
-class JoinChatRoomPacket(
-  val userName: String,
-  val roomName: String,
-  val roomPasswordHash: String?
+class SearchChatRoomPacket(
+  val chatRoomName: String
 ) : BasePacket() {
 
   override fun getPacketVersion(): Short = CURRENT_PACKET_VERSION.value
-  override fun getPacketType(): PacketType = PacketType.JoinRoomPacketType
+  override fun getPacketType(): PacketType = PacketType.SearchChatRoomPacketType
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(userName) + sizeof(roomName) + sizeof(roomPasswordHash)
+    return super.getPayloadSize() + sizeof(chatRoomName)
   }
 
   override fun toByteSink(byteSink: ByteSink) {
@@ -24,9 +22,7 @@ class JoinChatRoomPacket(
 
     when (CURRENT_PACKET_VERSION) {
       PacketVersion.V1 -> {
-        byteSink.writeString(userName)
-        byteSink.writeString(roomName)
-        byteSink.writeString(roomPasswordHash)
+        byteSink.writeString(chatRoomName)
       }
       PacketVersion.Unknown -> throw UnknownPacketVersionException(getPacketVersion())
     }
@@ -47,20 +43,17 @@ class JoinChatRoomPacket(
     private val CURRENT_PACKET_VERSION = PacketVersion.V1
 
     @Throws(PacketDeserializationException::class)
-    fun fromByteSink(byteSink: ByteSink): JoinChatRoomPacket {
+    fun fromByteSink(byteSink: ByteSink): SearchChatRoomPacket {
       try {
         val packetVersion = PacketVersion.fromShort(byteSink.readShort())
         when (packetVersion) {
-          JoinChatRoomPacket.PacketVersion.V1 -> {
-            val userName = byteSink.readString(Constants.maxUserNameLen)
-              ?: throw PacketDeserializationException("Could not read userName")
-            val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
+          PacketVersion.V1 -> {
+            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
               ?: throw PacketDeserializationException("Could not read chatRoomName")
-            val roomPasswordHash = byteSink.readString(Constants.maxChatRoomPasswordHashLen)
 
-            return JoinChatRoomPacket(userName, roomName, roomPasswordHash)
+            return SearchChatRoomPacket(chatRoomName)
           }
-          JoinChatRoomPacket.PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
+          PacketVersion.Unknown -> throw UnknownPacketVersionException(packetVersion.value)
         }
       } catch (error: Throwable) {
         when (error) {

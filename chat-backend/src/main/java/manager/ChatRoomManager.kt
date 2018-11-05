@@ -195,6 +195,11 @@ class ChatRoomManager : CoroutineScope {
     return result.await()
   }
 
+  suspend fun searchForRoomsWithSimilarName(roomName: String, maxCount: Int): List<PublicChatRoom> {
+    TODO("not implemented")
+    return emptyList()
+  }
+
   //for tests only!
   suspend fun __getUserJoinedRooms(): MutableMap<String, MutableList<RoomNameUserNamePair>> {
     val result = CompletableDeferred<MutableMap<String, MutableList<RoomNameUserNamePair>>>()
