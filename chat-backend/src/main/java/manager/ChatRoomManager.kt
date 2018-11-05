@@ -77,6 +77,10 @@ class ChatRoomManager : CoroutineScope {
             val result = userAlreadyJoinedInternal(userJoinedRooms, action.clientId, action.chatRoomName, action.userName)
             action.result.complete(result)
           }
+          is ActorAction.SearchForRoomsWithSimilarName -> {
+            val result = searchForRoomsWithSimilarNameInternal(chatRooms, action.roomName, action.maxCount)
+            action.result.complete(result)
+          }
 
           //for tests
           is ActorAction.GetChatRoomsTest -> action.result.complete(chatRooms)
@@ -196,8 +200,9 @@ class ChatRoomManager : CoroutineScope {
   }
 
   suspend fun searchForRoomsWithSimilarName(roomName: String, maxCount: Int): List<PublicChatRoom> {
-    TODO("not implemented")
-    return emptyList()
+    val result = CompletableDeferred<List<PublicChatRoom>>()
+    chatRoomManagerActor.send(ActorAction.SearchForRoomsWithSimilarName(result, roomName, maxCount))
+    return result.await()
   }
 
   //for tests only!
@@ -370,6 +375,38 @@ class ChatRoomManager : CoroutineScope {
     return chatRooms[chatRoomName]!!.passwordsMatch(chatRoomPassword)
   }
 
+  private fun searchForRoomsWithSimilarNameInternal(
+    chatRooms: MutableMap<String, ChatRoom>,
+    roomName: String,
+    maxCount: Int
+  ): List<PublicChatRoom> {
+    val foundRooms = mutableListOf<ChatRoom>()
+
+    val publicRooms = chatRooms.values
+      .asSequence()
+      .filter { it.isPublic }
+      .filter { it.chatRoomName.startsWith(roomName, true) }
+      .take(maxCount)
+      .toList()
+
+    foundRooms.addAll(publicRooms)
+
+    if (foundRooms.isEmpty()) {
+      val privateRoomWithExactlyTheSameName = chatRooms.values
+        .asSequence()
+        .filter { !it.isPublic }
+        .filter { it.chatRoomName.equals(roomName, true) }
+        .first()
+
+      foundRooms.add(privateRoomWithExactlyTheSameName)
+    }
+
+    return foundRooms.map { chatRoom ->
+      val copy = chatRoom.copy()
+      return@map PublicChatRoom(copy.chatRoomName, copy.chatRoomImageUrl)
+    }
+  }
+
   private fun getChatRoomInternal(
     chatRooms: MutableMap<String, ChatRoom>,
     roomName: String
@@ -443,6 +480,10 @@ class ChatRoomManager : CoroutineScope {
                   val clientId: String,
                   val roomName: String,
                   val userName: String) : ActorAction()
+
+    class SearchForRoomsWithSimilarName(val result: CompletableDeferred<List<PublicChatRoom>>,
+                                        val roomName: String,
+                                        val maxCount: Int) : ActorAction()
 
     //for tests
 
