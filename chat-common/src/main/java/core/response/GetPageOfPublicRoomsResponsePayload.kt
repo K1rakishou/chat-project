@@ -3,11 +3,11 @@ package core.response
 import core.*
 import core.byte_sink.ByteSink
 import core.exception.*
-import core.model.drainable.PublicChatRoom
+import core.model.drainable.ChatRoomData
 
 class GetPageOfPublicRoomsResponsePayload private constructor(
   status: Status,
-  val publicChatRoomList: List<PublicChatRoom> = emptyList()
+  val publicChatRoomList: List<ChatRoomData> = emptyList()
 ) : BaseResponse(status) {
 
   override fun getResponseType(): ResponseType = ResponseType.GetPageOfPublicRoomsResponseType
@@ -49,7 +49,7 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
-    fun success(publicChatRoomList: List<PublicChatRoom>): GetPageOfPublicRoomsResponsePayload {
+    fun success(publicChatRoomList: List<ChatRoomData>): GetPageOfPublicRoomsResponsePayload {
       return GetPageOfPublicRoomsResponsePayload(Status.Ok, publicChatRoomList)
     }
 
@@ -68,7 +68,7 @@ class GetPageOfPublicRoomsResponsePayload private constructor(
               return fail(status)
             }
 
-            val publicChatRoomList = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, Constants.maxChatRoomsCount)
+            val publicChatRoomList = byteSink.readList<ChatRoomData>(ChatRoomData::class, Constants.maxChatRoomsCount)
             return GetPageOfPublicRoomsResponsePayload(status, publicChatRoomList)
           }
           GetPageOfPublicRoomsResponsePayload.ResponseVersion.Unknown -> throw UnknownPacketVersionException(responseVersion.value)

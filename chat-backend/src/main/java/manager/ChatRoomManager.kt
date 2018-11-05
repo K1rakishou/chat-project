@@ -4,7 +4,7 @@ import core.ChatRoom
 import core.Constants
 import core.User
 import core.UserInRoom
-import core.model.drainable.PublicChatRoom
+import core.model.drainable.ChatRoomData
 import core.utils.TimeUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -168,8 +168,8 @@ class ChatRoomManager : CoroutineScope {
     return result.await()
   }
 
-  suspend fun getAllPublicRooms(): List<PublicChatRoom> {
-    val result = CompletableDeferred<List<PublicChatRoom>>()
+  suspend fun getAllPublicRooms(): List<ChatRoomData> {
+    val result = CompletableDeferred<List<ChatRoomData>>()
     chatRoomManagerActor.send(ActorAction.GetAllPublicRooms(result))
     return result.await()
   }
@@ -199,8 +199,8 @@ class ChatRoomManager : CoroutineScope {
     return result.await()
   }
 
-  suspend fun searchForRoomsWithSimilarName(roomName: String, maxCount: Int): List<PublicChatRoom> {
-    val result = CompletableDeferred<List<PublicChatRoom>>()
+  suspend fun searchForRoomsWithSimilarName(roomName: String, maxCount: Int): List<ChatRoomData> {
+    val result = CompletableDeferred<List<ChatRoomData>>()
     chatRoomManagerActor.send(ActorAction.SearchForRoomsWithSimilarName(result, roomName, maxCount))
     return result.await()
   }
@@ -356,12 +356,12 @@ class ChatRoomManager : CoroutineScope {
 
   private fun getAllPublicRoomsInternal(
     chatRooms: MutableMap<String, ChatRoom>
-  ): List<PublicChatRoom> {
+  ): List<ChatRoomData> {
     return chatRooms.values
       .filter { chatRoom -> chatRoom.isPublic }
       .map { chatRoom ->
         val copy = chatRoom.copy()
-        return@map PublicChatRoom(copy.chatRoomName, copy.chatRoomImageUrl)
+        return@map ChatRoomData(copy.chatRoomName, copy.chatRoomImageUrl, copy.isPublic)
       }
   }
 
@@ -379,7 +379,7 @@ class ChatRoomManager : CoroutineScope {
     chatRooms: MutableMap<String, ChatRoom>,
     roomName: String,
     maxCount: Int
-  ): List<PublicChatRoom> {
+  ): List<ChatRoomData> {
     val foundRooms = mutableListOf<ChatRoom>()
 
     val publicRooms = chatRooms.values
@@ -405,7 +405,7 @@ class ChatRoomManager : CoroutineScope {
 
     return foundRooms.map { chatRoom ->
       val copy = chatRoom.copy()
-      return@map PublicChatRoom(copy.chatRoomName, copy.chatRoomImageUrl)
+      return@map ChatRoomData(copy.chatRoomName, copy.chatRoomImageUrl, copy.isPublic)
     }
   }
 
@@ -469,7 +469,7 @@ class ChatRoomManager : CoroutineScope {
     class RoomHasPassword(val result: CompletableDeferred<Boolean>,
                           val chatRoomName: String) : ActorAction()
 
-    class GetAllPublicRooms(val result: CompletableDeferred<List<PublicChatRoom>>) : ActorAction()
+    class GetAllPublicRooms(val result: CompletableDeferred<List<ChatRoomData>>) : ActorAction()
 
     class DoesPasswordMatch(val result: CompletableDeferred<Boolean>,
                             val chatRoomName: String,
@@ -483,7 +483,7 @@ class ChatRoomManager : CoroutineScope {
                   val roomName: String,
                   val userName: String) : ActorAction()
 
-    class SearchForRoomsWithSimilarName(val result: CompletableDeferred<List<PublicChatRoom>>,
+    class SearchForRoomsWithSimilarName(val result: CompletableDeferred<List<ChatRoomData>>,
                                         val roomName: String,
                                         val maxCount: Int) : ActorAction()
 

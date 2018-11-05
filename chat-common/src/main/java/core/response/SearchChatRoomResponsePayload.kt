@@ -5,12 +5,12 @@ import core.ResponseType
 import core.Status
 import core.byte_sink.ByteSink
 import core.exception.*
-import core.model.drainable.PublicChatRoom
+import core.model.drainable.ChatRoomData
 import core.sizeofList
 
 class SearchChatRoomResponsePayload private constructor(
   status: Status,
-  val foundChatRooms: List<PublicChatRoom>
+  val foundChatRooms: List<ChatRoomData>
 ) : BaseResponse(status) {
 
   override fun getResponseType(): ResponseType = ResponseType.SearchChatRoomResponseType
@@ -52,7 +52,7 @@ class SearchChatRoomResponsePayload private constructor(
   companion object {
     private val CURRENT_RESPONSE_VERSION = ResponseVersion.V1
 
-    fun success(foundChatRooms: List<PublicChatRoom>): SearchChatRoomResponsePayload {
+    fun success(foundChatRooms: List<ChatRoomData>): SearchChatRoomResponsePayload {
       return SearchChatRoomResponsePayload(Status.Ok, foundChatRooms)
     }
 
@@ -71,7 +71,7 @@ class SearchChatRoomResponsePayload private constructor(
               return fail(status)
             }
 
-            val foundChatRooms = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, Constants.maxFoundChatRooms)
+            val foundChatRooms = byteSink.readList<ChatRoomData>(ChatRoomData::class, Constants.maxFoundChatRooms)
 
             return success(foundChatRooms)
           }

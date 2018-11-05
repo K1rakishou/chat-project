@@ -12,8 +12,8 @@ object DrainableFactory {
     where T : CanBeDrainedToSink {
 
     return when (clazz) {
-      PublicChatRoom::class -> {
-        PublicChatRoom.createFromByteSink<PublicChatRoom>(byteSink) as T?
+      ChatRoomData::class -> {
+        ChatRoomData.createFromByteSink<ChatRoomData>(byteSink) as T?
       }
       PublicUserInChat::class -> {
         PublicUserInChat.createFromByteSink<PublicUserInChat>(byteSink) as T?

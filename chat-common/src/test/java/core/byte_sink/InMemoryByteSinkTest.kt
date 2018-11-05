@@ -2,7 +2,7 @@ package core.byte_sink
 
 import core.exception.ByteSinkBufferOverflowException
 import core.exception.MaxListSizeExceededException
-import core.model.drainable.PublicChatRoom
+import core.model.drainable.ChatRoomData
 import core.model.drainable.PublicUserInChat
 import core.security.SecurityUtils
 import core.sizeofList
@@ -229,46 +229,48 @@ class InMemoryByteSinkTest {
   @Test
   fun testReadWriteNullDrainable() {
     byteSink.writeDrainable(null)
-    assertNull(byteSink.readDrainable<PublicChatRoom>(PublicChatRoom::class))
+    assertNull(byteSink.readDrainable<ChatRoomData>(ChatRoomData::class))
   }
 
   @Test
   fun testReadWriteListOfDrainables() {
     val expectedListOfDrainables = listOf(
-      PublicChatRoom("1", "1")
+      ChatRoomData("1", "1", true)
     )
 
     byteSink.writeList(expectedListOfDrainables)
 
-    assertEquals(15, sizeofList(expectedListOfDrainables))
-    assertEquals(15, byteSink.getWriterPosition())
+    assertEquals(16, sizeofList(expectedListOfDrainables))
+    assertEquals(16, byteSink.getWriterPosition())
 
-    val actualListOfDrainables = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, expectedListOfDrainables.size)
-    assertEquals(15, byteSink.getReaderPosition())
+    val actualListOfDrainables = byteSink.readList<ChatRoomData>(ChatRoomData::class, expectedListOfDrainables.size)
+    assertEquals(16, byteSink.getReaderPosition())
 
     for (i in 0 until expectedListOfDrainables.size) {
       assertEquals(expectedListOfDrainables[i].chatRoomName, actualListOfDrainables[i].chatRoomName)
       assertEquals(expectedListOfDrainables[i].chatRoomImageUrl, actualListOfDrainables[i].chatRoomImageUrl)
+      assertEquals(expectedListOfDrainables[i].isPublic, actualListOfDrainables[i].isPublic)
     }
   }
 
   @Test
   fun testReadWriteListOfDrainables2() {
     val expectedListOfDrainables = listOf(
-      PublicChatRoom("s5sdhe6e46je46j", "111"),
-      PublicChatRoom("a35h35jw35kk56k", "222"),
-      PublicChatRoom("s5sdhe6e4576je46j", "333"),
-      PublicChatRoom("64hwhw4hj54hj", "444"),
-      PublicChatRoom("fg6yfdt7futu", "555"),
-      PublicChatRoom("46", "666")
+      ChatRoomData("s5sdhe6e46je46j", "111", false),
+      ChatRoomData("a35h35jw35kk56k", "222", false),
+      ChatRoomData("s5sdhe6e4576je46j", "333", false),
+      ChatRoomData("64hwhw4hj54hj", "444", false),
+      ChatRoomData("fg6yfdt7futu", "555", false),
+      ChatRoomData("46", "666", false)
     )
 
     byteSink.writeList(expectedListOfDrainables)
-    val actualListOfDrainables = byteSink.readList<PublicChatRoom>(PublicChatRoom::class, expectedListOfDrainables.size)
+    val actualListOfDrainables = byteSink.readList<ChatRoomData>(ChatRoomData::class, expectedListOfDrainables.size)
 
     for (i in 0 until expectedListOfDrainables.size) {
       assertEquals(expectedListOfDrainables[i].chatRoomName, actualListOfDrainables[i].chatRoomName)
       assertEquals(expectedListOfDrainables[i].chatRoomImageUrl, actualListOfDrainables[i].chatRoomImageUrl)
+      assertEquals(expectedListOfDrainables[i].isPublic, actualListOfDrainables[i].isPublic)
     }
   }
 

@@ -1,6 +1,6 @@
 package core
 
-import core.model.drainable.PublicChatRoom
+import core.model.drainable.ChatRoomData
 import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.TextChatMessage
 import org.junit.Assert.*
@@ -90,12 +90,12 @@ class SizeofKtTest {
 
   @Test
   fun `sizeof PublicChatRoom`() {
-    assertEquals(13, sizeof(PublicChatRoom("1", "2")))
+    assertEquals(14, sizeof(ChatRoomData("1", "2", true)))
   }
 
   @Test
   fun `sizeof PublicChatRoom with empty chatRoomName`() {
-    assertEquals(8, sizeof(PublicChatRoom("", "1")))
+    assertEquals(9, sizeof(ChatRoomData("", "1", false)))
   }
 
   @Test
