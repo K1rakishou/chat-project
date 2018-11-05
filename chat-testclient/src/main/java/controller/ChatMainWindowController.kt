@@ -7,23 +7,21 @@ import core.Status
 import core.exception.ResponseDeserializationException
 import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
-import core.packet.GetPageOfPublicRoomsPacket
 import core.packet.SendChatMessagePacket
 import core.response.*
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import javafx.beans.property.SimpleIntegerProperty
-import javafx.beans.property.SimpleStringProperty
-import javafx.collections.FXCollections
 import kotlinx.coroutines.delay
 import manager.NetworkManager
-import model.chat_message.*
+import model.chat_message.BaseChatMessageItem
+import model.chat_message.ForeignTextChatMessageItem
+import model.chat_message.MyTextChatMessageItem
+import model.chat_message.SystemChatMessageItemMy
 import model.chat_room_list.NoRoomsNotificationItem
 import model.chat_room_list.PublicChatRoomItem
 import store.ChatRoomsStore
 import ui.chat_main_window.ChatMainWindow
-import ui.chat_main_window.ChatRoomView
-import ui.chat_main_window.ChatRoomViewEmpty
 import utils.ThreadChecker
 import java.util.concurrent.TimeUnit
 
@@ -41,7 +39,9 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
     startListeningToPackets()
     networkManager.shouldReconnectOnDisconnect()
-    networkManager.sendPacket(GetPageOfPublicRoomsPacket(0, 20))
+
+    //TODO: remove the rest
+//    networkManager.sendPacket(GetPageOfPublicRoomsPacket(0, 20))
   }
 
   override fun destroyController() {

@@ -18,7 +18,8 @@ class CreateRoomPacket(
   override fun getPacketType(): PacketType = PacketType.CreateRoomPacketType
 
   override fun getPayloadSize(): Int {
-    return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash) + sizeof(chatRoomImageUrl) + sizeof(userName)
+    return super.getPayloadSize() + sizeof(isPublic) + sizeof(chatRoomName) + sizeof(chatRoomPasswordHash) +
+      sizeof(chatRoomImageUrl) + sizeof(userName)
   }
 
   override fun toByteSink(byteSink: ByteSink) {

@@ -20,6 +20,8 @@ class ChatRoomsStore {
   }
 
   fun addManyChatRoomListItem(chatRoomItemList: List<BaseChatRoomListItem>) {
+    ThreadChecker.throwIfNotOnMainThread()
+
     for (item in chatRoomItemList) {
       val index = if (publicChatRoomList.isEmpty()) {
         0

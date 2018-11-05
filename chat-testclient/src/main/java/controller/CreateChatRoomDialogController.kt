@@ -1,5 +1,6 @@
 package controller
 
+import ChatApp
 import core.ResponseInfo
 import core.ResponseType
 import core.Status
@@ -97,10 +98,10 @@ class CreateChatRoomDialogController : BaseController<CreateChatRoomDialogFragme
   }
 
   private fun handleCreateRoomResponse(responseInfo: ResponseInfo) {
-    try {
-      println("CreateRoomResponseType response received")
-      ThreadChecker.throwIfOnMainThread()
+    println("CreateRoomResponseType response received")
+    ThreadChecker.throwIfOnMainThread()
 
+    try {
       val response = try {
         CreateRoomResponsePayload.fromByteSink(responseInfo.byteSink)
       } catch (error: ResponseDeserializationException) {

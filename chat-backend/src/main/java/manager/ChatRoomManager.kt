@@ -396,9 +396,11 @@ class ChatRoomManager : CoroutineScope {
         .asSequence()
         .filter { !it.isPublic }
         .filter { it.chatRoomName.equals(roomName, true) }
-        .first()
+        .firstOrNull()
 
-      foundRooms.add(privateRoomWithExactlyTheSameName)
+      if (privateRoomWithExactlyTheSameName != null) {
+        foundRooms.add(privateRoomWithExactlyTheSameName)
+      }
     }
 
     return foundRooms.map { chatRoom ->

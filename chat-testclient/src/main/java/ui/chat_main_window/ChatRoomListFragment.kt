@@ -53,12 +53,16 @@ class ChatRoomListFragment : BaseFragment() {
   }
 
   override fun onDock() {
+    controller.createController(this)
+
     debouncedSearch.start(this::performSearch)
     reloadChatRoomsList(ListState.NormalState)
   }
 
   override fun onUndock() {
     debouncedSearch.stop()
+
+    controller.destroyController()
   }
 
   private val virtualListView = VirtualListView(chatRoomsListProperty, { item ->

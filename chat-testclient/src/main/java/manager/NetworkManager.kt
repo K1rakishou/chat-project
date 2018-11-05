@@ -211,7 +211,11 @@ class NetworkManager : CoroutineScope {
           //sockets
           socket?.let { sckt ->
             if (!sckt.isClosed) {
-              sckt.close()
+              try {
+                sckt.close()
+              } catch (error: Throwable) {
+                //do nothing
+              }
             }
           }
 
@@ -269,6 +273,7 @@ class NetworkManager : CoroutineScope {
           }
 
         } catch (error: Throwable) {
+          error.printStackTrace()
           println("Disconnected from the server")
 
           disconnect()
