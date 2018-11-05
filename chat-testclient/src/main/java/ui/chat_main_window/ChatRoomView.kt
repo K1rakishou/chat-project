@@ -44,7 +44,7 @@ class ChatRoomView : BaseView() {
       }
 
       reloadMessagesHistory(event)
-    }
+    }.autoUnsubscribe()
 
     controller.scrollToBottomFlag.addListener { _, _, _ ->
       scrollToBottom()

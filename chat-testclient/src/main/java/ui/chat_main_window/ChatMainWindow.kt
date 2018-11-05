@@ -40,7 +40,7 @@ class ChatMainWindow : BaseView("Chat") {
     }.autoUnsubscribe()
     subscribe<ChatMainWindowEvents.ShowCreateChatRoomDialogEvent> {
       showCreateChatRoomDialog()
-    }
+    }.autoUnsubscribe()
     subscribe<ChatMainWindowEvents.ChatRoomCreatedEvent> { event ->
       controller.onChatRoomCreated(event.roomName, event.userName, event.roomImageUrl)
     }.autoUnsubscribe()
