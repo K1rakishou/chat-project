@@ -35,6 +35,7 @@ abstract class BaseChatRoomListItem(
 
   enum class ChatRoomListItemType {
     ChatRoomItemType,
-    NoRoomsNotificationType
+    NoRoomsNotificationType,
+    SearchChatRoomItemType
   }
 }

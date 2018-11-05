@@ -1,6 +1,7 @@
 import javafx.stage.Stage
 import manager.NetworkManager
 import store.ChatRoomsStore
+import store.SearchChatRoomsStore
 import store.SettingsStore
 import tornadofx.App
 import tornadofx.NoPrimaryViewSpecified
@@ -20,5 +21,6 @@ class ChatApp : App(NoPrimaryViewSpecified::class, Styles::class) {
     val networkManager = NetworkManager()
     val settingsStore = SettingsStore()
     val chatRoomsStore = ChatRoomsStore()
+    val searchChatRoomsStore = SearchChatRoomsStore()
   }
 }
