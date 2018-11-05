@@ -73,7 +73,7 @@ class LoadingWindow : BaseView("Chat") {
 
   fun onConnectedToServer() {
     doOnUI {
-      find<ChatMainWindow>().openWindow(resizable = true)
+      find<ChatMainWindow>().openWindow(resizable = true, escapeClosesWindow = false)
 
       closeView()
       fire(ConnectionWindowEvents.CloseConnectionWindowEvent)
