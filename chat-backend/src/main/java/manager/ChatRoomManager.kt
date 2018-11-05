@@ -13,14 +13,12 @@ import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.consumeEach
 import kotlin.coroutines.CoroutineContext
 
-class ChatRoomManager(
-  private val dispatcher: CoroutineDispatcher = newFixedThreadPoolContext(2, "chat-room-manager")
-) : CoroutineScope {
+class ChatRoomManager : CoroutineScope {
   private val job = Job()
   private val chatRoomManagerActor: SendChannel<ActorAction>
 
   override val coroutineContext: CoroutineContext
-    get() = job + dispatcher
+    get() = job + Dispatchers.Default
 
   init {
     chatRoomManagerActor = actor(capacity = Channel.UNLIMITED) {

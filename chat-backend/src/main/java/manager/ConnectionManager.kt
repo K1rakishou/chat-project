@@ -15,15 +15,14 @@ import kotlin.coroutines.CoroutineContext
 
 class ConnectionManager(
   private val chatRoomManager: ChatRoomManager,
-  private val responseBuilder: ResponseBuilder,
-  private val dispatcher: CoroutineDispatcher = newFixedThreadPoolContext(2, "connection-manager")
+  private val responseBuilder: ResponseBuilder
 ) : CoroutineScope {
   private val job = Job()
   private val sendActorChannelCapacity = 2048
   private val connectionActor: SendChannel<ActorAction>
 
   override val coroutineContext: CoroutineContext
-    get() = job + dispatcher
+    get() = job + Dispatchers.Default
 
   init {
     connectionActor = actor(capacity = sendActorChannelCapacity) {
