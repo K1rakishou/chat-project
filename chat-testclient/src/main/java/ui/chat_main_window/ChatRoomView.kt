@@ -59,6 +59,7 @@ class ChatRoomView : BaseView() {
         baseChatMessage as MyTextChatMessageItem
         createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText, baseChatMessage.getMessageType())
       }
+      MessageType.MyImageMessage -> TODO()
       else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
     }
   })

@@ -11,6 +11,7 @@ import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Cursor
 import javafx.scene.control.OverrunStyle
+import javafx.scene.input.KeyCode
 import javafx.scene.layout.Background
 import javafx.scene.layout.BackgroundFill
 import javafx.scene.layout.CornerRadii
@@ -83,6 +84,12 @@ class ChatRoomListFragment : BaseFragment() {
   override val root = vbox {
     textfield {
       promptText = "Search for a chat room"
+
+      setOnKeyReleased { event ->
+        if (event.code == KeyCode.ESCAPE) {
+          clear()
+        }
+      }
 
       textProperty().addListener { _, _, text ->
         debouncedSearch.process(text)
