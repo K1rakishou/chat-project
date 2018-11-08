@@ -67,8 +67,6 @@ class ChatRoomListFragment : BaseFragment() {
   }
 
   private val virtualListView = VirtualListView(chatRoomsListProperty, { item ->
-    println("Constructing a node for a room with name ${item.roomName}")
-
     return@VirtualListView when (item) {
       is PublicChatRoomItem -> createCellPublicChatRoomItem(chatMainWindowSize.widthProperty, item)
       is NoRoomsNotificationItem -> createCellNoRoomsNotificationItem(chatMainWindowSize.widthProperty)

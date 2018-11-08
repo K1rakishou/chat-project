@@ -5,19 +5,15 @@ import core.model.drainable.PublicUserInChat
 import core.model.drainable.chat_message.BaseChatMessage
 import core.model.drainable.chat_message.ChatMessageType
 import core.model.drainable.chat_message.TextChatMessage
-import javafx.beans.property.SimpleListProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
-import javafx.collections.ListChangeListener
 import model.chat_message.BaseChatMessageItem
-import model.chat_message.ForeignTextChatMessageItem
-import model.chat_message.MessageType
-import model.chat_message.MyTextChatMessageItem
+import model.chat_message.text_message.ForeignTextChatMessageItem
+import model.chat_message.text_message.MyTextChatMessageItem
 import model.user.BaseUserItem
 import model.user.ForeignUserItem
 import model.user.MyUserItem
 import tornadofx.onChange
-import java.lang.RuntimeException
 
 class PublicChatRoomItem(
   roomName: String,

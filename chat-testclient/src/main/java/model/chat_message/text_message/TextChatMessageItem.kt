@@ -1,16 +1,17 @@
-package model.chat_message
+package model.chat_message.text_message
 
 import javafx.beans.property.SimpleStringProperty
+import model.chat_message.BaseChatMessageItem
 import java.util.*
 
-open class MyTextChatMessageItem(
+abstract class TextChatMessageItem(
   senderName: String,
   messageText: String,
   serverMessageId: Int = -1,
   clientMessageId: Int = -1
 ) : BaseChatMessageItem(serverMessageId, clientMessageId) {
 
-  override fun getMessageType(): MessageType = MessageType.MyTextMessage
+//  override fun getMessageType(): MessageType = MessageType.MyTextMessage
 
   override fun toTextMessage(): String {
     return "$senderName: $messageText"
@@ -35,7 +36,7 @@ open class MyTextChatMessageItem(
       return false
     }
 
-    if (other !is MyTextChatMessageItem) {
+    if (other !is TextChatMessageItem) {
       return false
     }
 

@@ -25,8 +25,22 @@ class Styles : Stylesheet() {
       fontWeight = FontWeight.BOLD
       textFill = c(47, 175, 47)
     }
-    textChatMessage {
+
+    myTextChatMessage {
       fontSize = 16.px
+      textFill = c(172, 172, 172)
+    }
+    myTextChatMessageAcceptedByServer {
+      fontSize = 16.px
+      textFill = c(0, 0, 0)
+    }
+    systemTextChatMessage {
+      fontSize = 16.px
+      textFill = c(0, 0, 0)
+    }
+    foreignTextChatMessage {
+      fontSize = 16.px
+      textFill = c(0, 0, 0)
     }
   }
 
@@ -37,6 +51,10 @@ class Styles : Stylesheet() {
 
     val senderName by cssclass()
     val receiverName by cssclass()
-    val textChatMessage by cssclass()
+
+    val myTextChatMessage by cssclass()
+    val myTextChatMessageAcceptedByServer by cssclass()
+    val systemTextChatMessage by cssclass()
+    val foreignTextChatMessage by cssclass()
   }
 }

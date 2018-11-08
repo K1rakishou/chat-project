@@ -15,9 +15,9 @@ import javafx.beans.property.SimpleIntegerProperty
 import kotlinx.coroutines.delay
 import manager.NetworkManager
 import model.chat_message.BaseChatMessageItem
-import model.chat_message.ForeignTextChatMessageItem
-import model.chat_message.MyTextChatMessageItem
-import model.chat_message.SystemChatMessageItemMy
+import model.chat_message.text_message.ForeignTextChatMessageItem
+import model.chat_message.text_message.MyTextChatMessageItem
+import model.chat_message.text_message.SystemChatMessageItem
 import model.chat_room_list.NoRoomsNotificationItem
 import model.chat_room_list.PublicChatRoomItem
 import store.ChatRoomsStore
@@ -54,7 +54,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     if (!networkManager.isConnected) {
       println("Not connected")
 
-      addChatMessage(selectedChatRoomName, SystemChatMessageItemMy("Not connected to the server"))
+      addChatMessage(selectedChatRoomName, SystemChatMessageItem("Not connected to the server"))
       return
     }
 
@@ -254,7 +254,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     }
 
     chatRoom.addForeignUser(userName)
-    addChatMessage(roomName, SystemChatMessageItemMy("User \"$userName\" has joined to chat room"))
+    addChatMessage(roomName, SystemChatMessageItem("User \"$userName\" has joined to chat room"))
   }
 
   private fun removeForeignUserFromChatRoom(roomName: String, userName: String) {
@@ -265,7 +265,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     }
 
     chatRoom.removeUser(userName)
-    addChatMessage(roomName, SystemChatMessageItemMy("User \"$userName\" has left the room"))
+    addChatMessage(roomName, SystemChatMessageItem("User \"$userName\" has left the room"))
   }
 
   //TODO: make private
@@ -322,7 +322,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       chatRoom.addMyUser(userName)
       chatRoom.replaceChatRoomHistory(messageHistory)
 
-      addChatMessage(roomName, SystemChatMessageItemMy("You've joined the chat room"))
+      addChatMessage(roomName, SystemChatMessageItem("You've joined the chat room"))
     }
   }
 
@@ -337,7 +337,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     doOnUI {
       //TODO
 //      selectedRoomName?.let { roomName ->
-//        addChatMessage(roomName, SystemChatMessageItemMy("Disconnected from the server"))
+//        addChatMessage(roomName, SystemChatMessageItem("Disconnected from the server"))
 //      }
     }
   }
@@ -346,7 +346,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     doOnUI {
       //TODO
 //      selectedRoomName?.let { roomName ->
-//        addChatMessage(roomName, SystemChatMessageItemMy("Reconnected"))
+//        addChatMessage(roomName, SystemChatMessageItem("Reconnected"))
 //      }
     }
   }
@@ -355,7 +355,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     doOnUI {
       //TODO
 //      selectedRoomName?.let { roomName ->
-//        addChatMessage(roomName, SystemChatMessageItemMy("Error while trying to reconnect: ${error?.message
+//        addChatMessage(roomName, SystemChatMessageItem("Error while trying to reconnect: ${error?.message
 //          ?: "No error message"}"))
 //      }
     }

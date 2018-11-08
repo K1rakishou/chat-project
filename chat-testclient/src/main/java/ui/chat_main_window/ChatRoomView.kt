@@ -15,7 +15,9 @@ import javafx.scene.paint.Paint
 import kotlinx.coroutines.delay
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.MessageType
-import model.chat_message.MyTextChatMessageItem
+import model.chat_message.text_message.ForeignTextChatMessageItem
+import model.chat_message.text_message.MyTextChatMessageItem
+import model.chat_message.text_message.SystemChatMessageItem
 import org.fxmisc.flowless.VirtualizedScrollPane
 import store.ChatRoomsStore
 import tornadofx.*
@@ -53,11 +55,17 @@ class ChatRoomView : BaseView() {
 
   private val virtualListView = VirtualMultiSelectListView(currentChatRoomMessagesProperty, { baseChatMessage ->
     return@VirtualMultiSelectListView when (baseChatMessage.getMessageType()) {
-      MessageType.MyTextMessage,
-      MessageType.ForeignTextMessage,
-      MessageType.SystemTextMessage -> {
+      MessageType.MyTextMessage -> {
         baseChatMessage as MyTextChatMessageItem
-        createTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText, baseChatMessage.getMessageType())
+        createMyTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText, baseChatMessage.isAcceptedByServer())
+      }
+      MessageType.ForeignTextMessage -> {
+        baseChatMessage as ForeignTextChatMessageItem
+        createForeignTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+      }
+      MessageType.SystemTextMessage -> {
+        baseChatMessage as SystemChatMessageItem
+        createSystemTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
       }
       MessageType.MyImageMessage -> TODO()
       else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
@@ -172,7 +180,7 @@ class ChatRoomView : BaseView() {
 //    }
 //  }
 
-  private fun createTextChatMessage(senderName: String, messageText: String, messageType: MessageType): Node {
+  private fun createForeignTextChatMessage(senderName: String, messageText: String): Node {
     return hbox {
       paddingTop = 2.0
       paddingBottom = 2.0
@@ -180,20 +188,66 @@ class ChatRoomView : BaseView() {
       paddingRight = 4.0
 
       prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
-      id = "child_id_${childIndex.get()}"
 
       vbox {
         label(senderName) {
-          if (messageType == MessageType.MyTextMessage) {
-            addClass(Styles.senderName)
-          } else {
-            addClass(Styles.receiverName)
-          }
+          addClass(Styles.receiverName)
         }
-        text(messageText) {
-          wrappingWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+        label(messageText) {
+          //TODO: text wrapping does not work with the "Label" control
+          prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
 
-          addClass(Styles.textChatMessage)
+          addClass(Styles.foreignTextChatMessage)
+        }
+      }
+    }
+  }
+
+  private fun createSystemTextChatMessage(senderName: String, messageText: String): Node {
+    return hbox {
+      paddingTop = 2.0
+      paddingBottom = 2.0
+      paddingLeft = 4.0
+      paddingRight = 4.0
+
+      prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+
+      vbox {
+        label(senderName) {
+          addClass(Styles.senderName)
+        }
+        label(messageText) {
+          //TODO: text wrapping does not work with the "Label" control
+          prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+
+          addClass(Styles.systemTextChatMessage)
+        }
+      }
+    }
+  }
+
+  private fun createMyTextChatMessage(senderName: String, messageText: String, acceptedByServer: Boolean): Node {
+    return hbox {
+      paddingTop = 2.0
+      paddingBottom = 2.0
+      paddingLeft = 4.0
+      paddingRight = 4.0
+
+      prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+
+      vbox {
+        label(senderName) {
+          addClass(Styles.senderName)
+        }
+        label(messageText) {
+          //TODO: text wrapping does not work with the "Label" control
+          prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+
+          if (!acceptedByServer) {
+            addClass(Styles.myTextChatMessage)
+          } else {
+            addClass(Styles.myTextChatMessageAcceptedByServer)
+          }
         }
       }
     }

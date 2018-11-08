@@ -1,7 +1,7 @@
 package model.chat_message
 
-import java.lang.IllegalArgumentException
-import java.lang.IllegalStateException
+import model.chat_message.text_message.MyTextChatMessageItem
+import model.chat_message.text_message.SystemChatMessageItem
 
 abstract class BaseChatMessageItem(
   val serverMessageId: Int,
@@ -34,7 +34,7 @@ abstract class BaseChatMessageItem(
           oldChatMessageItem.serverMessageId,
           clientMessage
         )
-        is SystemChatMessageItemMy -> SystemChatMessageItemMy(
+        is SystemChatMessageItem -> SystemChatMessageItem(
           oldChatMessageItem.messageText,
           oldChatMessageItem.serverMessageId,
           clientMessage
@@ -56,7 +56,7 @@ abstract class BaseChatMessageItem(
           serverMessageId,
           oldChatMessageItem.clientMessageId
         )
-        is SystemChatMessageItemMy -> SystemChatMessageItemMy(
+        is SystemChatMessageItem -> SystemChatMessageItem(
           oldChatMessageItem.messageText,
           serverMessageId,
           oldChatMessageItem.clientMessageId
