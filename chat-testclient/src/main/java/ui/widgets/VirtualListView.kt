@@ -67,7 +67,11 @@ class VirtualListView<T>(
 
   fun getVirtualFlow() = virtualFlow
 
-  fun selectItemByKey(key: String) {
+  fun selectItemByKey(key: String?) {
+    if (key == null) {
+      return
+    }
+
     val index = items.indexOfFirst { keySelector(it) == key }
     if (index == -1) {
       println("No item found with key ($key)")

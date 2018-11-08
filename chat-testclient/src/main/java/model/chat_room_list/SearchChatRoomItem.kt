@@ -12,5 +12,4 @@ class SearchChatRoomItem(
   var imageUrl: String
     get() = imageUrlProperty.get()
     set(value) = imageUrlProperty.set(value)
-
 }

@@ -11,6 +11,7 @@ import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Cursor
 import javafx.scene.control.OverrunStyle
+import javafx.scene.control.TextField
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Background
 import javafx.scene.layout.BackgroundFill
@@ -29,6 +30,8 @@ import ui.base.BaseFragment
 import ui.widgets.VirtualListView
 
 class ChatRoomListFragment : BaseFragment() {
+  private lateinit var searchTextInput: TextField
+
   private val controller: ChatRoomListFragmentController by inject()
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val searchChatRoomsStore: SearchChatRoomsStore by lazy { ChatApp.searchChatRoomsStore }
@@ -37,19 +40,22 @@ class ChatRoomListFragment : BaseFragment() {
   private val rightMargin = 16.0
 
   private val debouncedSearch = DebouncedSearchHelper()
-
   private var currentListState = ListState.NormalState
   private val chatRoomsListProperty = FXCollections.observableArrayList<BaseChatRoomListItem>()
   private val chatRoomsListPropertyListener = ListConversionListener<BaseChatRoomListItem, BaseChatRoomListItem>(chatRoomsListProperty) { it }
-
   private val chatMainWindowSize = params[ChatMainWindow.CHAT_ROOM_LIST_VIEW_SIZE] as ChatMainWindow.ChatRoomViewSizeParams
 
   init {
     subscribe<ChatRoomListFragmentEvents.SelectItem> { event ->
-      virtualListView.selectItemByKey(event.key)
+      selectItem(event.key)
     }.autoUnsubscribe()
     subscribe<ChatRoomListFragmentEvents.ClearSelection> {
+      lastSelectedChatRoomName = null
       virtualListView.clearSelection()
+    }.autoUnsubscribe()
+    subscribe<ChatRoomListFragmentEvents.ClearSearchInput> {
+      searchTextInput.clear()
+      selectItem(lastSelectedChatRoomName)
     }.autoUnsubscribe()
   }
 
@@ -80,7 +86,7 @@ class ChatRoomListFragment : BaseFragment() {
   })
 
   override val root = vbox {
-    textfield {
+    searchTextInput = textfield {
       promptText = "Search for a chat room"
 
       setOnKeyReleased { event ->
@@ -98,6 +104,10 @@ class ChatRoomListFragment : BaseFragment() {
       background = Background(BackgroundFill(Paint.valueOf("#ffffff"), CornerRadii.EMPTY, Insets.EMPTY))
       prefHeightProperty().bind(chatMainWindowSize.heightProperty)
     }))
+  }
+
+  private fun selectItem(key: String?) {
+    virtualListView.selectItemByKey(key)
   }
 
   private fun performSearch(chatRoomName: String) {
@@ -137,13 +147,15 @@ class ChatRoomListFragment : BaseFragment() {
             lastSelectedChatRoomName = item.roomName
             fire(ChatMainWindowEvents.ShowChatRoomViewEvent(item.roomName))
           }
-        } else {
-          fire(ChatMainWindowEvents.ShowJoinChatRoomDialogEvent(item.roomName))
         }
       }
       is NoRoomsNotificationItem -> {
         fire(ChatMainWindowEvents.ShowCreateChatRoomDialogEvent)
       }
+      is SearchChatRoomItem -> {
+        fire(ChatMainWindowEvents.ShowJoinChatRoomDialogEvent(item.roomName))
+      }
+      else -> throw RuntimeException("Not implemented for ${item::class}")
     }
   }
 
@@ -168,8 +180,8 @@ class ChatRoomListFragment : BaseFragment() {
       paddingAll = 2.0
       cursor = Cursor.HAND
 
-      prefWidthProperty().bind(widthProperty - rightMargin)
-      maxWidthProperty().bind(widthProperty - rightMargin)
+      prefWidthProperty().bind(widthProperty)
+      maxWidthProperty().bind(widthProperty)
 
       imageview(item.imageUrl) {
         minHeight = 60.0
@@ -201,8 +213,8 @@ class ChatRoomListFragment : BaseFragment() {
       paddingAll = 2.0
       cursor = Cursor.HAND
 
-      prefWidthProperty().bind(widthProperty - rightMargin)
-      maxWidthProperty().bind(widthProperty - rightMargin)
+      prefWidthProperty().bind(widthProperty)
+      maxWidthProperty().bind(widthProperty)
 
       imageview(item.imageUrl) {
         minHeight = 60.0

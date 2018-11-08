@@ -268,8 +268,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     addChatMessage(roomName, SystemChatMessageItem("User \"$userName\" has left the room"))
   }
 
-  //TODO: make private
-  fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem): Int {
+  private fun addChatMessage(roomName: String, chatMessage: BaseChatMessageItem): Int {
     val messageId = store.addChatRoomMessage(roomName, chatMessage)
     if (messageId == -1) {
       println("Could not add chat room message to room with name $roomName")
@@ -298,11 +297,10 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   fun onChatRoomCreated(roomName: String, userName: String?, roomImageUrl: String) {
     doOnUI {
       store.removeNoRoomsNotification()
-      store.addChatRoomListItem(PublicChatRoomItem.create(roomName, roomImageUrl))
 
       //if userName is not null that means that we need to auto join this user into the created room
       if (userName != null) {
-        onJoinedToChatRoom(roomName, userName, emptyList(), emptyList())
+        onJoinedToChatRoom(roomName, roomImageUrl, userName, emptyList(), emptyList())
 
         view.selectRoomWithName(roomName)
         scrollChatToBottom()
@@ -310,14 +308,21 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     }
   }
 
-  fun onJoinedToChatRoom(roomName: String, userName: String, users: List<PublicUserInChat>, messageHistory: List<BaseChatMessage>) {
+  fun onJoinedToChatRoom(
+    roomName: String,
+    roomImageUrl: String,
+    userName: String,
+    users: List<PublicUserInChat>,
+    messageHistory: List<BaseChatMessage>
+  ) {
     doOnUI {
-      view.showChatRoomView(roomName)
-
       //Wait some time before ChatRoomView shows up
-      delay(TimeUnit.MILLISECONDS.toMillis(delayBeforeAddFirstChatRoomMessage))
+      delay(delayBeforeAddFirstChatRoomMessage)
 
-      val chatRoom = requireNotNull(store.getChatRoomByName(roomName))
+      val chatRoom = PublicChatRoomItem.create(roomName, roomImageUrl)
+      store.addChatRoomListItem(chatRoom)
+
+      view.showChatRoomView(roomName)
       chatRoom.replaceUserList(users)
       chatRoom.addMyUser(userName)
       chatRoom.replaceChatRoomHistory(messageHistory)

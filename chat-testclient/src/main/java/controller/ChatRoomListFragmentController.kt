@@ -11,12 +11,15 @@ import core.response.SearchChatRoomResponsePayload
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
 import manager.NetworkManager
+import store.ChatRoomsStore
 import store.SearchChatRoomsStore
 import ui.chat_main_window.ChatRoomListFragment
 import utils.ThreadChecker
 
 class ChatRoomListFragmentController : BaseController<ChatRoomListFragment>() {
   private val networkManager: NetworkManager by lazy { ChatApp.networkManager }
+
+  private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val searchChatRoomsStore: SearchChatRoomsStore by lazy { ChatApp.searchChatRoomsStore }
 
   override fun createController(viewParam: ChatRoomListFragment) {
@@ -102,7 +105,11 @@ class ChatRoomListFragmentController : BaseController<ChatRoomListFragment>() {
     }
 
     doOnUI {
-      searchChatRoomsStore.reloadSearchChatRoomList(response.foundChatRooms)
+      val alreadyJoinedRoomsSet =  chatRoomsStore.publicChatRoomList
+        .map { it.roomName }
+        .toSet()
+
+      searchChatRoomsStore.reloadSearchChatRoomList(response.foundChatRooms, alreadyJoinedRoomsSet)
     }
   }
 }

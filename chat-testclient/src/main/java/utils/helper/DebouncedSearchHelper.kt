@@ -3,25 +3,26 @@ package utils.helper
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.subjects.PublishSubject
-import java.lang.ref.WeakReference
 import java.util.concurrent.TimeUnit
 
 class DebouncedSearchHelper {
+  private val debounceTime = 500L
   private val subject = PublishSubject.create<String>()
-  private lateinit var callback: WeakReference<(String) -> Unit>
+
+  private var callback: ((String) -> Unit)? = null
   private lateinit var compositeDisposable: CompositeDisposable
 
   fun start(_callback: (String) -> Unit) {
-    callback = WeakReference(_callback)
+    callback = _callback
 
     compositeDisposable = CompositeDisposable()
     compositeDisposable += subject
-      .debounce(500, TimeUnit.MILLISECONDS)
-      .subscribe({ text -> callback.get()?.invoke(text) }, { error -> error.printStackTrace() })
+      .debounce(debounceTime, TimeUnit.MILLISECONDS)
+      .subscribe({ text -> callback?.invoke(text) }, { error -> error.printStackTrace() })
   }
 
   fun stop() {
-    callback.clear()
+    callback = null
     compositeDisposable.dispose()
   }
 

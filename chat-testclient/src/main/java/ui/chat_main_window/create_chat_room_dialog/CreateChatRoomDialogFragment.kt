@@ -1,9 +1,10 @@
 package ui.chat_main_window.create_chat_room_dialog
 
-import ChatApp.Companion.settingsStore
+import ChatApp
 import controller.CreateChatRoomDialogController
 import core.Status
 import events.ChatMainWindowEvents
+import events.ChatRoomListFragmentEvents
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
@@ -171,6 +172,9 @@ class CreateChatRoomDialogFragment : BaseFragment("Create Chat Room") {
   fun onChatRoomCreated(roomName: String, roomPassword: String?, roomImageUrl: String, userName: String?, isPublic: Boolean) {
     doOnUI {
       fire(ChatMainWindowEvents.ChatRoomCreatedEvent(roomName, userName, roomImageUrl))
+      fire(ChatRoomListFragmentEvents.ClearSearchInput)
+      fire(ChatRoomListFragmentEvents.SelectItem(roomName))
+
       unlockControls()
       closeFragment()
     }

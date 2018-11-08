@@ -126,10 +126,11 @@ class JoinChatRoomDialogController : BaseController<JoinChatRoomDialogFragment>(
     }
 
     val roomName = response.roomName!!
+    val roomImageUrl = response.roomImageUrl!!
     val userName = response.userName!!
     val users = response.users
     val messageHistory = response.messageHistory
 
-    view.onJoinedToChatRoom(roomName, userName, users, messageHistory)
+    view.onJoinedToChatRoom(roomName, roomImageUrl, userName, users, messageHistory)
   }
 }

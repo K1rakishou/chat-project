@@ -15,6 +15,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test
   fun testResponseSuccess() {
     val roomName = "121314"
+    val roomImageUrl = "imagur.com/123"
     val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(false, 0, 0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
@@ -26,11 +27,12 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       PublicUserInChat("test1")
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, roomImageUrl, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(roomImageUrl, restoredResponse.roomImageUrl)
       assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
@@ -39,6 +41,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
 
         assertEquals(expectedMessage.serverMessageId, actualMessage.serverMessageId)
         assertEquals(expectedMessage.clientMessageId, actualMessage.clientMessageId)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.senderName, actualMessage.senderName)
         assertEquals(expectedMessage.message, actualMessage.message)
         assertEquals(expectedMessage.isMyMessage, actualMessage.isMyMessage)
@@ -64,15 +67,17 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test
   fun testResponseEmpty() {
     val roomName = "test"
+    val roomImageUrl = "imagur.com/123"
     val userName = "test"
     val messageHistory = emptyList<BaseChatMessage>()
     val usersInChatRoom = emptyList<PublicUserInChat>()
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, roomImageUrl, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(roomImageUrl, restoredResponse.roomImageUrl)
       assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
@@ -95,6 +100,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ResponseDeserializationException::class)
   fun testResponseExceedTextMessageSenderName() {
     val roomName = "121314"
+    val roomImageUrl = "imagur.com/123"
     val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(false, 0, 1, SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10), "wwwwwwwwwwwwwwwwwwwwww")
@@ -103,11 +109,12 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       PublicUserInChat("test1")
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, roomImageUrl, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(roomImageUrl, restoredResponse.roomImageUrl)
       assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
@@ -130,6 +137,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ResponseDeserializationException::class)
   fun testResponseExceedTextMessageMessage() {
     val roomName = "121314"
+    val roomImageUrl = "imagur.com/123"
     val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(true, 0, 1, "e5we6s76", SecurityUtils.Generator.generateRandomString(Constants.maxTextMessageLen + 10))
@@ -138,11 +146,12 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       PublicUserInChat("test1")
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, roomImageUrl, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(roomImageUrl, restoredResponse.roomImageUrl)
       assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
@@ -165,6 +174,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ResponseDeserializationException::class)
   fun testResponseExceedUserInChatUserName() {
     val roomName = "121314"
+    val roomImageUrl = "imagur.com/123"
     val userName = "test"
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(false, 0, 1, "e5we6s76", "45346347")
@@ -173,11 +183,12 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       PublicUserInChat(SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10))
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, roomImageUrl, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(roomImageUrl, restoredResponse.roomImageUrl)
       assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
@@ -200,6 +211,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ResponseDeserializationException::class)
   fun testResponseExceedUserName() {
     val roomName = "121314"
+    val roomImageUrl = "imagur.com/123"
     val userName = SecurityUtils.Generator.generateRandomString(Constants.maxUserNameLen + 10)
     val messageHistory = listOf<BaseChatMessage>(
       TextChatMessage(true, 0, 0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
@@ -211,11 +223,52 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       PublicUserInChat("test1")
     )
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, roomImageUrl, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(roomImageUrl, restoredResponse.roomImageUrl)
+      assertEquals(userName, restoredResponse.userName)
+
+      for (i in 0 until messageHistory.size) {
+        val expectedMessage = messageHistory[i] as TextChatMessage
+        val actualMessage = restoredResponse.messageHistory[i] as TextChatMessage
+
+        assertEquals(expectedMessage.serverMessageId, actualMessage.serverMessageId)
+        assertEquals(expectedMessage.clientMessageId, actualMessage.clientMessageId)
+        assertEquals(expectedMessage.senderName, actualMessage.senderName)
+        assertEquals(expectedMessage.message, actualMessage.message)
+        assertEquals(expectedMessage.isMyMessage, actualMessage.isMyMessage)
+      }
+
+      for (i in 0 until usersInChatRoom.size) {
+        assertEquals(usersInChatRoom[i].userName, restoredResponse.users[i].userName)
+      }
+    })
+  }
+
+  @Test(expected = ResponseDeserializationException::class)
+  fun testResponseExceedImageUrl() {
+    val roomName = "121314"
+    val roomImageUrl = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomImageUrlLen + 10)
+    val userName = "test"
+    val messageHistory = listOf<BaseChatMessage>(
+      TextChatMessage(true, 0, 0, "ttt", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(true, 1, 1, "se46se46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(false, 2, 2, "6ase46", "wwwwwwwwwwwwwwwwwwwwww"),
+      TextChatMessage(false, 3, 3, "hhhhhhhhhhhhhhhhhh", "wwwwwwwwwwwwwwwwwwwwww")
+    )
+    val usersInChatRoom = listOf(
+      PublicUserInChat("test1")
+    )
+
+    testPayload(JoinChatRoomResponsePayload.success(roomName, roomImageUrl, userName, messageHistory, usersInChatRoom), { byteSink ->
+      JoinChatRoomResponsePayload.fromByteSink(byteSink)
+    }, { restoredResponse ->
+      assertEquals(Status.Ok.value, restoredResponse.status.value)
+      assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(roomImageUrl, restoredResponse.roomImageUrl)
       assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {
@@ -238,6 +291,7 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test
   fun testResponseWithBigMessageHistory() {
     val roomName = "121314"
+    val roomImageUrl = "imagur.com/123"
     val userName = "test"
     val messageHistory = mutableListOf<BaseChatMessage>()
     val usersInChatRoom = listOf(
@@ -249,11 +303,12 @@ class JoinChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
       messageHistory += TextChatMessage(false, i, i, "test sender", message)
     }
 
-    testPayload(JoinChatRoomResponsePayload.success(roomName, userName, messageHistory, usersInChatRoom), { byteSink ->
+    testPayload(JoinChatRoomResponsePayload.success(roomName, roomImageUrl, userName, messageHistory, usersInChatRoom), { byteSink ->
       JoinChatRoomResponsePayload.fromByteSink(byteSink)
     }, { restoredResponse ->
       assertEquals(Status.Ok.value, restoredResponse.status.value)
       assertEquals(roomName, restoredResponse.roomName)
+      assertEquals(roomImageUrl, restoredResponse.roomImageUrl)
       assertEquals(userName, restoredResponse.userName)
 
       for (i in 0 until messageHistory.size) {

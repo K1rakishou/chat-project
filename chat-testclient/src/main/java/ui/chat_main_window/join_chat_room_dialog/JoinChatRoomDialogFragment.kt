@@ -125,15 +125,17 @@ class JoinChatRoomDialogFragment : BaseFragment("Join Chat Room") {
 
   fun onJoinedToChatRoom(
     roomName: String,
+    roomImageUrl: String,
     userName: String,
     users: List<PublicUserInChat>,
     messageHistory: List<BaseChatMessage>
   ) {
     doOnUI {
-      fire(ChatMainWindowEvents.JoinedChatRoomEvent(roomName, userName, users, messageHistory))
-      unlockControls()
+      fire(ChatMainWindowEvents.JoinedChatRoomEvent(roomName, roomImageUrl, userName, users, messageHistory))
+      fire(ChatRoomListFragmentEvents.ClearSearchInput)
 
       clearSelection = false
+      unlockControls()
       closeFragment()
     }
   }

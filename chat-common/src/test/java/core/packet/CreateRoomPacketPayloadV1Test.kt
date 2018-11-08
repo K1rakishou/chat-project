@@ -89,7 +89,7 @@ class CreateRoomPacketPayloadV1Test : BasePacketPayloadTest() {
     val isPublic = true
     val roomName = "fgfdhd"
     val roomPassword = "fgfdhd"
-    val chatRoomImageUrl = SecurityUtils.Generator.generateRandomString(Constants.maxImageUrlLen + 10)
+    val chatRoomImageUrl = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomImageUrlLen + 10)
     val userName = "test123"
 
     testPayload(CreateRoomPacket(isPublic, roomName, roomPassword, chatRoomImageUrl, userName), { byteSink ->

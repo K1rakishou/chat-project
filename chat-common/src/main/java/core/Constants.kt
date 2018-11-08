@@ -7,18 +7,16 @@ object Constants {
   const val maxRoomHistoryMessagesCount = 100
   const val maxUsersInRoomCount = 100
   const val maxChatRoomsCount = Short.MAX_VALUE.toInt()
+
   const val minChatRoomNameLen = 5
   const val maxChatRoomNameLength = 128
   const val minChatRoomPasswordLen = 8
   const val maxChatRoomPasswordLen = 48
   const val maxChatRoomPasswordHashLen = 96
-  const val maxEcPublicKeySize = 1024
+  const val maxChatRoomImageUrlLen = 64
+
   const val minUserNameLen = 3
   const val maxUserNameLen = 64
   const val maxTextMessageLen = 2048
-  const val maxImageUrlLen = 64
   const val maxFoundChatRooms = 10
-
-  const val ivLen = 24
-  const val randomBytesLen = 16
 }

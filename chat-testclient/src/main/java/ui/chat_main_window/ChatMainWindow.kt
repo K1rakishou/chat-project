@@ -31,7 +31,7 @@ class ChatMainWindow : BaseView("Chat") {
 
   init {
     subscribe<ChatMainWindowEvents.JoinedChatRoomEvent> { event ->
-      controller.onJoinedToChatRoom(event.roomName, event.userName, event.users, event.messageHistory)
+      controller.onJoinedToChatRoom(event.roomName, event.roomImageUrl, event.userName, event.users, event.messageHistory)
     }.autoUnsubscribe()
     subscribe<ChatMainWindowEvents.ShowJoinChatRoomDialogEvent> { event ->
       val roomNameItem = JoinChatRoomDialogFragment.RoomNameItem(event.roomName)
@@ -129,6 +129,7 @@ class ChatMainWindow : BaseView("Chat") {
 
   fun showChatRoomView(roomName: String) {
     doOnUI {
+      title = "Chat [${roomName}]"
       selectedRoomNameProperty.set(roomName)
 
       val parameters = mutableMapOf(

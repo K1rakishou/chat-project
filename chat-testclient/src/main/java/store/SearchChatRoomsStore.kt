@@ -9,14 +9,18 @@ import utils.ThreadChecker
 class SearchChatRoomsStore {
   val searchChatRoomList: ObservableList<SearchChatRoomItem> = FXCollections.observableArrayList()
 
-  fun reloadSearchChatRoomList(foundRooms: List<ChatRoomData>) {
+  fun reloadSearchChatRoomList(
+    foundRooms: List<ChatRoomData>,
+    alreadyJoinedRoomsSet: Set<String>
+  ) {
     ThreadChecker.throwIfNotOnMainThread()
 
-    val converted = foundRooms.map { publicChatRoom ->
-      SearchChatRoomItem(publicChatRoom.chatRoomName, publicChatRoom.chatRoomImageUrl)
-    }
+    val convertedList = foundRooms
+      .filterNot { publicChatRoom -> alreadyJoinedRoomsSet.contains(publicChatRoom.chatRoomName) }
+      .map { publicChatRoom -> SearchChatRoomItem(publicChatRoom.chatRoomName, publicChatRoom.chatRoomImageUrl) }
 
+    //TODO: if convertedList is empty add some kind of notification that no rooms has been found
     searchChatRoomList.clear()
-    searchChatRoomList.addAll(converted)
+    searchChatRoomList.addAll(convertedList)
   }
 }

@@ -19,6 +19,7 @@ class ChatMainWindowEvents {
 
   class JoinedChatRoomEvent(
     val roomName: String,
+    val roomImageUrl: String,
     val userName: String,
     val users: List<PublicUserInChat>,
     val messageHistory: List<BaseChatMessage>

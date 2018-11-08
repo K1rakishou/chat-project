@@ -30,7 +30,6 @@ class ChatRoomView : BaseView() {
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val scrollbarApproxSize = 16.0
-  private val childIndex = AtomicInteger(0)
   private val controller: ChatMainWindowController by inject()
 
   private var selectedChatRoomName: String = ""

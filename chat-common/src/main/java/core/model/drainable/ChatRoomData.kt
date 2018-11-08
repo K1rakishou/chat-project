@@ -30,7 +30,7 @@ class ChatRoomData(
         return null
       }
 
-      val chatRoomImageUrl = byteSink.readString(Constants.maxImageUrlLen)
+      val chatRoomImageUrl = byteSink.readString(Constants.maxChatRoomImageUrlLen)
       if (chatRoomImageUrl == null) {
         return null
       }
