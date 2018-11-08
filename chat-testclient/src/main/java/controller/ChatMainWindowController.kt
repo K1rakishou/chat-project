@@ -284,7 +284,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   private fun updatePublicChatRoomList(response: GetPageOfPublicRoomsResponsePayload) {
     if (response.publicChatRoomList.isEmpty()) {
-      store.addChatRoomListItem(NoRoomsNotificationItem())
+      store.addChatRoomListItem(NoRoomsNotificationItem.haveNotJoinedAnyRoomsYet())
     } else {
       val mappedRooms = response.publicChatRoomList
         .map { PublicChatRoomItem.create(it.chatRoomName, it.chatRoomImageUrl) }
@@ -296,8 +296,6 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   fun onChatRoomCreated(roomName: String, userName: String?, roomImageUrl: String) {
     doOnUI {
-      store.removeNoRoomsNotification()
-
       //if userName is not null that means that we need to auto join this user into the created room
       if (userName != null) {
         onJoinedToChatRoom(roomName, roomImageUrl, userName, emptyList(), emptyList())
@@ -318,6 +316,8 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     doOnUI {
       //Wait some time before ChatRoomView shows up
       delay(delayBeforeAddFirstChatRoomMessage)
+
+      store.removeNoRoomsNotification()
 
       val chatRoom = PublicChatRoomItem.create(roomName, roomImageUrl)
       store.addChatRoomListItem(chatRoom)

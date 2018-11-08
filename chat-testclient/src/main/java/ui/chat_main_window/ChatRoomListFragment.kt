@@ -2,6 +2,7 @@ package ui.chat_main_window
 
 import ChatApp
 import controller.ChatRoomListFragmentController
+import core.Constants
 import utils.helper.DebouncedSearchHelper
 import events.ChatMainWindowEvents
 import events.ChatRoomListFragmentEvents
@@ -66,6 +67,10 @@ class ChatRoomListFragment : BaseFragment() {
     reloadChatRoomsList(ListState.NormalState)
   }
 
+  override fun onRefresh() {
+    super.onRefresh()
+  }
+
   override fun onUndock() {
     debouncedSearch.stop()
 
@@ -75,7 +80,7 @@ class ChatRoomListFragment : BaseFragment() {
   private val virtualListView = VirtualListView(chatRoomsListProperty, { item ->
     return@VirtualListView when (item) {
       is PublicChatRoomItem -> createCellPublicChatRoomItem(chatMainWindowSize.widthProperty, item)
-      is NoRoomsNotificationItem -> createCellNoRoomsNotificationItem(chatMainWindowSize.widthProperty)
+      is NoRoomsNotificationItem -> createCellNoRoomsNotificationItem(chatMainWindowSize.widthProperty, item.message)
       is SearchChatRoomItem ->  createCellSearchChatRoomItem(chatMainWindowSize.widthProperty, item)
       else -> throw RuntimeException("Not implemented for ${item::class}")
     }
@@ -96,6 +101,11 @@ class ChatRoomListFragment : BaseFragment() {
       }
 
       textProperty().addListener { _, _, text ->
+        //should be at least minChatRoomSearchLen symbols 
+        if (text.length <= Constants.minChatRoomSearchLen) {
+          return@addListener
+        }
+
         debouncedSearch.process(text)
       }
     }
@@ -150,7 +160,9 @@ class ChatRoomListFragment : BaseFragment() {
         }
       }
       is NoRoomsNotificationItem -> {
-        fire(ChatMainWindowEvents.ShowCreateChatRoomDialogEvent)
+        if (item.notificationType == NoRoomsNotificationItem.NotificationType.JoinedRoomsNotificationType) {
+          fire(ChatMainWindowEvents.ShowCreateChatRoomDialogEvent)
+        }
       }
       is SearchChatRoomItem -> {
         fire(ChatMainWindowEvents.ShowJoinChatRoomDialogEvent(item.roomName))
@@ -159,7 +171,7 @@ class ChatRoomListFragment : BaseFragment() {
     }
   }
 
-  private fun createCellNoRoomsNotificationItem(widthProperty: ReadOnlyDoubleProperty): HBox {
+  private fun createCellNoRoomsNotificationItem(widthProperty: ReadOnlyDoubleProperty, message: String): HBox {
     return hbox {
       prefHeight = 64.0
       maxHeight = 64.0
@@ -169,7 +181,10 @@ class ChatRoomListFragment : BaseFragment() {
       prefWidthProperty().bind(widthProperty - rightMargin)
       maxWidthProperty().bind(widthProperty - rightMargin)
 
-      label("No public chat rooms created yet") { minWidth = 8.0 }
+      label(message) {
+        alignment = Pos.CENTER_LEFT
+        minWidth = 8.0
+      }
     }
   }
 

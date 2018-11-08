@@ -19,6 +19,8 @@ class CreateChatRoomDialogFragment : BaseFragment("Create Chat Room") {
   private val disableControlsFlag = SimpleBooleanProperty(false)
   private val sharedSettings: SharedSettings by lazy { ChatApp.settingsStore.sharedSettings }
 
+  private var clearSelection = true
+
   private val model = object : ViewModel() {
     val roomName = bind { SimpleStringProperty(null) }
     val roomPassword = bind { SimpleStringProperty(null) }
@@ -33,6 +35,10 @@ class CreateChatRoomDialogFragment : BaseFragment("Create Chat Room") {
   }
 
   override fun onUndock() {
+    if (clearSelection) {
+      fire(ChatRoomListFragmentEvents.ClearSelection)
+    }
+
     controller.destroyController()
     super.onUndock()
   }
@@ -175,6 +181,7 @@ class CreateChatRoomDialogFragment : BaseFragment("Create Chat Room") {
       fire(ChatRoomListFragmentEvents.ClearSearchInput)
       fire(ChatRoomListFragmentEvents.SelectItem(roomName))
 
+      clearSelection = false
       unlockControls()
       closeFragment()
     }

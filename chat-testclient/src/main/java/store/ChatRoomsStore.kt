@@ -12,6 +12,10 @@ import utils.ThreadChecker
 class ChatRoomsStore {
   val publicChatRoomList: ObservableList<BaseChatRoomListItem> = FXCollections.observableArrayList()
 
+  init {
+    publicChatRoomList.add(NoRoomsNotificationItem.haveNotJoinedAnyRoomsYet())
+  }
+
   private fun getChatRoomList(): List<PublicChatRoomItem> {
     ThreadChecker.throwIfNotOnMainThread()
 

@@ -8,6 +8,7 @@ object Constants {
   const val maxUsersInRoomCount = 100
   const val maxChatRoomsCount = Short.MAX_VALUE.toInt()
 
+  const val minChatRoomSearchLen = 4
   const val minChatRoomNameLen = 5
   const val maxChatRoomNameLength = 128
   const val minChatRoomPasswordLen = 8
