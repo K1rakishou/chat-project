@@ -50,6 +50,12 @@ class ChatMainWindow : BaseView("Chat") {
   }
 
   override fun onDock() {
+    currentStage?.focusedProperty()?.onChange { focused ->
+      if (focused) {
+        fire(ChatRoomListFragmentEvents.SelectItem(null))
+      }
+    }
+
     controller.createController(this)
 
     currentWindow?.x = chatMainWindowSettings.windowXposition

@@ -47,6 +47,7 @@ class ChatRoomListFragment : BaseFragment() {
   private val chatMainWindowSize = params[ChatMainWindow.CHAT_ROOM_LIST_VIEW_SIZE] as ChatMainWindow.ChatRoomViewSizeParams
 
   init {
+    //TODO: should probably add delay here
     subscribe<ChatRoomListFragmentEvents.SelectItem> { event ->
       selectItem(event.key)
     }.autoUnsubscribe()
@@ -101,11 +102,6 @@ class ChatRoomListFragment : BaseFragment() {
       }
 
       textProperty().addListener { _, _, text ->
-        //should be at least minChatRoomSearchLen symbols 
-        if (text.length <= Constants.minChatRoomSearchLen) {
-          return@addListener
-        }
-
         debouncedSearch.process(text)
       }
     }
@@ -117,7 +113,12 @@ class ChatRoomListFragment : BaseFragment() {
   }
 
   private fun selectItem(key: String?) {
-    virtualListView.selectItemByKey(key)
+    if (key != null) {
+      lastSelectedChatRoomName = key
+      virtualListView.selectItemByKey(key)
+    } else {
+      virtualListView.selectItemByKey(lastSelectedChatRoomName)
+    }
   }
 
   private fun performSearch(chatRoomName: String) {
@@ -129,15 +130,18 @@ class ChatRoomListFragment : BaseFragment() {
 
       currentListState = newListState
       reloadChatRoomsList(currentListState)
-    }
 
-    controller.sendSearchRequest(chatRoomName)
+      if (newListState != ListState.NotEnoughSymbols) {
+        controller.sendSearchRequest(chatRoomName)
+      }
+    }
   }
 
   private fun reloadChatRoomsList(listState: ListState) {
     val (oldSearchChatRoomsProperty, newSearchChatRoomsProperty) = when (listState) {
       ListState.SearchState -> chatRoomsStore.publicChatRoomList to searchChatRoomsStore.searchChatRoomList
       ListState.NormalState -> searchChatRoomsStore.searchChatRoomList to chatRoomsStore.publicChatRoomList
+      ListState.NotEnoughSymbols -> return
     }
 
     oldSearchChatRoomsProperty.removeListener(chatRoomsListPropertyListener)
@@ -250,12 +254,17 @@ class ChatRoomListFragment : BaseFragment() {
 
   enum class ListState {
     SearchState,
-    NormalState;
+    NormalState,
+    NotEnoughSymbols;
 
     companion object {
       fun fromText(text: String): ListState {
         if (text.isEmpty()) {
           return NormalState
+        }
+
+        if (text.length < Constants.minChatRoomSearchLen) {
+          return NotEnoughSymbols
         }
 
         return SearchState
