@@ -32,20 +32,15 @@ class ChatRoomView : BaseView() {
   private val scrollbarApproxSize = 16.0
   private val controller: ChatMainWindowController by inject()
 
-  private var selectedChatRoomName: String = ""
   private var currentChatRoomMessagesProperty = FXCollections.observableArrayList<BaseChatMessageItem>()
   private var chatMainWindowSize = params[ChatMainWindow.CHAT_ROOM_VIEW_SIZE] as ChatMainWindow.ChatRoomViewSizeParams
 
   private val roomMessagePropertyListener = ListConversionListener<BaseChatMessageItem, BaseChatMessageItem>(currentChatRoomMessagesProperty) { it }
 
   init {
-    subscribe<ChatRoomViewEvents.ChangeSelectedRoom> { event ->
-      if (event.selectedRoomName == selectedChatRoomName) {
-        return@subscribe
-      }
-
-      reloadMessagesHistory(event)
-    }.autoUnsubscribe()
+    chatRoomsStore.selectedRoomStore.getSelectedRoom().addListener { _, _, selectedRoomName ->
+      reloadMessagesHistory(selectedRoomName)
+    }
 
     controller.scrollToBottomFlag.addListener { _, _, _ ->
       scrollToBottom()
@@ -108,7 +103,7 @@ class ChatRoomView : BaseView() {
           return@setOnAction
         }
 
-        controller.sendMessage(selectedChatRoomName, text)
+        controller.sendMessage(chatRoomsStore.selectedRoomStore.getSelectedRoom().get(), text)
 
         clear()
         requestFocus()
@@ -116,12 +111,14 @@ class ChatRoomView : BaseView() {
     }
   }
 
-  private fun reloadMessagesHistory(event: ChatRoomViewEvents.ChangeSelectedRoom) {
-    val oldSelectedChatRoomName = selectedChatRoomName
-    selectedChatRoomName = event.selectedRoomName
+  private fun reloadMessagesHistory(selectedRoomName: String?) {
+    if (selectedRoomName == null) {
+      return
+    }
 
+    val oldSelectedChatRoomName = chatRoomsStore.selectedRoomStore.getSelectedRoom().get()
     val oldRoomMessageProperty = chatRoomsStore.getChatRoomByName(oldSelectedChatRoomName)?.roomMessagesProperty
-    val newRoomMessageProperty = chatRoomsStore.getChatRoomByName(selectedChatRoomName)!!.roomMessagesProperty
+    val newRoomMessageProperty = chatRoomsStore.getChatRoomByName(selectedRoomName)!!.roomMessagesProperty
     val messageHistory = newRoomMessageProperty ?: emptyList<BaseChatMessageItem>()
 
     //remove old listener if it's not null
@@ -133,6 +130,8 @@ class ChatRoomView : BaseView() {
 
     //add new listener
     newRoomMessageProperty!!.addListener(roomMessagePropertyListener)
+
+    chatRoomsStore.selectedRoomStore.setSelectedRoom(selectedRoomName)
   }
 
   private fun handleDragAndDrop(node: Node) {

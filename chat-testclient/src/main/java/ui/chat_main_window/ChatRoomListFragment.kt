@@ -37,9 +37,7 @@ class ChatRoomListFragment : BaseFragment() {
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val searchChatRoomsStore: SearchChatRoomsStore by lazy { ChatApp.searchChatRoomsStore }
 
-  private var lastSelectedChatRoomName: String? = null
   private val rightMargin = 16.0
-
   private val debouncedSearch = DebouncedSearchHelper()
   private var currentListState = ListState.NormalState
   private val chatRoomsListProperty = FXCollections.observableArrayList<BaseChatRoomListItem>()
@@ -47,17 +45,16 @@ class ChatRoomListFragment : BaseFragment() {
   private val chatMainWindowSize = params[ChatMainWindow.CHAT_ROOM_LIST_VIEW_SIZE] as ChatMainWindow.ChatRoomViewSizeParams
 
   init {
-    //TODO: should probably add delay here
     subscribe<ChatRoomListFragmentEvents.SelectItem> { event ->
       selectItem(event.key)
     }.autoUnsubscribe()
     subscribe<ChatRoomListFragmentEvents.ClearSelection> {
-      lastSelectedChatRoomName = null
+      chatRoomsStore.selectedRoomStore.clearSelectedRoom()
       virtualListView.clearSelection()
     }.autoUnsubscribe()
     subscribe<ChatRoomListFragmentEvents.ClearSearchInput> {
       searchTextInput.clear()
-      selectItem(lastSelectedChatRoomName)
+      selectItem(chatRoomsStore.selectedRoomStore.getSelectedRoom().get())
     }.autoUnsubscribe()
   }
 
@@ -78,7 +75,7 @@ class ChatRoomListFragment : BaseFragment() {
     return@VirtualListView when (item) {
       is PublicChatRoomItem -> createCellPublicChatRoomItem(chatMainWindowSize.widthProperty, item)
       is NoRoomsNotificationItem -> createCellNoRoomsNotificationItem(chatMainWindowSize.widthProperty, item.message)
-      is SearchChatRoomItem ->  createCellSearchChatRoomItem(chatMainWindowSize.widthProperty, item)
+      is SearchChatRoomItem -> createCellSearchChatRoomItem(chatMainWindowSize.widthProperty, item)
       else -> throw RuntimeException("Not implemented for ${item::class}")
     }
   }, { item ->
@@ -110,10 +107,9 @@ class ChatRoomListFragment : BaseFragment() {
 
   private fun selectItem(key: String?) {
     if (key != null) {
-      lastSelectedChatRoomName = key
       virtualListView.selectItemByKey(key)
     } else {
-      virtualListView.selectItemByKey(lastSelectedChatRoomName)
+      virtualListView.selectItemByKey(chatRoomsStore.selectedRoomStore.getSelectedRoom().get())
     }
   }
 
@@ -127,8 +123,12 @@ class ChatRoomListFragment : BaseFragment() {
       currentListState = newListState
       reloadChatRoomsList(currentListState)
 
-      if (newListState != ListState.NotEnoughSymbols) {
-        controller.sendSearchRequest(chatRoomName)
+      when (newListState) {
+        ListState.SearchState -> controller.sendSearchRequest(chatRoomName)
+        ListState.NormalState -> selectItem(null)
+        ListState.NotEnoughSymbols -> {
+          //do nothing
+        }
       }
     }
   }
@@ -153,8 +153,9 @@ class ChatRoomListFragment : BaseFragment() {
       is PublicChatRoomItem -> {
         val isMyUserAdded = chatRoomsStore.getChatRoomByName(item.roomName)?.isMyUserAdded() ?: false
         if (isMyUserAdded) {
+          val lastSelectedChatRoomName = chatRoomsStore.selectedRoomStore.getSelectedRoom().get()
           if (lastSelectedChatRoomName == null || lastSelectedChatRoomName != item.roomName) {
-            lastSelectedChatRoomName = item.roomName
+            chatRoomsStore.selectedRoomStore.setSelectedRoom(item.roomName)
             fire(ChatMainWindowEvents.ShowChatRoomViewEvent(item.roomName))
           }
         }

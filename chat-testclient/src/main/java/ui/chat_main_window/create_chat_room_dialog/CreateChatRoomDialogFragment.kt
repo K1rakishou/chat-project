@@ -178,8 +178,6 @@ class CreateChatRoomDialogFragment : BaseFragment("Create Chat Room") {
   fun onChatRoomCreated(roomName: String, roomPassword: String?, roomImageUrl: String, userName: String?, isPublic: Boolean) {
     doOnUI {
       fire(ChatMainWindowEvents.ChatRoomCreatedEvent(roomName, userName, roomImageUrl))
-      fire(ChatRoomListFragmentEvents.ClearSearchInput)
-      fire(ChatRoomListFragmentEvents.SelectItem(roomName))
 
       clearSelection = false
       unlockControls()

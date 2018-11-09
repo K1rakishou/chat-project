@@ -23,7 +23,6 @@ import model.chat_room_list.PublicChatRoomItem
 import store.ChatRoomsStore
 import ui.chat_main_window.ChatMainWindow
 import utils.ThreadChecker
-import java.util.concurrent.TimeUnit
 
 class ChatMainWindowController : BaseController<ChatMainWindow>() {
   private val networkManager: NetworkManager by lazy { ChatApp.networkManager }
@@ -327,6 +326,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       chatRoom.addMyUser(userName)
       chatRoom.replaceChatRoomHistory(messageHistory)
 
+      view.onJoinedChatRoom(roomName)
       addChatMessage(roomName, SystemChatMessageItem("You've joined the chat room"))
     }
   }

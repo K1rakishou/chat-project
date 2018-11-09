@@ -1,31 +1,27 @@
 package ui.chat_main_window
 
+import ChatApp
 import ChatApp.Companion.settingsStore
 import controller.ChatMainWindowController
 import events.ChatMainWindowEvents
 import events.ChatRoomListFragmentEvents
-import events.ChatRoomViewEvents
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Orientation
 import javafx.scene.control.SplitPane
 import javafx.scene.layout.Border
 import javafx.scene.layout.Priority
-import kotlinx.coroutines.delay
+import store.ChatRoomsStore
 import store.settings.ChatMainWindowSettings
 import tornadofx.*
 import ui.base.BaseView
 import ui.chat_main_window.create_chat_room_dialog.CreateChatRoomDialogFragment
 import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
-import java.lang.IllegalStateException
 
 class ChatMainWindow : BaseView("Chat") {
-  private val delayUntilViewShown = 100L
-
   private val controller: ChatMainWindowController by inject()
   private val chatMainWindowSettings: ChatMainWindowSettings by lazy { ChatApp.settingsStore.chatMainWindowSettings }
+  private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
 
-  private val selectedRoomNameProperty = SimpleStringProperty()
   private val chatRoomViewSizeParams = ChatRoomViewSizeParams(SimpleDoubleProperty(), SimpleDoubleProperty())
   private val chatRoomListViewSizeParams = ChatRoomViewSizeParams(SimpleDoubleProperty(), SimpleDoubleProperty())
 
@@ -136,7 +132,6 @@ class ChatMainWindow : BaseView("Chat") {
   fun showChatRoomView(roomName: String) {
     doOnUI {
       title = "Chat [${roomName}]"
-      selectedRoomNameProperty.set(roomName)
 
       val parameters = mutableMapOf(
         CHAT_ROOM_VIEW_SIZE to chatRoomViewSizeParams
@@ -147,14 +142,14 @@ class ChatMainWindow : BaseView("Chat") {
         chatRoomViewEmpty.replaceWith(find<ChatRoomView>(params = parameters))
       }
 
-      delay(delayUntilViewShown)
-
-      if (find<ChatRoomView>().isDocked) {
-        fire(ChatRoomViewEvents.ChangeSelectedRoom(roomName))
-      } else {
-        throw IllegalStateException("Neither ChatRoomViewEmpty nor ChatRoomView is docked. Should not happen.")
-      }
+      chatRoomsStore.selectedRoomStore.setSelectedRoom(roomName)
     }
+  }
+
+  fun onJoinedChatRoom(roomName: String) {
+    //update room selection
+    fire(ChatRoomListFragmentEvents.ClearSearchInput)
+    fire(ChatRoomListFragmentEvents.SelectItem(roomName))
   }
 
   class ChatRoomViewSizeParams(

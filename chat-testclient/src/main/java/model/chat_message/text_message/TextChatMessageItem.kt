@@ -11,8 +11,6 @@ abstract class TextChatMessageItem(
   clientMessageId: Int = -1
 ) : BaseChatMessageItem(serverMessageId, clientMessageId) {
 
-//  override fun getMessageType(): MessageType = MessageType.MyTextMessage
-
   override fun toTextMessage(): String {
     return "$senderName: $messageText"
   }
