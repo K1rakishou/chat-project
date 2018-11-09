@@ -5,6 +5,7 @@ import ChatApp.Companion.settingsStore
 import controller.ChatMainWindowController
 import events.ChatMainWindowEvents
 import events.ChatRoomListFragmentEvents
+import events.ChatRoomViewEvents
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Orientation
 import javafx.scene.control.SplitPane
@@ -150,6 +151,12 @@ class ChatMainWindow : BaseView("Chat") {
     //update room selection
     fire(ChatRoomListFragmentEvents.ClearSearchInput)
     fire(ChatRoomListFragmentEvents.SelectItem(roomName))
+  }
+
+  fun scrollChatMessagesToBottom() {
+    doOnUI {
+      fire(ChatRoomViewEvents.ScrollToBottom)
+    }
   }
 
   class ChatRoomViewSizeParams(

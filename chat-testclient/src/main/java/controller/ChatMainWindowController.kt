@@ -29,12 +29,8 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
   private val store: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val delayBeforeAddFirstChatRoomMessage = 250L
 
-  lateinit var scrollToBottomFlag: SimpleIntegerProperty
-
   override fun createController(viewParam: ChatMainWindow) {
     super.createController(viewParam)
-
-    scrollToBottomFlag = SimpleIntegerProperty(0)
 
     startListeningToPackets()
     networkManager.shouldReconnectOnDisconnect()
@@ -331,11 +327,8 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     }
   }
 
-  //TODO: change to eventbus
   private fun scrollChatToBottom() {
-    //To make the listener receive the new value we need it to be different from the last value.
-    //Otherwise it doesn't work
-    scrollToBottomFlag.set(scrollToBottomFlag.value + 1)
+    view.scrollChatMessagesToBottom()
   }
 
   private fun onDisconnected() {

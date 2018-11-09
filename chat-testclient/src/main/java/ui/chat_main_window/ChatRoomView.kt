@@ -44,9 +44,9 @@ class ChatRoomView : BaseView() {
       reloadMessagesHistory(selectedRoomName)
     }
 
-    controller.scrollToBottomFlag.addListener { _, _, _ ->
+    subscribe<ChatRoomViewEvents.ScrollToBottom> {
       scrollToBottom()
-    }
+    }.autoUnsubscribe()
   }
 
   private val virtualListView = VirtualMultiSelectListView(currentChatRoomMessagesProperty, { baseChatMessage ->
@@ -134,6 +134,17 @@ class ChatRoomView : BaseView() {
     selectedRoomStore.setSelectedRoom(selectedRoomName)
   }
 
+  fun scrollToBottom() {
+    //goddamn hacks I swear
+    //So, if you don't add a delay here before trying to update scrollbar's position it will scroll to the
+    //currentItemPosition-1 and not to the last one because it needs some time to calculate that item's size
+    doOnUI {
+      delay(delayBeforeUpdatingScrollBarPosition.toLong())
+
+      virtualScrollPane.content.showAsLast(virtualListView.getLastItemIndex())
+    }
+  }
+
   private fun handleDragAndDrop(node: Node) {
     //TODO
 //    node.setOnDragOver { event ->
@@ -149,17 +160,6 @@ class ChatRoomView : BaseView() {
 //        controller.addChatMessage(selectedChatRoomName, MyImageChatMessage("test", it))
 //      }
 //    }
-  }
-
-  fun scrollToBottom() {
-    //goddamn hacks I swear
-    //So, if you don't add a delay here before trying to update scrollbar's position it will scroll to the
-    //currentItemPosition-1 and not to the last one because it needs some time to calculate that item's size
-    doOnUI {
-      delay(delayBeforeUpdatingScrollBarPosition.toLong())
-
-      virtualScrollPane.content.showAsLast(virtualListView.getLastItemIndex())
-    }
   }
 
   //TODO

@@ -107,9 +107,10 @@ class ChatRoomListFragment : BaseFragment() {
     }))
   }
 
-  private fun selectItem(key: String?) {
-    if (key != null) {
-      virtualListView.selectItemByKey(key)
+  //if roomName is null - try to select item with name from the selected room store
+  private fun selectItem(roomName: String?) {
+    if (roomName != null) {
+      virtualListView.selectItemByKey(roomName)
     } else {
       virtualListView.selectItemByKey(selectedRoomStore.getSelectedRoom().get())
     }
@@ -139,7 +140,10 @@ class ChatRoomListFragment : BaseFragment() {
     val (oldSearchChatRoomsProperty, newSearchChatRoomsProperty) = when (listState) {
       ListState.SearchState -> chatRoomsStore.publicChatRoomList to searchChatRoomsStore.searchChatRoomList
       ListState.NormalState -> searchChatRoomsStore.searchChatRoomList to chatRoomsStore.publicChatRoomList
-      ListState.NotEnoughSymbols -> return
+      ListState.NotEnoughSymbols -> {
+        //do nothing
+        return
+      }
     }
 
     oldSearchChatRoomsProperty.removeListener(chatRoomsListPropertyListener)
