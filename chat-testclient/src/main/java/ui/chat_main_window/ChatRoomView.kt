@@ -131,7 +131,6 @@ class ChatRoomView : BaseView() {
 
     //add new listener
     newRoomMessageProperty!!.addListener(roomMessagePropertyListener)
-    selectedRoomStore.setSelectedRoom(selectedRoomName)
   }
 
   fun scrollToBottom() {

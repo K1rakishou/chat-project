@@ -102,20 +102,21 @@ class ChatRoomItem(
   }
 
   fun replaceChatRoomHistory(messageHistory: List<BaseChatMessage>) {
-    val newChatRoomHistory = messageHistory.map { message ->
-      when (message.messageType) {
-        ChatMessageType.Unknown -> throw UnknownChatMessageTypeException(message.messageType)
-        ChatMessageType.Text -> {
-          message as TextChatMessage
+    val newChatRoomHistory = messageHistory
+      .map { message ->
+        when (message.messageType) {
+          ChatMessageType.Unknown -> throw UnknownChatMessageTypeException(message.messageType)
+          ChatMessageType.Text -> {
+            message as TextChatMessage
 
-          if (message.isMyMessage) {
-            MyTextChatMessageItem(message.senderName, message.message)
-          } else {
-            ForeignTextChatMessageItem(message.senderName, message.message)
+            if (message.isMyMessage) {
+              MyTextChatMessageItem(message.senderName, message.message)
+            } else {
+              ForeignTextChatMessageItem(message.senderName, message.message)
+            }
           }
         }
       }
-    }
 
     roomMessagesProperty.clear()
     roomMessagesProperty.addAll(newChatRoomHistory)
