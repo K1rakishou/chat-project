@@ -10,7 +10,7 @@ import javafx.geometry.Orientation
 import javafx.scene.control.SplitPane
 import javafx.scene.layout.Border
 import javafx.scene.layout.Priority
-import store.ChatRoomsStore
+import store.SelectedRoomStore
 import store.settings.ChatMainWindowSettings
 import tornadofx.*
 import ui.base.BaseView
@@ -20,7 +20,7 @@ import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
 class ChatMainWindow : BaseView("Chat") {
   private val controller: ChatMainWindowController by inject()
   private val chatMainWindowSettings: ChatMainWindowSettings by lazy { ChatApp.settingsStore.chatMainWindowSettings }
-  private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
+  private val selectedRoomStore: SelectedRoomStore by lazy { ChatApp.selectedRoomStore }
 
   private val chatRoomViewSizeParams = ChatRoomViewSizeParams(SimpleDoubleProperty(), SimpleDoubleProperty())
   private val chatRoomListViewSizeParams = ChatRoomViewSizeParams(SimpleDoubleProperty(), SimpleDoubleProperty())
@@ -142,7 +142,7 @@ class ChatMainWindow : BaseView("Chat") {
         chatRoomViewEmpty.replaceWith(find<ChatRoomView>(params = parameters))
       }
 
-      chatRoomsStore.selectedRoomStore.setSelectedRoom(roomName)
+      selectedRoomStore.setSelectedRoom(roomName)
     }
   }
 

@@ -10,7 +10,6 @@ import model.chat_room_list.PublicChatRoomItem
 import utils.ThreadChecker
 
 class ChatRoomsStore {
-  val selectedRoomStore = SelectedRoomStore()
   val publicChatRoomList: ObservableList<BaseChatRoomListItem> = FXCollections.observableArrayList()
 
   init {

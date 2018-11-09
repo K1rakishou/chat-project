@@ -26,6 +26,7 @@ import model.chat_room_list.SearchChatRoomItem
 import org.fxmisc.flowless.VirtualizedScrollPane
 import store.ChatRoomsStore
 import store.SearchChatRoomsStore
+import store.SelectedRoomStore
 import tornadofx.*
 import ui.base.BaseFragment
 import ui.widgets.VirtualListView
@@ -35,6 +36,7 @@ class ChatRoomListFragment : BaseFragment() {
 
   private val controller: ChatRoomListFragmentController by inject()
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
+  private val selectedRoomStore: SelectedRoomStore by lazy { ChatApp.selectedRoomStore }
   private val searchChatRoomsStore: SearchChatRoomsStore by lazy { ChatApp.searchChatRoomsStore }
 
   private val rightMargin = 16.0
@@ -49,12 +51,12 @@ class ChatRoomListFragment : BaseFragment() {
       selectItem(event.key)
     }.autoUnsubscribe()
     subscribe<ChatRoomListFragmentEvents.ClearSelection> {
-      chatRoomsStore.selectedRoomStore.clearSelectedRoom()
+      selectedRoomStore.clearSelectedRoom()
       virtualListView.clearSelection()
     }.autoUnsubscribe()
     subscribe<ChatRoomListFragmentEvents.ClearSearchInput> {
       searchTextInput.clear()
-      selectItem(chatRoomsStore.selectedRoomStore.getSelectedRoom().get())
+      selectItem(selectedRoomStore.getSelectedRoom().get())
     }.autoUnsubscribe()
   }
 
@@ -109,7 +111,7 @@ class ChatRoomListFragment : BaseFragment() {
     if (key != null) {
       virtualListView.selectItemByKey(key)
     } else {
-      virtualListView.selectItemByKey(chatRoomsStore.selectedRoomStore.getSelectedRoom().get())
+      virtualListView.selectItemByKey(selectedRoomStore.getSelectedRoom().get())
     }
   }
 
@@ -153,9 +155,9 @@ class ChatRoomListFragment : BaseFragment() {
       is PublicChatRoomItem -> {
         val isMyUserAdded = chatRoomsStore.getChatRoomByName(item.roomName)?.isMyUserAdded() ?: false
         if (isMyUserAdded) {
-          val lastSelectedChatRoomName = chatRoomsStore.selectedRoomStore.getSelectedRoom().get()
+          val lastSelectedChatRoomName = selectedRoomStore.getSelectedRoom().get()
           if (lastSelectedChatRoomName == null || lastSelectedChatRoomName != item.roomName) {
-            chatRoomsStore.selectedRoomStore.setSelectedRoom(item.roomName)
+            selectedRoomStore.setSelectedRoom(item.roomName)
             fire(ChatMainWindowEvents.ShowChatRoomViewEvent(item.roomName))
           }
         }

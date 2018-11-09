@@ -20,6 +20,7 @@ import model.chat_message.text_message.MyTextChatMessageItem
 import model.chat_message.text_message.SystemChatMessageItem
 import org.fxmisc.flowless.VirtualizedScrollPane
 import store.ChatRoomsStore
+import store.SelectedRoomStore
 import tornadofx.*
 import ui.base.BaseView
 import ui.widgets.VirtualMultiSelectListView
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class ChatRoomView : BaseView() {
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
+  private val selectedRoomStore: SelectedRoomStore by lazy { ChatApp.selectedRoomStore }
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val scrollbarApproxSize = 16.0
   private val controller: ChatMainWindowController by inject()
@@ -38,7 +40,7 @@ class ChatRoomView : BaseView() {
   private val roomMessagePropertyListener = ListConversionListener<BaseChatMessageItem, BaseChatMessageItem>(currentChatRoomMessagesProperty) { it }
 
   init {
-    chatRoomsStore.selectedRoomStore.getSelectedRoom().addListener { _, _, selectedRoomName ->
+    selectedRoomStore.getSelectedRoom().addListener { _, _, selectedRoomName ->
       reloadMessagesHistory(selectedRoomName)
     }
 
@@ -62,7 +64,6 @@ class ChatRoomView : BaseView() {
         createSystemTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
       }
       MessageType.MyImageMessage -> TODO()
-      else -> throw IllegalArgumentException("Not implemented for ${baseChatMessage::class}")
     }
   })
 
@@ -103,7 +104,7 @@ class ChatRoomView : BaseView() {
           return@setOnAction
         }
 
-        controller.sendMessage(chatRoomsStore.selectedRoomStore.getSelectedRoom().get(), text)
+        controller.sendMessage(selectedRoomStore.getSelectedRoom().get(), text)
 
         clear()
         requestFocus()
@@ -116,7 +117,7 @@ class ChatRoomView : BaseView() {
       return
     }
 
-    val oldSelectedChatRoomName = chatRoomsStore.selectedRoomStore.getSelectedRoom().get()
+    val oldSelectedChatRoomName = selectedRoomStore.getSelectedRoom().get()
     val oldRoomMessageProperty = chatRoomsStore.getChatRoomByName(oldSelectedChatRoomName)?.roomMessagesProperty
     val newRoomMessageProperty = chatRoomsStore.getChatRoomByName(selectedRoomName)!!.roomMessagesProperty
     val messageHistory = newRoomMessageProperty ?: emptyList<BaseChatMessageItem>()
@@ -130,8 +131,7 @@ class ChatRoomView : BaseView() {
 
     //add new listener
     newRoomMessageProperty!!.addListener(roomMessagePropertyListener)
-
-    chatRoomsStore.selectedRoomStore.setSelectedRoom(selectedRoomName)
+    selectedRoomStore.setSelectedRoom(selectedRoomName)
   }
 
   private fun handleDragAndDrop(node: Node) {
@@ -178,6 +178,7 @@ class ChatRoomView : BaseView() {
 //    }
 //  }
 
+  //TODO: extract to it's own class?
   private fun createForeignTextChatMessage(senderName: String, messageText: String): Node {
     return hbox {
       paddingTop = 2.0
@@ -201,6 +202,7 @@ class ChatRoomView : BaseView() {
     }
   }
 
+  //TODO: extract to it's own class?
   private fun createSystemTextChatMessage(senderName: String, messageText: String): Node {
     return hbox {
       paddingTop = 2.0
@@ -224,6 +226,7 @@ class ChatRoomView : BaseView() {
     }
   }
 
+  //TODO: extract to it's own class?
   private fun createMyTextChatMessage(senderName: String, messageText: String, acceptedByServer: Boolean): Node {
     return hbox {
       paddingTop = 2.0
