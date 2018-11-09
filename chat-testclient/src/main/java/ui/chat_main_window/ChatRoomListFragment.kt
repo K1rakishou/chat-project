@@ -41,22 +41,25 @@ class ChatRoomListFragment : BaseFragment() {
 
   private val rightMargin = 16.0
   private val debouncedSearch = DebouncedSearchHelper()
-  private var currentListState = ListState.NormalState
   private val chatRoomsListProperty = FXCollections.observableArrayList<BaseChatRoomListItem>()
   private val chatRoomsListPropertyListener = ListConversionListener<BaseChatRoomListItem, BaseChatRoomListItem>(chatRoomsListProperty) { it }
   private val chatMainWindowSize = params[ChatMainWindow.CHAT_ROOM_LIST_VIEW_SIZE] as ChatMainWindow.ChatRoomViewSizeParams
 
+  private var currentListState = ListState.NormalState
+  private var lastSelectedRoom: String? = null
+
   init {
-    subscribe<ChatRoomListFragmentEvents.SelectItem> { event ->
-      selectItem(event.key)
-    }.autoUnsubscribe()
+    selectedRoomStore.getSelectedRoomProperty().addListener { _, _, selectedRoomName ->
+      selectItem(selectedRoomName)
+    }
+
     subscribe<ChatRoomListFragmentEvents.ClearSelection> {
-      selectedRoomStore.clearSelectedRoom()
       virtualListView.clearSelection()
+      selectItem(null)
     }.autoUnsubscribe()
     subscribe<ChatRoomListFragmentEvents.ClearSearchInput> {
       searchTextInput.clear()
-      selectItem(selectedRoomStore.getSelectedRoom().get())
+      selectItem(lastSelectedRoom)
     }.autoUnsubscribe()
   }
 
@@ -107,12 +110,13 @@ class ChatRoomListFragment : BaseFragment() {
     }))
   }
 
-  //if roomName is null - try to select item with name from the selected room store
+  //if roomName is null - try to select item with name lastSelectedRoom
   private fun selectItem(roomName: String?) {
     if (roomName != null) {
+      lastSelectedRoom = roomName
       virtualListView.selectItemByKey(roomName)
     } else {
-      virtualListView.selectItemByKey(selectedRoomStore.getSelectedRoom().get())
+      virtualListView.selectItemByKey(lastSelectedRoom)
     }
   }
 
@@ -159,9 +163,8 @@ class ChatRoomListFragment : BaseFragment() {
       is ChatRoomItem -> {
         val isMyUserAdded = chatRoomsStore.getChatRoomByName(item.roomName)?.isMyUserAdded() ?: false
         if (isMyUserAdded) {
-          val lastSelectedChatRoomName = selectedRoomStore.getSelectedRoom().get()
+          val lastSelectedChatRoomName = selectedRoomStore.getSelectedRoom()
           if (lastSelectedChatRoomName == null || lastSelectedChatRoomName != item.roomName) {
-            selectedRoomStore.setSelectedRoom(item.roomName)
             fire(ChatMainWindowEvents.ShowChatRoomViewEvent(item.roomName))
           }
         }

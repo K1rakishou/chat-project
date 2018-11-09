@@ -43,16 +43,11 @@ class ChatMainWindow : BaseView("Chat") {
     }.autoUnsubscribe()
     subscribe<ChatMainWindowEvents.ShowChatRoomViewEvent> { event ->
       showChatRoomView(event.selectedRoomName)
+      selectedRoomStore.setSelectedRoom(event.selectedRoomName)
     }.autoUnsubscribe()
   }
 
   override fun onDock() {
-    currentStage?.focusedProperty()?.onChange { focused ->
-      if (focused) {
-        fire(ChatRoomListFragmentEvents.SelectItem(null))
-      }
-    }
-
     controller.createController(this)
 
     currentWindow?.x = chatMainWindowSettings.windowXposition
@@ -118,12 +113,6 @@ class ChatMainWindow : BaseView("Chat") {
     }
   }
 
-  fun selectRoomWithName(roomName: String) {
-    doOnUI {
-      fire(ChatRoomListFragmentEvents.SelectItem(roomName))
-    }
-  }
-
   private fun showCreateChatRoomDialog() {
     doOnUI {
       find<CreateChatRoomDialogFragment>().openModal(resizable = false)
@@ -142,15 +131,19 @@ class ChatMainWindow : BaseView("Chat") {
       if (chatRoomViewEmpty.isDocked) {
         chatRoomViewEmpty.replaceWith(find<ChatRoomView>(params = parameters))
       }
-
-      selectedRoomStore.setSelectedRoom(roomName)
     }
   }
 
   fun onJoinedChatRoom(roomName: String) {
     //update room selection
     fire(ChatRoomListFragmentEvents.ClearSearchInput)
-    fire(ChatRoomListFragmentEvents.SelectItem(roomName))
+    selectRoomWithName(roomName)
+  }
+
+  fun selectRoomWithName(roomName: String?) {
+    doOnUI {
+      selectedRoomStore.setSelectedRoom(roomName)
+    }
   }
 
   fun scrollChatMessagesToBottom() {

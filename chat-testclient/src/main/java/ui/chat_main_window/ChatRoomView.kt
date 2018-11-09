@@ -40,7 +40,7 @@ class ChatRoomView : BaseView() {
   private val roomMessagePropertyListener = ListConversionListener<BaseChatMessageItem, BaseChatMessageItem>(currentChatRoomMessagesProperty) { it }
 
   init {
-    selectedRoomStore.getSelectedRoom().addListener { _, _, selectedRoomName ->
+    selectedRoomStore.getSelectedRoomProperty().addListener { _, _, selectedRoomName ->
       reloadMessagesHistory(selectedRoomName)
     }
 
@@ -104,7 +104,7 @@ class ChatRoomView : BaseView() {
           return@setOnAction
         }
 
-        controller.sendMessage(selectedRoomStore.getSelectedRoom().get(), text)
+        controller.sendMessage(selectedRoomStore.getSelectedRoom(), text)
 
         clear()
         requestFocus()
@@ -117,7 +117,7 @@ class ChatRoomView : BaseView() {
       return
     }
 
-    val oldSelectedChatRoomName = selectedRoomStore.getSelectedRoom().get()
+    val oldSelectedChatRoomName = selectedRoomStore.getSelectedRoom()
     val oldRoomMessageProperty = chatRoomsStore.getChatRoomByName(oldSelectedChatRoomName)?.roomMessagesProperty
     val newRoomMessageProperty = chatRoomsStore.getChatRoomByName(selectedRoomName)!!.roomMessagesProperty
     val messageHistory = newRoomMessageProperty ?: emptyList<BaseChatMessageItem>()

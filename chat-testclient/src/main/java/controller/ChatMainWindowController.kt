@@ -42,8 +42,12 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
     super.destroyController()
   }
 
-  fun sendMessage(selectedChatRoomName: String, messageText: String) {
+  fun sendMessage(selectedChatRoomName: String?, messageText: String) {
     ThreadChecker.throwIfNotOnMainThread()
+
+    if (selectedChatRoomName == null) {
+      throw IllegalStateException("selectedChatRoomName must not be null!")
+    }
 
     if (!networkManager.isConnected) {
       println("Not connected")
