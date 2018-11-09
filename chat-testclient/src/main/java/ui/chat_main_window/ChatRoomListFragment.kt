@@ -68,10 +68,6 @@ class ChatRoomListFragment : BaseFragment() {
     reloadChatRoomsList(ListState.NormalState)
   }
 
-  override fun onRefresh() {
-    super.onRefresh()
-  }
-
   override fun onUndock() {
     debouncedSearch.stop()
 
@@ -175,6 +171,7 @@ class ChatRoomListFragment : BaseFragment() {
     }
   }
 
+  //TODO: extract to it's own class?
   private fun createCellNoRoomsNotificationItem(widthProperty: ReadOnlyDoubleProperty, message: String): HBox {
     return hbox {
       prefHeight = 64.0
@@ -192,6 +189,7 @@ class ChatRoomListFragment : BaseFragment() {
     }
   }
 
+  //TODO: extract to it's own class?
   private fun createCellPublicChatRoomItem(widthProperty: ReadOnlyDoubleProperty, item: PublicChatRoomItem): HBox {
     return hbox {
       prefHeight = 64.0
@@ -225,6 +223,7 @@ class ChatRoomListFragment : BaseFragment() {
     }
   }
 
+  //TODO: extract to it's own class?
   private fun createCellSearchChatRoomItem(widthProperty: ReadOnlyDoubleProperty, item: SearchChatRoomItem): HBox {
     return hbox {
       prefHeight = 64.0
