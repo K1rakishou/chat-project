@@ -15,6 +15,12 @@ class Styles : Stylesheet() {
     chatRoomViewEmptyLabel {
       fontSize = 24.px
     }
+
+    systemMessage {
+      fontSize = 20.px
+      fontWeight = FontWeight.BOLD
+      textFill = c(47, 47, 175)
+    }
     senderName {
       fontSize = 20.px
       fontWeight = FontWeight.BOLD
@@ -49,6 +55,7 @@ class Styles : Stylesheet() {
     val chatRoomTextField by cssclass()
     val chatRoomViewEmptyLabel by cssclass()
 
+    val systemMessage by cssclass()
     val senderName by cssclass()
     val receiverName by cssclass()
 

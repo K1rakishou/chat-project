@@ -202,30 +202,6 @@ class ChatRoomView : BaseView() {
   }
 
   //TODO: extract to it's own class?
-  private fun createSystemTextChatMessage(senderName: String, messageText: String): Node {
-    return hbox {
-      paddingTop = 2.0
-      paddingBottom = 2.0
-      paddingLeft = 4.0
-      paddingRight = 4.0
-
-      prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
-
-      vbox {
-        label(senderName) {
-          addClass(Styles.senderName)
-        }
-        label(messageText) {
-          //TODO: text wrapping does not work with the "Label" control
-          prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
-
-          addClass(Styles.systemTextChatMessage)
-        }
-      }
-    }
-  }
-
-  //TODO: extract to it's own class?
   private fun createMyTextChatMessage(senderName: String, messageText: String, acceptedByServer: Boolean): Node {
     return hbox {
       paddingTop = 2.0
@@ -248,6 +224,30 @@ class ChatRoomView : BaseView() {
           } else {
             addClass(Styles.myTextChatMessageAcceptedByServer)
           }
+        }
+      }
+    }
+  }
+
+  //TODO: extract to it's own class?
+  private fun createSystemTextChatMessage(senderName: String, messageText: String): Node {
+    return hbox {
+      paddingTop = 2.0
+      paddingBottom = 2.0
+      paddingLeft = 4.0
+      paddingRight = 4.0
+
+      prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+
+      vbox {
+        label(senderName) {
+          addClass(Styles.systemMessage)
+        }
+        label(messageText) {
+          //TODO: text wrapping does not work with the "Label" control
+          prefWidthProperty().bind(chatMainWindowSize.widthProperty - scrollbarApproxSize)
+
+          addClass(Styles.systemTextChatMessage)
         }
       }
     }
