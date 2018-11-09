@@ -105,7 +105,7 @@ class ChatRoomListFragmentController : BaseController<ChatRoomListFragment>() {
     }
 
     doOnUI {
-      val alreadyJoinedRoomsSet =  chatRoomsStore.publicChatRoomList
+      val alreadyJoinedRoomsSet =  chatRoomsStore.chatRoomList
         .map { it.roomName }
         .toSet()
 

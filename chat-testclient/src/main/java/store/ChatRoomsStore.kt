@@ -6,31 +6,31 @@ import manager.IdGeneratorManager
 import model.chat_message.BaseChatMessageItem
 import model.chat_room_list.BaseChatRoomListItem
 import model.chat_room_list.NoRoomsNotificationItem
-import model.chat_room_list.PublicChatRoomItem
+import model.chat_room_list.ChatRoomItem
 import utils.ThreadChecker
 
 class ChatRoomsStore {
-  val publicChatRoomList: ObservableList<BaseChatRoomListItem> = FXCollections.observableArrayList()
+  val chatRoomList: ObservableList<BaseChatRoomListItem> = FXCollections.observableArrayList()
 
   init {
-    publicChatRoomList.add(NoRoomsNotificationItem.haveNotJoinedAnyRoomsYet())
+    chatRoomList.add(NoRoomsNotificationItem.haveNotJoinedAnyRoomsYet())
   }
 
-  private fun getChatRoomList(): List<PublicChatRoomItem> {
+  private fun getChatRoomList(): List<ChatRoomItem> {
     ThreadChecker.throwIfNotOnMainThread()
 
-    return publicChatRoomList
-      .filterIsInstance(PublicChatRoomItem::class.java)
+    return chatRoomList
+      .filterIsInstance(ChatRoomItem::class.java)
   }
 
-  fun addManyChatRoomListItem(chatRoomItemList: List<BaseChatRoomListItem>) {
+  fun addManyChatRoomItems(chatRoomItemList: List<BaseChatRoomListItem>) {
     ThreadChecker.throwIfNotOnMainThread()
 
     for (item in chatRoomItemList) {
-      val index = if (publicChatRoomList.isEmpty()) {
+      val index = if (chatRoomList.isEmpty()) {
         0
       } else {
-        publicChatRoomList.lastIndex
+        chatRoomList.lastIndex
       }
 
       addChatRoomListItem(item, index)
@@ -42,18 +42,18 @@ class ChatRoomsStore {
 
     when (chatRoomItem) {
       is NoRoomsNotificationItem -> {
-        if (publicChatRoomList.isNotEmpty()) {
+        if (chatRoomList.isNotEmpty()) {
           throw RuntimeException("Must be empty!")
         }
 
-        publicChatRoomList.add(0, chatRoomItem)
+        chatRoomList.add(0, chatRoomItem)
       }
-      is PublicChatRoomItem -> {
+      is ChatRoomItem -> {
         if (getChatRoomByName(chatRoomItem.roomName) != null) {
           throw IllegalStateException("Room with name ${chatRoomItem.roomName} already exists!")
         }
 
-        publicChatRoomList.add(index, chatRoomItem)
+        chatRoomList.add(index, chatRoomItem)
       }
       else -> throw RuntimeException("Not implemented for ${chatRoomItem::class}")
     }
@@ -62,11 +62,11 @@ class ChatRoomsStore {
   fun removeNoRoomsNotification() {
     ThreadChecker.throwIfNotOnMainThread()
 
-    if (publicChatRoomList.isEmpty()) {
+    if (chatRoomList.isEmpty()) {
       return
     }
 
-    if (publicChatRoomList[0].type == BaseChatRoomListItem.ChatRoomListItemType.NoRoomsNotificationType) {
+    if (chatRoomList[0].type == BaseChatRoomListItem.ChatRoomListItemType.NoRoomsNotificationType) {
       removeChatRoomListItem(0)
     }
   }
@@ -74,10 +74,10 @@ class ChatRoomsStore {
   fun removeChatRoomListItem(index: Int) {
     ThreadChecker.throwIfNotOnMainThread()
 
-    publicChatRoomList.removeAt(index)
+    chatRoomList.removeAt(index)
   }
 
-  fun getChatRoomByName(roomName: String?): PublicChatRoomItem? {
+  fun getChatRoomByName(roomName: String?): ChatRoomItem? {
     ThreadChecker.throwIfNotOnMainThread()
 
     if (roomName == null) {

@@ -15,7 +15,7 @@ import model.user.ForeignUserItem
 import model.user.MyUserItem
 import tornadofx.onChange
 
-class PublicChatRoomItem(
+class ChatRoomItem(
   roomName: String,
   imageUrl: String
 ) : BaseChatRoomListItem(ChatRoomListItemType.ChatRoomItemType, roomName) {
@@ -143,8 +143,8 @@ class PublicChatRoomItem(
   }
 
   companion object {
-    fun create(roomName: String, roomImageUrl: String): PublicChatRoomItem {
-      return PublicChatRoomItem(roomName, roomImageUrl)
+    fun create(roomName: String, roomImageUrl: String): ChatRoomItem {
+      return ChatRoomItem(roomName, roomImageUrl)
     }
   }
 }

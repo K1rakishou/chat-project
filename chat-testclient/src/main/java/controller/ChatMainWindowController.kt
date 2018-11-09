@@ -11,7 +11,6 @@ import core.packet.SendChatMessagePacket
 import core.response.*
 import io.reactivex.rxkotlin.plusAssign
 import io.reactivex.rxkotlin.subscribeBy
-import javafx.beans.property.SimpleIntegerProperty
 import kotlinx.coroutines.delay
 import manager.NetworkManager
 import model.chat_message.BaseChatMessageItem
@@ -19,7 +18,7 @@ import model.chat_message.text_message.ForeignTextChatMessageItem
 import model.chat_message.text_message.MyTextChatMessageItem
 import model.chat_message.text_message.SystemChatMessageItem
 import model.chat_room_list.NoRoomsNotificationItem
-import model.chat_room_list.PublicChatRoomItem
+import model.chat_room_list.ChatRoomItem
 import store.ChatRoomsStore
 import ui.chat_main_window.ChatMainWindow
 import utils.ThreadChecker
@@ -282,10 +281,10 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       store.addChatRoomListItem(NoRoomsNotificationItem.haveNotJoinedAnyRoomsYet())
     } else {
       val mappedRooms = response.publicChatRoomList
-        .map { PublicChatRoomItem.create(it.chatRoomName, it.chatRoomImageUrl) }
+        .map { ChatRoomItem.create(it.chatRoomName, it.chatRoomImageUrl) }
 
       store.removeNoRoomsNotification()
-      store.addManyChatRoomListItem(mappedRooms)
+      store.addManyChatRoomItems(mappedRooms)
     }
   }
 
@@ -314,7 +313,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
       store.removeNoRoomsNotification()
 
-      val chatRoom = PublicChatRoomItem.create(roomName, roomImageUrl)
+      val chatRoom = ChatRoomItem.create(roomName, roomImageUrl)
       store.addChatRoomListItem(chatRoom)
 
       view.showChatRoomView(roomName)

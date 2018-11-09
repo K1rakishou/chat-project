@@ -18,7 +18,7 @@ abstract class BaseChatRoomListItem(
       return false
     }
 
-    if (other !is PublicChatRoomItem) {
+    if (other !is ChatRoomItem) {
       return false
     }
 

@@ -21,7 +21,7 @@ import javafx.scene.layout.HBox
 import javafx.scene.paint.Paint
 import model.chat_room_list.BaseChatRoomListItem
 import model.chat_room_list.NoRoomsNotificationItem
-import model.chat_room_list.PublicChatRoomItem
+import model.chat_room_list.ChatRoomItem
 import model.chat_room_list.SearchChatRoomItem
 import org.fxmisc.flowless.VirtualizedScrollPane
 import store.ChatRoomsStore
@@ -75,7 +75,7 @@ class ChatRoomListFragment : BaseFragment() {
 
   private val virtualListView = VirtualListView(chatRoomsListProperty, { item ->
     return@VirtualListView when (item) {
-      is PublicChatRoomItem -> createCellPublicChatRoomItem(chatMainWindowSize.widthProperty, item)
+      is ChatRoomItem -> createCellChatRoomItem(chatMainWindowSize.widthProperty, item)
       is NoRoomsNotificationItem -> createCellNoRoomsNotificationItem(chatMainWindowSize.widthProperty, item.message)
       is SearchChatRoomItem -> createCellSearchChatRoomItem(chatMainWindowSize.widthProperty, item)
       else -> throw RuntimeException("Not implemented for ${item::class}")
@@ -138,8 +138,8 @@ class ChatRoomListFragment : BaseFragment() {
 
   private fun reloadChatRoomsList(listState: ListState) {
     val (oldSearchChatRoomsProperty, newSearchChatRoomsProperty) = when (listState) {
-      ListState.SearchState -> chatRoomsStore.publicChatRoomList to searchChatRoomsStore.searchChatRoomList
-      ListState.NormalState -> searchChatRoomsStore.searchChatRoomList to chatRoomsStore.publicChatRoomList
+      ListState.SearchState -> chatRoomsStore.chatRoomList to searchChatRoomsStore.searchChatRoomList
+      ListState.NormalState -> searchChatRoomsStore.searchChatRoomList to chatRoomsStore.chatRoomList
       ListState.NotEnoughSymbols -> {
         //do nothing
         return
@@ -156,7 +156,7 @@ class ChatRoomListFragment : BaseFragment() {
 
   private fun onItemSelected(item: BaseChatRoomListItem) {
     when (item) {
-      is PublicChatRoomItem -> {
+      is ChatRoomItem -> {
         val isMyUserAdded = chatRoomsStore.getChatRoomByName(item.roomName)?.isMyUserAdded() ?: false
         if (isMyUserAdded) {
           val lastSelectedChatRoomName = selectedRoomStore.getSelectedRoom().get()
@@ -197,7 +197,7 @@ class ChatRoomListFragment : BaseFragment() {
   }
 
   //TODO: extract to it's own class?
-  private fun createCellPublicChatRoomItem(widthProperty: ReadOnlyDoubleProperty, item: PublicChatRoomItem): HBox {
+  private fun createCellChatRoomItem(widthProperty: ReadOnlyDoubleProperty, item: ChatRoomItem): HBox {
     return hbox {
       prefHeight = 64.0
       maxHeight = 64.0
