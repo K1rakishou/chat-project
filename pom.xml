@@ -6,13 +6,13 @@
 
     <groupId>com.kirakishou</groupId>
     <artifactId>chat-project</artifactId>
-    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
     <modules>
+        <module>chat-common</module>
         <module>chat-backend</module>
         <module>chat-testclient</module>
-        <module>chat-common</module>
     </modules>
-
 
 </project>
