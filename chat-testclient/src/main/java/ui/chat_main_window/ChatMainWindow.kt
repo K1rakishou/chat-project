@@ -43,7 +43,7 @@ class ChatMainWindow : BaseView("Chat") {
     }.autoUnsubscribe()
     subscribe<ChatMainWindowEvents.ShowChatRoomViewEvent> { event ->
       showChatRoomView(event.selectedRoomName)
-      selectedRoomStore.setSelectedRoom(event.selectedRoomName)
+      selectRoomWithName(event.selectedRoomName)
     }.autoUnsubscribe()
   }
 

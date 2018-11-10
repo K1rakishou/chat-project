@@ -294,12 +294,9 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
 
   fun onChatRoomCreated(roomName: String, userName: String?, roomImageUrl: String) {
     doOnUI {
-      //if userName is not null that means that we need to auto join this user into the created room
+      //if userName is null that means we don't need to automatically join this user to the room
       if (userName != null) {
         onJoinedToChatRoom(roomName, roomImageUrl, userName, emptyList(), emptyList())
-
-        view.selectRoomWithName(roomName)
-        scrollChatToBottom()
       }
     }
   }

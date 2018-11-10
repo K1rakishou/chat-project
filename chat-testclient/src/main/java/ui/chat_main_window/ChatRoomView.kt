@@ -8,6 +8,7 @@ import javafx.collections.FXCollections
 import javafx.geometry.Insets
 import javafx.scene.Node
 import javafx.scene.control.ScrollPane
+import javafx.scene.control.TextField
 import javafx.scene.layout.Background
 import javafx.scene.layout.BackgroundFill
 import javafx.scene.layout.CornerRadii
@@ -24,10 +25,11 @@ import store.SelectedRoomStore
 import tornadofx.*
 import ui.base.BaseView
 import ui.widgets.VirtualMultiSelectListView
-import java.util.concurrent.atomic.AtomicInteger
 
 
 class ChatRoomView : BaseView() {
+  private lateinit var messageInput: TextField
+
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val selectedRoomStore: SelectedRoomStore by lazy { ChatApp.selectedRoomStore }
   private val delayBeforeUpdatingScrollBarPosition = 50.0
@@ -42,6 +44,7 @@ class ChatRoomView : BaseView() {
   init {
     selectedRoomStore.getSelectedRoomProperty().addListener { _, _, selectedRoomName ->
       reloadMessagesHistory(selectedRoomName)
+      messageInputSetFocus()
     }
 
     subscribe<ChatRoomViewEvents.ScrollToBottom> {
@@ -88,7 +91,7 @@ class ChatRoomView : BaseView() {
 
     add(virtualScrollPane)
 
-    textfield {
+    messageInput = textfield {
       addClass(Styles.chatRoomTextField)
       promptText = "Enter your message here"
       whenDocked { requestFocus() }
@@ -112,13 +115,17 @@ class ChatRoomView : BaseView() {
     }
   }
 
+  private fun messageInputSetFocus() {
+    messageInput.requestFocus()
+  }
+
   private fun reloadMessagesHistory(selectedRoomName: String?) {
     if (selectedRoomName == null) {
       return
     }
 
-    val oldSelectedChatRoomName = selectedRoomStore.getSelectedRoom()
-    val oldRoomMessageProperty = chatRoomsStore.getChatRoomByName(oldSelectedChatRoomName)?.roomMessagesProperty
+    val prevSelectedChatRoomName = selectedRoomStore.getPrevSelectedRoom()
+    val oldRoomMessageProperty = chatRoomsStore.getChatRoomByName(prevSelectedChatRoomName)?.roomMessagesProperty
     val newRoomMessageProperty = chatRoomsStore.getChatRoomByName(selectedRoomName)!!.roomMessagesProperty
     val messageHistory = newRoomMessageProperty ?: emptyList<BaseChatMessageItem>()
 
