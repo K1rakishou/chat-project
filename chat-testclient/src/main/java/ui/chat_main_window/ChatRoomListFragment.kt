@@ -102,22 +102,19 @@ class ChatRoomListFragment : BaseFragment() {
       textProperty().addListener { _, _, text ->
         debouncedSearch.process(text)
       }
+
+      focusedProperty().addListener { _, _, focused ->
+        if (!focused) {
+          //clear searchTextInput when user selects any other input control
+          searchTextInput.textProperty().set("")
+        }
+      }
     }
 
     add(VirtualizedScrollPane(virtualListView.getVirtualFlow().apply {
       background = Background(BackgroundFill(Paint.valueOf("#ffffff"), CornerRadii.EMPTY, Insets.EMPTY))
       prefHeightProperty().bind(chatMainWindowSize.heightProperty)
     }))
-  }
-
-  //if roomName is null - try to select item with name lastSelectedRoom
-  private fun selectItem(roomName: String?) {
-    if (roomName != null) {
-      lastSelectedRoom = roomName
-      virtualListView.selectItemByKey(roomName)
-    } else {
-      virtualListView.selectItemByKey(lastSelectedRoom)
-    }
   }
 
   private fun performSearch(chatRoomName: String) {
@@ -137,6 +134,16 @@ class ChatRoomListFragment : BaseFragment() {
           //do nothing
         }
       }
+    }
+  }
+
+  //if roomName is null - try to select item with name lastSelectedRoom
+  private fun selectItem(roomName: String?) {
+    if (roomName != null) {
+      lastSelectedRoom = roomName
+      virtualListView.selectItemByKey(roomName)
+    } else {
+      virtualListView.selectItemByKey(lastSelectedRoom)
     }
   }
 
