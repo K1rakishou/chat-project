@@ -40,7 +40,9 @@ class ChatRoomItem(
         }
 
         if (lastElement != null) {
-          lastMessageProperty.set(lastElement.toTextMessage())
+          if (lastElement.canBeUsedAsLastMessage()) {
+            lastMessageProperty.set(lastElement.toTextMessage())
+          }
         } else {
           lastMessageProperty.set("")
         }

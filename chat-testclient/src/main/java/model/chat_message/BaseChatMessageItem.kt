@@ -22,6 +22,15 @@ abstract class BaseChatMessageItem(
     }
   }
 
+  fun canBeUsedAsLastMessage(): Boolean {
+    return when (getMessageType()) {
+      MessageType.MyTextMessage,
+      MessageType.ForeignTextMessage ,
+      MessageType.MyImageMessage -> true
+      MessageType.SystemTextMessage -> false
+    }
+  }
+
   companion object {
     const val CLIENT_SIDE_ONLY_MESSAGE_ID = -1
     const val FOREIGN_MESSAGE_ID = -2
