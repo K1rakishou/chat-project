@@ -34,15 +34,23 @@ class FullImageViewWindow : BaseFragment() {
   override fun onDock() {
     super.onDock()
 
+    if (!setupWindow()) {
+      return
+    }
+
+    loadImage()
+  }
+
+  private fun setupWindow(): Boolean {
     if (currentStage == null) {
       println("Current stage is null")
-      return
+      return false
     }
 
     val screen = Screen.getScreensForRectangle(x, y, width, height).firstOrNull()
     if (screen == null) {
       println("Could not get current screen")
-      return
+      return false
     }
 
     val bounds = screen.visualBounds
@@ -52,6 +60,10 @@ class FullImageViewWindow : BaseFragment() {
     currentStage!!.width = bounds.width
     currentStage!!.height = bounds.height
 
+    return true
+  }
+
+  private fun loadImage() {
     doOnBg {
       val image = imageLoader.newRequest()
         .load(url)
