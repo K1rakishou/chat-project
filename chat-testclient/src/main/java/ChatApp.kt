@@ -1,3 +1,4 @@
+import core.CachingImageLoader
 import javafx.stage.Stage
 import manager.NetworkManager
 import store.ChatRoomsStore
@@ -24,5 +25,6 @@ class ChatApp : App(NoPrimaryViewSpecified::class, Styles::class) {
     val chatRoomsStore = ChatRoomsStore()
     val searchChatRoomsStore = SearchChatRoomsStore()
     val selectedRoomStore = SelectedRoomStore()
+    val imageLoader = CachingImageLoader()
   }
 }

@@ -36,7 +36,7 @@
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-javafx</artifactId>
-            <version>1.0.1</version>
+            <version>1.0.0</version>
         </dependency>
 
         <dependency>
@@ -60,7 +60,7 @@
         <dependency>
             <groupId>com.github.K1rakishou</groupId>
             <artifactId>Caching-Image-Loader</artifactId>
-            <version>51993a7df7</version>
+            <version>master</version>
         </dependency>
         <dependency>
             <groupId>com.kirakishou</groupId>

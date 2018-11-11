@@ -1,8 +1,12 @@
 package ui.chat_main_window
 
 import ChatApp
+import builders.CircleCropParametersBuilder
+import builders.TransformationBuilder
 import controller.ChatRoomListFragmentController
+import core.CachingImageLoader
 import core.Constants
+import core.SaveStrategy
 import utils.helper.DebouncedSearchHelper
 import events.ChatMainWindowEvents
 import events.ChatRoomListFragmentEvents
@@ -11,6 +15,7 @@ import javafx.collections.FXCollections
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Cursor
+import javafx.scene.Node
 import javafx.scene.control.OverrunStyle
 import javafx.scene.control.TextField
 import javafx.scene.input.KeyCode
@@ -30,6 +35,8 @@ import store.SelectedRoomStore
 import tornadofx.*
 import ui.base.BaseFragment
 import ui.widgets.VirtualListView
+import java.awt.Color
+import java.lang.IllegalStateException
 
 class ChatRoomListFragment : BaseFragment() {
   private lateinit var searchTextInput: TextField
@@ -38,6 +45,7 @@ class ChatRoomListFragment : BaseFragment() {
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val selectedRoomStore: SelectedRoomStore by lazy { ChatApp.selectedRoomStore }
   private val searchChatRoomsStore: SearchChatRoomsStore by lazy { ChatApp.searchChatRoomsStore }
+  private val imageLoader: CachingImageLoader by lazy { ChatApp.imageLoader }
 
   private val rightMargin = 16.0
   private val debouncedSearch = DebouncedSearchHelper()
@@ -212,19 +220,14 @@ class ChatRoomListFragment : BaseFragment() {
       prefHeight = 64.0
       maxHeight = 64.0
       paddingAll = 2.0
+      alignment = Pos.CENTER_LEFT
+      paddingRight = 8.0
       cursor = Cursor.HAND
 
       prefWidthProperty().bind(widthProperty)
       maxWidthProperty().bind(widthProperty)
 
-      imageview(item.imageUrl) {
-        minHeight = 60.0
-        fitHeight = 60.0
-        isPreserveRatio = true
-        isSmooth = true
-        alignment = Pos.CENTER_LEFT
-        paddingRight = 8.0
-      }
+      createImageView(item)
       label { minWidth = 8.0 }
       vbox {
         label(item.roomName) {
@@ -246,25 +249,49 @@ class ChatRoomListFragment : BaseFragment() {
       prefHeight = 64.0
       maxHeight = 64.0
       paddingAll = 2.0
+      alignment = Pos.CENTER_LEFT
+      paddingRight = 8.0
       cursor = Cursor.HAND
 
       prefWidthProperty().bind(widthProperty)
       maxWidthProperty().bind(widthProperty)
 
-      imageview(item.imageUrl) {
-        minHeight = 60.0
-        fitHeight = 60.0
-        isPreserveRatio = true
-        isSmooth = true
-        alignment = Pos.CENTER_LEFT
-        paddingRight = 8.0
-      }
+      createImageView(item)
       label { minWidth = 8.0 }
       vbox {
         label(item.roomName) {
           textOverrun = OverrunStyle.ELLIPSIS
         }
       }
+    }
+  }
+
+  private fun Node.createImageView(item: BaseChatRoomListItem) {
+    val imageUrl = when (item) {
+      is ChatRoomItem -> item.imageUrl
+      is SearchChatRoomItem -> item.imageUrl
+      else -> throw IllegalStateException("Not supported")
+    }
+
+    imageview {
+      fitWidth = 60.0
+      fitHeight = 60.0
+      isPreserveRatio = true
+      isSmooth = true
+
+      imageLoader.newRequest()
+        .load(imageUrl)
+        .transformations(
+          TransformationBuilder()
+            .centerCrop(this)
+            .circleCrop(
+              CircleCropParametersBuilder()
+                .backgroundColor(Color(0f, 0f, 0f, 0f))
+                .stroke(6f, Color.LIGHT_GRAY)
+            )
+        )
+        .saveStrategy(SaveStrategy.SaveTransformedImage)
+        .into(this)
     }
   }
 
