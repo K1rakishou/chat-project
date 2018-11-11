@@ -1,5 +1,6 @@
 package model.chat_message.text_message
 
+import core.LinksExtractor
 import javafx.beans.property.SimpleStringProperty
 import model.chat_message.BaseChatMessageItem
 import java.util.*
@@ -10,11 +11,11 @@ abstract class TextChatMessageItem(
   serverMessageId: Int = -1,
   clientMessageId: Int = -1
 ) : BaseChatMessageItem(serverMessageId, clientMessageId) {
-
   override fun toTextMessage(): String {
     return "$senderName: $messageText"
   }
 
+  val links = LinksExtractor.extract(messageText)
   val id = UUID.randomUUID()
 
   private val senderNameProperty by lazy { SimpleStringProperty(senderName) }

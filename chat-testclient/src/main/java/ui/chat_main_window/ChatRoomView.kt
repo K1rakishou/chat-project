@@ -2,16 +2,19 @@ package ui.chat_main_window
 
 import ChatApp
 import Styles
+import builders.TransformationBuilder
 import controller.ChatMainWindowController
+import core.CachingImageLoader
+import core.SaveStrategy
 import events.ChatRoomViewEvents
 import javafx.collections.FXCollections
 import javafx.geometry.Insets
+import javafx.geometry.Orientation
+import javafx.scene.Cursor
 import javafx.scene.Node
 import javafx.scene.control.ScrollPane
 import javafx.scene.control.TextField
-import javafx.scene.layout.Background
-import javafx.scene.layout.BackgroundFill
-import javafx.scene.layout.CornerRadii
+import javafx.scene.layout.*
 import javafx.scene.paint.Paint
 import kotlinx.coroutines.delay
 import model.chat_message.BaseChatMessageItem
@@ -19,6 +22,7 @@ import model.chat_message.MessageType
 import model.chat_message.text_message.ForeignTextChatMessageItem
 import model.chat_message.text_message.MyTextChatMessageItem
 import model.chat_message.text_message.SystemChatMessageItem
+import model.links.AbstractLink
 import org.fxmisc.flowless.VirtualizedScrollPane
 import store.ChatRoomsStore
 import store.SelectedRoomStore
@@ -32,6 +36,7 @@ class ChatRoomView : BaseView() {
 
   private val chatRoomsStore: ChatRoomsStore by lazy { ChatApp.chatRoomsStore }
   private val selectedRoomStore: SelectedRoomStore by lazy { ChatApp.selectedRoomStore }
+  private val imageLoader: CachingImageLoader by lazy { ChatApp.imageLoader }
   private val delayBeforeUpdatingScrollBarPosition = 50.0
   private val scrollbarApproxSize = 16.0
   private val controller: ChatMainWindowController by inject()
@@ -56,11 +61,11 @@ class ChatRoomView : BaseView() {
     return@VirtualMultiSelectListView when (baseChatMessage.getMessageType()) {
       MessageType.MyTextMessage -> {
         baseChatMessage as MyTextChatMessageItem
-        createMyTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText, baseChatMessage.isAcceptedByServer())
+        createMyTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText, baseChatMessage.isAcceptedByServer(), baseChatMessage.links)
       }
       MessageType.ForeignTextMessage -> {
         baseChatMessage as ForeignTextChatMessageItem
-        createForeignTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText)
+        createForeignTextChatMessage(baseChatMessage.senderName, baseChatMessage.messageText, baseChatMessage.links)
       }
       MessageType.SystemTextMessage -> {
         baseChatMessage as SystemChatMessageItem
@@ -185,7 +190,11 @@ class ChatRoomView : BaseView() {
 //  }
 
   //TODO: extract to it's own class?
-  private fun createForeignTextChatMessage(senderName: String, messageText: String): Node {
+  private fun createForeignTextChatMessage(
+    senderName: String,
+    messageText: String,
+    links: List<AbstractLink>
+  ): Node {
     return hbox {
       paddingTop = 2.0
       paddingBottom = 2.0
@@ -204,12 +213,18 @@ class ChatRoomView : BaseView() {
 
           addClass(Styles.foreignTextChatMessage)
         }
+        createImageViews(links)
       }
     }
   }
 
   //TODO: extract to it's own class?
-  private fun createMyTextChatMessage(senderName: String, messageText: String, acceptedByServer: Boolean): Node {
+  private fun createMyTextChatMessage(
+    senderName: String,
+    messageText: String,
+    acceptedByServer: Boolean,
+    links: List<AbstractLink>
+  ): Node {
     return hbox {
       paddingTop = 2.0
       paddingBottom = 2.0
@@ -232,12 +247,53 @@ class ChatRoomView : BaseView() {
             addClass(Styles.myTextChatMessageAcceptedByServer)
           }
         }
+        createImageViews(links)
+      }
+    }
+  }
+
+  private fun Node.createImageViews(links: List<AbstractLink>) {
+    if (links.isEmpty()) {
+      return
+    }
+
+    flowpane {
+      orientation = Orientation.HORIZONTAL
+      paddingAll = 4.0
+      hgap = 4.0
+      vgap = 4.0
+
+      for (link in links) {
+        vbox {
+          imageview {
+            fitWidth = 128.0
+            fitHeight = 128.0
+            isPreserveRatio = true
+            isSmooth = true
+            cursor = Cursor.HAND
+
+            paddingLeft = 4.0
+            paddingRight = 4.0
+
+            imageLoader.newRequest()
+              .load(link.value)
+              .transformations(
+                TransformationBuilder()
+                  .centerCrop(this)
+              )
+              .saveStrategy(SaveStrategy.SaveOriginalImage)
+              .into(this)
+          }
+        }
       }
     }
   }
 
   //TODO: extract to it's own class?
-  private fun createSystemTextChatMessage(senderName: String, messageText: String): Node {
+  private fun createSystemTextChatMessage(
+    senderName: String,
+    messageText: String
+  ): Node {
     return hbox {
       paddingTop = 2.0
       paddingBottom = 2.0
