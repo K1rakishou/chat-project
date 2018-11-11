@@ -139,4 +139,30 @@ object UiValidators {
     return null
   }
 
+  fun validateSearchString(
+    context: ValidationContext,
+    searchString: String?
+  ): ValidationMessage? {
+    if (searchString == null) {
+      return context.error("Room name is null")
+    }
+
+    if (searchString.isEmpty()) {
+      return null
+    }
+
+    if (searchString.isBlank()) {
+      return context.error("Room name is blank")
+    }
+
+    if (searchString.length < Constants.minChatRoomSearchLen) {
+      return context.error("Room name should have at least ${Constants.minChatRoomSearchLen} symbols")
+    }
+
+    if (searchString.length > Constants.maxChatRoomNameLen) {
+      return context.error("Room name exceeds ${Constants.maxChatRoomNameLen} symbols")
+    }
+
+    return null
+  }
 }
