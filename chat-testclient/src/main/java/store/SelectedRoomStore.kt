@@ -18,7 +18,15 @@ class SelectedRoomStore {
     return prevSelectedRoomProperty.get()
   }
 
-  fun setSelectedRoom(roomName: String?): Boolean {
+  fun getSelectedOrPrevSelected(): String? {
+    if (selectedRoomProperty.get() != null) {
+      return getSelectedRoom()
+    }
+
+    return getPrevSelectedRoom()
+  }
+
+  fun setSelectedRoom(roomName: String): Boolean {
     if (roomName == selectedRoomProperty.get()) {
       return false
     }
@@ -26,5 +34,10 @@ class SelectedRoomStore {
     prevSelectedRoomProperty.set(selectedRoomProperty.get())
     selectedRoomProperty.set(roomName)
     return true
+  }
+
+  fun clearSelection() {
+    selectedRoomProperty.set(null)
+    prevSelectedRoomProperty.set(null)
   }
 }

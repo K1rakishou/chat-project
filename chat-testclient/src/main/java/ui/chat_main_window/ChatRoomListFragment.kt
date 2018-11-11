@@ -54,7 +54,6 @@ class ChatRoomListFragment : BaseFragment() {
   private val chatMainWindowSize = params[ChatMainWindow.CHAT_ROOM_LIST_VIEW_SIZE] as ChatMainWindow.ChatRoomViewSizeParams
 
   private var currentListState = ListState.NormalState
-  private var lastSelectedRoom: String? = null
 
   init {
     selectedRoomStore.getSelectedRoomProperty().addListener { _, _, selectedRoomName ->
@@ -63,11 +62,11 @@ class ChatRoomListFragment : BaseFragment() {
 
     subscribe<ChatRoomListFragmentEvents.ClearSelection> {
       virtualListView.clearSelection()
-      selectItem(null)
+      clearSelection()
     }.autoUnsubscribe()
     subscribe<ChatRoomListFragmentEvents.ClearSearchInput> {
       searchTextInput.clear()
-      selectItem(lastSelectedRoom)
+      clearSelection()
     }.autoUnsubscribe()
   }
 
@@ -110,13 +109,6 @@ class ChatRoomListFragment : BaseFragment() {
       textProperty().addListener { _, _, text ->
         debouncedSearch.process(text)
       }
-
-      focusedProperty().addListener { _, _, focused ->
-        if (!focused) {
-          //clear searchTextInput when user selects any other input control
-          searchTextInput.textProperty().set("")
-        }
-      }
     }
 
     add(VirtualizedScrollPane(virtualListView.getVirtualFlow().apply {
@@ -137,7 +129,12 @@ class ChatRoomListFragment : BaseFragment() {
 
       when (newListState) {
         ListState.SearchState -> controller.sendSearchRequest(chatRoomName)
-        ListState.NormalState -> selectItem(null)
+        ListState.NormalState -> {
+          val roomName = selectedRoomStore.getSelectedOrPrevSelected()
+          if (roomName != null) {
+            selectItem(roomName)
+          }
+        }
         ListState.NotEnoughSymbols -> {
           //do nothing
         }
@@ -145,14 +142,13 @@ class ChatRoomListFragment : BaseFragment() {
     }
   }
 
-  //if roomName is null - try to select item with name lastSelectedRoom
-  private fun selectItem(roomName: String?) {
-    if (roomName != null) {
-      lastSelectedRoom = roomName
-      virtualListView.selectItemByKey(roomName)
-    } else {
-      virtualListView.selectItemByKey(lastSelectedRoom)
-    }
+  //if roomName is null - try to select an item by lastSelectedRoom
+  private fun selectItem(roomName: String) {
+    virtualListView.selectItemByKey(roomName)
+  }
+
+  private fun clearSelection() {
+    virtualListView.clearSelection()
   }
 
   private fun reloadChatRoomsList(listState: ListState) {
@@ -287,7 +283,7 @@ class ChatRoomListFragment : BaseFragment() {
             .circleCrop(
               CircleCropParametersBuilder()
                 .backgroundColor(Color(0f, 0f, 0f, 0f))
-                .stroke(6f, Color.LIGHT_GRAY)
+                .stroke(6f, Color.DARK_GRAY)
             )
         )
         .saveStrategy(SaveStrategy.SaveTransformedImage)

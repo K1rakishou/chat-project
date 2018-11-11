@@ -140,7 +140,7 @@ class ChatMainWindow : BaseView("Chat") {
     selectRoomWithName(roomName)
   }
 
-  fun selectRoomWithName(roomName: String?) {
+  fun selectRoomWithName(roomName: String) {
     doOnUI {
       selectedRoomStore.setSelectedRoom(roomName)
     }
