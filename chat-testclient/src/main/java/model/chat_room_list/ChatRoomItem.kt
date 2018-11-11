@@ -103,7 +103,7 @@ class ChatRoomItem(
     userListProperty.addAll(mappedUsers)
   }
 
-  fun replaceChatRoomHistory(messageHistory: List<BaseChatMessage>) {
+  fun setChatRoomHistory(messageHistory: List<BaseChatMessage>) {
     val newChatRoomHistory = messageHistory
       .map { message ->
         when (message.messageType) {

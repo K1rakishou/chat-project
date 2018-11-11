@@ -320,7 +320,7 @@ class ChatMainWindowController : BaseController<ChatMainWindow>() {
       view.showChatRoomView(roomName)
       chatRoom.replaceUserList(users)
       chatRoom.addMyUser(userName)
-      chatRoom.replaceChatRoomHistory(messageHistory)
+      chatRoom.setChatRoomHistory(messageHistory)
 
       view.onJoinedChatRoom(roomName)
       addChatMessage(roomName, SystemChatMessageItem("You've joined the chat room"))
