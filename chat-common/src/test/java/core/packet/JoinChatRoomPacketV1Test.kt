@@ -56,7 +56,7 @@ class JoinChatRoomPacketV1Test : BasePacketPayloadTest() {
   @Test(expected = PacketDeserializationException::class)
   fun testPacketExceedRoomName() {
     val userName = "test_user_name"
-    val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10)
+    val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLen + 10)
     val roomPasswordHash = "12345678"
 
     testPayload(JoinChatRoomPacket(userName, roomName, roomPasswordHash), { byteSink ->

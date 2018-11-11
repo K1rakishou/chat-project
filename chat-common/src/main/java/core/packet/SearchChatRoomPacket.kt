@@ -48,7 +48,7 @@ class SearchChatRoomPacket(
         val packetVersion = PacketVersion.fromShort(byteSink.readShort())
         when (packetVersion) {
           PacketVersion.V1 -> {
-            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLen)
               ?: throw PacketDeserializationException("Could not read chatRoomName")
 
             return SearchChatRoomPacket(chatRoomName)

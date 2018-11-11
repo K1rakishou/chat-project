@@ -86,8 +86,8 @@ object UiValidators {
       return context.error("Room name should be at least ${Constants.minChatRoomNameLen} symbols")
     }
 
-    if (roomName.length > Constants.maxChatRoomNameLength) {
-      return context.error("Room name must not exceed ${Constants.maxChatRoomNameLength} symbols")
+    if (roomName.length > Constants.maxChatRoomNameLen) {
+      return context.error("Room name must not exceed ${Constants.maxChatRoomNameLen} symbols")
     }
 
     return null

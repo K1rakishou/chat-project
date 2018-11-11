@@ -56,7 +56,7 @@ class SearchChatRoomResponsePayloadTest : BaseResponsePayloadTest() {
   @Test(expected = ResponseDeserializationException::class)
   fun `test response with chatRoomName exceeding maxChatRoomNameLen`() {
     val foundChatRooms = listOf(
-      ChatRoomData(SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10), "awrawrawr", true)
+      ChatRoomData(SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLen + 10), "awrawrawr", true)
     )
 
     testPayload(SearchChatRoomResponsePayload.success(foundChatRooms), { byteSink ->

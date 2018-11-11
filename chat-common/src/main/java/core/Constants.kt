@@ -10,7 +10,7 @@ object Constants {
 
   const val minChatRoomSearchLen = 4
   const val minChatRoomNameLen = 5
-  const val maxChatRoomNameLength = 128
+  const val maxChatRoomNameLen = 128
   const val minChatRoomPasswordLen = 8
   const val maxChatRoomPasswordLen = 48
   const val maxChatRoomPasswordHashLen = 96

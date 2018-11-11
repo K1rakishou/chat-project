@@ -70,7 +70,7 @@ class UserHasJoinedResponsePayload private constructor(
               return fail(status)
             }
 
-            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLen)
               ?: throw ResponseDeserializationException("Could not read chatRoomName")
             val user = byteSink.readDrainable<PublicUserInChat>(PublicUserInChat::class)
               ?: throw ResponseDeserializationException("Could not read user")

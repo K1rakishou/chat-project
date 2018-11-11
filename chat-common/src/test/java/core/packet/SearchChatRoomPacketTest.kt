@@ -32,7 +32,7 @@ class SearchChatRoomPacketTest : BasePacketPayloadTest() {
 
   @Test(expected = PacketDeserializationException::class)
   fun `test packet with chatRoomName exceeding maxChatRoomNameLen`() {
-    val chatRoomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10)
+    val chatRoomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLen + 10)
 
     testPayload(SearchChatRoomPacket(chatRoomName), { byteSink ->
       SearchChatRoomPacket.fromByteSink(byteSink)

@@ -55,7 +55,7 @@ class SendChatMessagePacket(
         when (packetVersion) {
           SendChatMessagePacket.PacketVersion.V1 -> {
             val clientMessageId = byteSink.readInt()
-            val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            val roomName = byteSink.readString(Constants.maxChatRoomNameLen)
               ?: throw PacketDeserializationException("Could not read roomName")
             val userName = byteSink.readString(Constants.maxUserNameLen)
               ?: throw PacketDeserializationException("Could not read userName")

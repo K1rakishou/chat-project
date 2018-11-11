@@ -73,7 +73,7 @@ class GetPageOfPublicRoomsResponsePayloadTest : BaseResponsePayloadTest() {
       ChatRoomData("testRoom1", "111", false),
       ChatRoomData("testRoom154364r6dr76rt7", "222", true),
       ChatRoomData("45476d478", "333", false),
-      ChatRoomData(SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10), "444", false),
+      ChatRoomData(SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLen + 10), "444", false),
       ChatRoomData("545745", "555", true)
     )
 

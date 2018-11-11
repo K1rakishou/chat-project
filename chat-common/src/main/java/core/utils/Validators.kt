@@ -43,8 +43,8 @@ object Validators {
       return Status.BadParam
     }
 
-    if (chatRoomName.length > Constants.maxChatRoomNameLength) {
-      println("chatRoomName.length (${chatRoomName.length}) > Constants.maxChatRoomNameLength (${Constants.maxChatRoomNameLength})")
+    if (chatRoomName.length > Constants.maxChatRoomNameLen) {
+      println("chatRoomName.length (${chatRoomName.length}) > Constants.maxChatRoomNameLen (${Constants.maxChatRoomNameLen})")
       return Status.BadParam
     }
 

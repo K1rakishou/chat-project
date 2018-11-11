@@ -98,6 +98,11 @@ class ChatRoomListFragment : BaseFragment() {
 
   override val root = vbox {
     searchTextInput = textfield {
+      val context = ValidationContext()
+      context.addValidator(this@textfield, this.textProperty()) { searchString ->
+        validateSearchString(this, searchString)
+      }
+
       promptText = "Search for a chat room"
 
       setOnKeyReleased { event ->
@@ -115,6 +120,33 @@ class ChatRoomListFragment : BaseFragment() {
       background = Background(BackgroundFill(Paint.valueOf("#ffffff"), CornerRadii.EMPTY, Insets.EMPTY))
       prefHeightProperty().bind(chatMainWindowSize.heightProperty)
     }))
+  }
+
+  private fun validateSearchString(
+    context: ValidationContext,
+    searchString: String?
+  ): ValidationMessage? {
+    if (searchString == null) {
+      return context.error("Room name is null")
+    }
+
+    if (searchString.isEmpty()) {
+      return null
+    }
+
+    if (searchString.isBlank()) {
+      return context.error("Room name is blank")
+    }
+
+    if (searchString.length < Constants.minChatRoomSearchLen) {
+      return context.error("Room name should have at least ${Constants.minChatRoomSearchLen} symbols")
+    }
+
+    if (searchString.length > Constants.maxChatRoomNameLen) {
+      return context.error("Room name exceeds ${Constants.maxChatRoomNameLen} symbols")
+    }
+
+    return null
   }
 
   private fun performSearch(chatRoomName: String) {

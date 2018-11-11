@@ -77,7 +77,7 @@ class NewChatMessageResponsePayload private constructor(
 
             val serverMessageId = byteSink.readInt()
             val clientMessageId = byteSink.readInt()
-            val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            val roomName = byteSink.readString(Constants.maxChatRoomNameLen)
               ?: throw ResponseDeserializationException("Could not read chatRoomName")
             val userName = byteSink.readString(Constants.maxUserNameLen)
               ?: throw ResponseDeserializationException("Could not read chatRoomName")

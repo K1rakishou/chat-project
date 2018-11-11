@@ -83,7 +83,7 @@ class JoinChatRoomResponsePayload private constructor(
               return fail(status)
             }
 
-            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            val chatRoomName = byteSink.readString(Constants.maxChatRoomNameLen)
               ?: throw ResponseDeserializationException("Could not read chatRoomName")
             val roomImageUrl = byteSink.readString(Constants.maxChatRoomImageUrlLen)
               ?: throw ResponseDeserializationException("Could not read chatRoomName")

@@ -72,7 +72,7 @@ class UserHasLeftResponsePayload private constructor(
               return fail(status)
             }
 
-            val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
+            val roomName = byteSink.readString(Constants.maxChatRoomNameLen)
               ?: throw ResponseDeserializationException("Could not read roomName")
             val userName = byteSink.readString(Constants.maxUserNameLen)
               ?: throw ResponseDeserializationException("Could not read userName")

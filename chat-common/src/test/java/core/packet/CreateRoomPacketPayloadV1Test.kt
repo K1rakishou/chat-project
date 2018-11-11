@@ -49,7 +49,7 @@ class CreateRoomPacketPayloadV1Test : BasePacketPayloadTest() {
   @Test(expected = PacketDeserializationException::class)
   fun testPacketExceedMaxRoomNameLen() {
     val isPublic = true
-    val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10)
+    val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLen + 10)
     val roomPassword = "fgfdhd"
     val chatRoomImageUrl = "imgur.com/123.jpg"
     val userName = "test123"

@@ -43,8 +43,8 @@ class ChatRoomListFragmentController : BaseController<ChatRoomListFragment>() {
       return
     }
 
-    if (chatRoomNameToSearch.length > Constants.maxChatRoomNameLength) {
-      println("chatRoomNameToSearch length (${chatRoomNameToSearch.length}) exceeds Constants.maxChatRoomNameLength (${Constants.maxChatRoomNameLength})")
+    if (chatRoomNameToSearch.length > Constants.maxChatRoomNameLen) {
+      println("chatRoomNameToSearch length (${chatRoomNameToSearch.length}) exceeds Constants.maxChatRoomNameLen (${Constants.maxChatRoomNameLen})")
       return
     }
 

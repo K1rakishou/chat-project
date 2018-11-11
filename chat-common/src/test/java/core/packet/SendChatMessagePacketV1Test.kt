@@ -40,7 +40,7 @@ class SendChatMessagePacketV1Test : BasePacketPayloadTest() {
   @Test(expected = PacketDeserializationException::class)
   fun testPacketExceedRoomNameSize() {
     val clientMessageId = 1
-    val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLength + 10)
+    val roomName = SecurityUtils.Generator.generateRandomString(Constants.maxChatRoomNameLen + 10)
     val userName = "test user"
     val message = "test message"
 

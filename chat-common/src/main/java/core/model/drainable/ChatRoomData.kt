@@ -25,7 +25,7 @@ class ChatRoomData(
 
   companion object : CanBeRestoredFromSink {
     override fun <T> createFromByteSink(byteSink: ByteSink): T? {
-      val roomName = byteSink.readString(Constants.maxChatRoomNameLength)
+      val roomName = byteSink.readString(Constants.maxChatRoomNameLen)
       if (roomName == null) {
         return null
       }
