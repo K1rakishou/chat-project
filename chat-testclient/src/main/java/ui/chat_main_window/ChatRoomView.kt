@@ -16,6 +16,7 @@ import javafx.scene.control.ScrollPane
 import javafx.scene.control.TextField
 import javafx.scene.layout.*
 import javafx.scene.paint.Paint
+import javafx.stage.StageStyle
 import kotlinx.coroutines.delay
 import model.chat_message.BaseChatMessageItem
 import model.chat_message.MessageType
@@ -28,6 +29,7 @@ import store.ChatRoomsStore
 import store.SelectedRoomStore
 import tornadofx.*
 import ui.base.BaseView
+import ui.chat_main_window.full_image_view_window.FullImageViewWindow
 import ui.widgets.VirtualMultiSelectListView
 
 
@@ -265,18 +267,23 @@ class ChatRoomView : BaseView() {
 
       for (link in links) {
         vbox {
+          cursor = Cursor.HAND
+
+          setOnMouseClicked {
+            showFullImage(link.url)
+          }
+
           imageview {
             fitWidth = 128.0
             fitHeight = 128.0
             isPreserveRatio = true
             isSmooth = true
-            cursor = Cursor.HAND
 
             paddingLeft = 4.0
             paddingRight = 4.0
 
             imageLoader.newRequest()
-              .load(link.value)
+              .load(link.url)
               .transformations(
                 TransformationBuilder()
                   .centerCrop(this)
@@ -287,6 +294,31 @@ class ChatRoomView : BaseView() {
         }
       }
     }
+  }
+
+  private fun showFullImage(url: String) {
+    if (currentStage == null) {
+      println("Current stage is null")
+      return
+    }
+
+    val x  = currentStage!!.x
+    val y = currentStage!!.y
+    val width  = currentStage!!.width
+    val height  = currentStage!!.height
+
+    val parameters = mutableMapOf(
+      "url" to url,
+      "x" to x,
+      "y" to y,
+      "width" to width,
+      "height" to height
+    )
+
+    find<FullImageViewWindow>(params = parameters).openModal(
+      resizable = false,
+      stageStyle = StageStyle.UNDECORATED
+    )
   }
 
   //TODO: extract to it's own class?
