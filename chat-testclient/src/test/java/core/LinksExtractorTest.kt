@@ -11,9 +11,9 @@ class LinksExtractorTest {
       """
         I have a block of text, that can have zero, or many urls. I'm trying to get a list of images. There are no img tags, just a links.
         In:
-        var text = "foo bar https://i.imgur.com/WTPqq.jpg , bar foo http://i.imgur.com/uqaWNCR.jpg";
+        var text = "foo bar https://i.imgur.com/WTPqq.jpeg , bar foo http://i.imgur.com/uqaWNCR.jpg";
         Out:
-        var urls = ["http://i.imgur.com/WTPqq.gif", "http://i.imgur.com/uqaWNCR.jpg" ];
+        var urls = ["http://i.imgur.com/WTPqq.gif", "http://i.imgur.com/uqaWNCR.png" ];
       """
 
     val links = LinksExtractor.extract(message)
