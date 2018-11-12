@@ -118,8 +118,8 @@ class ConnectionManager(
       roomsWithUserNames.forEach { (roomName, userName) ->
         val room = chatRoomManager.getChatRoom(roomName)
         if (room != null) {
-          for (userInRoom in room.getEveryone()) {
-            sendResponseInternal(connections, userInRoom.user.clientId, UserHasLeftResponsePayload.success(roomName, userName))
+          for (user in room.getEveryone()) {
+            sendResponseInternal(connections, user.clientId, UserHasLeftResponsePayload.success(roomName, userName))
           }
         }
       }

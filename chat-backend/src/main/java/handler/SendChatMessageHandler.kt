@@ -74,8 +74,8 @@ class SendChatMessageHandler(
     val serverMessageId = chatRoom.addMessage(clientId, ChatMessageType.Text, clientMessageId, userName, message)
     val response = NewChatMessageResponsePayload.success(serverMessageId, clientMessageId, roomName, userName, message)
 
-    for (userInRoom in chatRoom.getEveryoneExcept(userName)) {
-      connectionManager.sendResponse(userInRoom.user.clientId, response)
+    for (user in chatRoom.getEveryoneExcept(userName)) {
+      connectionManager.sendResponse(user.clientId, response)
     }
 
     connectionManager.sendResponse(clientId, SendChatMessageResponsePayload.success(roomName, serverMessageId, clientMessageId))

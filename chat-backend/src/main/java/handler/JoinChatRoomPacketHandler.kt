@@ -65,9 +65,9 @@ class JoinChatRoomPacketHandler(
       }
 
       //just collect users's info and send it back
-      val usersInRoom = chatRoom.getEveryoneExcept(userName)
-      val publicUserInChatList = usersInRoom
-        .map { userInRoom -> PublicUserInChat(userInRoom.user.userName) }
+      val users = chatRoom.getEveryoneExcept(userName)
+      val publicUserInChatList = users
+        .map { user -> PublicUserInChat(user.userName) }
 
       val messageHistory = chatRoom.getMessageHistory(clientId)
       val response = JoinChatRoomResponsePayload.success(chatRoom.chatRoomName, chatRoom.chatRoomImageUrl, userName, messageHistory, publicUserInChatList)
@@ -111,13 +111,13 @@ class JoinChatRoomPacketHandler(
     println("There are ${roomParticipants.size} users in room")
 
     //get all info from all users in the chat room
-    for (userInRoom in roomParticipants) {
-      val publicUserInChat = PublicUserInChat(userInRoom.user.userName)
+    for (user in roomParticipants) {
+      val publicUserInChat = PublicUserInChat(user.userName)
 
       //send to every user in the chat room that a new user has joined
       val newPublicUser = PublicUserInChat(newUser.userName)
       val response = UserHasJoinedResponsePayload.success(chatRoom.chatRoomName, newPublicUser)
-      connectionManager.sendResponse(userInRoom.user.clientId, response)
+      connectionManager.sendResponse(user.clientId, response)
 
       publicUserInChatList += publicUserInChat
     }

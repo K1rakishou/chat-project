@@ -1,40 +1,37 @@
 package repository
 
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
-import kotlinx.coroutines.newFixedThreadPoolContext
-import kotlinx.coroutines.withContext
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.transaction
-import kotlin.coroutines.CoroutineContext
+import core.ChatRoom
 
 open class BaseRepository {
-  private val dispatcher: CoroutineContext
-
-  init {
-    dispatcher = newFixedThreadPoolContext(Runtime.getRuntime().availableProcessors() * 2, "database-pool")
-  }
-
-  fun init() {
-    Database.connect(hikari())
-  }
-
-  private fun hikari(): HikariDataSource {
-    val config = HikariConfig()
-    config.driverClassName = "org.postgresql.Driver"
-    config.jdbcUrl = "jdbc:postgresql://192.168.99.100:5432/postgres"
-    config.username = "postgres"
-    config.password = "4e7d2dfx"
-    config.maximumPoolSize = 5
-    config.isAutoCommit = false
-    config.transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-    config.validate()
-    return HikariDataSource(config)
-  }
-
-  protected suspend fun <T> query(block: () -> T): T {
-    return withContext(dispatcher) {
-      transaction { block() }
-    }
-  }
+//  val hzInstance: HazelcastInstance
+//
+//  init {
+//    val config = Config()
+//    config.mapConfigs.put(chatRoomsMap, chatRoomsMapConfig())
+//
+//    hzInstance = Hazelcast.newHazelcastInstance(config)
+//  }
+//
+//  private fun chatRoomsMapConfig(): MapConfig {
+//    return MapConfig()
+//      .setName(chatRoomsMap)
+//      .setBackupCount(1)
+//      .setAsyncBackupCount(2)
+//  }
+//
+//  private fun chatRoomUsersListConfig(): ListConfig {
+//    return ListConfig()
+//      .setName(usersInChatRoomList)
+//      .setBackupCount(1)
+//      .setAsyncBackupCount(2)
+//  }
+//
+//  fun getChatRoomsMap(): IMap<String, ChatRoom> {
+//    return hzInstance.getMap<String, ChatRoom>(chatRoomsMap)
+//  }
+//
+//  companion object {
+//    const val chatRoomsMap = "chat_rooms_map"
+//    const val usersInChatRoomList = "users_in_chat_room"
+//  }
 }

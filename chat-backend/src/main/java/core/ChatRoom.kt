@@ -13,18 +13,18 @@ data class ChatRoom(
   val roomPasswordHash: String?,
   val isPublic: Boolean,
   val createdOn: Long,
-  val userList: MutableSet<UserInRoom> = mutableSetOf(),
+  val userList: MutableSet<User> = mutableSetOf(),
   val messageHistory: RingBuffer<BaseChatMessageData> = RingBuffer(Constants.maxRoomHistoryMessagesCount)
 ) {
 
   private val messageIdCounter = AtomicInteger(0)
 
-  fun addUser(userInRoom: UserInRoom): Boolean {
+  fun addUser(userInRoom: User): Boolean {
     return userList.add(userInRoom)
   }
 
   fun removeUser(userName: String) {
-    userList.removeIf { it.user.userName == userName }
+    userList.removeIf { it.userName == userName }
   }
 
   fun addMessage(
@@ -50,22 +50,22 @@ data class ChatRoom(
 
   fun containsUser(userName: String): Boolean {
     return userList
-      .firstOrNull { it.user.userName == userName }
+      .firstOrNull { it.userName == userName }
       ?.let { true } ?: false
   }
 
-  fun getUser(userName: String): UserInRoom? {
-    return userList.firstOrNull { it.user.userName == userName }
+  fun getUser(userName: String): User? {
+    return userList.firstOrNull { it.userName == userName }
   }
 
-  fun getEveryone(): List<UserInRoom> {
+  fun getEveryone(): List<User> {
     return userList.toMutableList()
   }
 
-  fun getEveryoneExcept(userName: String): List<UserInRoom> {
-    return mutableListOf<UserInRoom>()
+  fun getEveryoneExcept(userName: String): List<User> {
+    return mutableListOf<User>()
       .apply {
-        addAll(userList.filter { it.user.userName != userName })
+        addAll(userList.filter { it.userName != userName })
       }
   }
 

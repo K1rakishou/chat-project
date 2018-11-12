@@ -30,11 +30,11 @@ class ChatRoomManagerTest {
 
         assertNotNull(chatRoomManager.joinRoom(clientId1, chatRoomName, user1))
 
-        val userInRoom = chatRoomManager.__getChatRooms()[chatRoomName]!!.getUser(userName1)
+        val user = chatRoomManager.__getChatRooms()[chatRoomName]!!.getUser(userName1)
         assertNotNull(user1)
 
-        assertEquals(userName1, userInRoom!!.user.userName)
-        assertEquals(clientId1, userInRoom.user.clientId)
+        assertEquals(userName1, user!!.userName)
+        assertEquals(clientId1, user.clientId)
 
         val roomsJoinedByUser = chatRoomManager.__getUserJoinedRooms()[clientId1]
         assertNotNull(roomsJoinedByUser)
@@ -47,11 +47,11 @@ class ChatRoomManagerTest {
       kotlin.run {
         assertNotNull(chatRoomManager.joinRoom(clientId2, chatRoomName, user2))
 
-        val userInRoom = chatRoomManager.__getChatRooms()[chatRoomName]!!.getUser(userName2)
+        val user = chatRoomManager.__getChatRooms()[chatRoomName]!!.getUser(userName2)
         assertNotNull(user2)
 
-        assertEquals(userName2, userInRoom!!.user.userName)
-        assertEquals(clientId2, userInRoom.user.clientId)
+        assertEquals(userName2, user!!.userName)
+        assertEquals(clientId2, user.clientId)
 
         val roomsJoinedByUser = chatRoomManager.__getUserJoinedRooms()[clientId2]
         assertNotNull(roomsJoinedByUser)

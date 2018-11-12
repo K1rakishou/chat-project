@@ -3,7 +3,6 @@ package manager
 import core.ChatRoom
 import core.Constants
 import core.User
-import core.UserInRoom
 import core.model.drainable.ChatRoomData
 import core.utils.TimeUtils
 import kotlinx.coroutines.*
@@ -193,8 +192,8 @@ class ChatRoomManager : CoroutineScope {
     clientId: String,
     roomName: String,
     userName: String
-  ): UserInRoom? {
-    val result = CompletableDeferred<UserInRoom?>()
+  ): User? {
+    val result = CompletableDeferred<User?>()
     chatRoomManagerActor.send(ActorAction.GetUser(result, clientId, roomName, userName))
     return result.await()
   }
@@ -255,7 +254,7 @@ class ChatRoomManager : CoroutineScope {
       return null
     }
 
-    if (!chatRoom.addUser(UserInRoom(user))) {
+    if (!chatRoom.addUser(user)) {
       return null
     }
 
@@ -422,7 +421,7 @@ class ChatRoomManager : CoroutineScope {
     clientId: String,
     roomName: String,
     userName: String
-  ): UserInRoom? {
+  ): User? {
     val joinedRoom = userJoinedRooms[clientId]
       ?.any { it.roomName == roomName && it.userName == userName }
       ?: false
@@ -478,7 +477,7 @@ class ChatRoomManager : CoroutineScope {
     class GetRoom(val result: CompletableDeferred<ChatRoom?>,
                   val roomName: String) : ActorAction()
 
-    class GetUser(val result: CompletableDeferred<UserInRoom?>,
+    class GetUser(val result: CompletableDeferred<User?>,
                   val clientId: String,
                   val roomName: String,
                   val userName: String) : ActorAction()
