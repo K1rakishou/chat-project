@@ -23,9 +23,10 @@ class VirtualListView<T>(
 ) {
   private val noSelection = -1
   private var selectedItemIndex = noSelection
+  private val selectedColor = Background(BackgroundFill(Styles.accntColorDark, CornerRadii.EMPTY, Insets.EMPTY))
 
   private val virtualFlow = VirtualFlow.createVertical(items) { item ->
-    Cell.wrapNode(SelectableNode.wrapNode(cellFactory(item)))
+    Cell.wrapNode(SelectableNode.wrapNode(selectedColor, cellFactory(item)))
   }
 
   init {
@@ -131,9 +132,9 @@ class VirtualListView<T>(
   }
 
   class SelectableNode private constructor(
+    private val selectedColor: Background,
     private val node: Node
   ) : Region() {
-    private val selectedColor = Background(BackgroundFill(Paint.valueOf("#cde4ff"), CornerRadii.EMPTY, Insets.EMPTY))
     private var isSelected = false
 
     init {
@@ -151,8 +152,8 @@ class VirtualListView<T>(
     }
 
     companion object {
-      fun wrapNode(node: Node): SelectableNode {
-        return SelectableNode(node)
+      fun wrapNode(selectedColor: Background, node: Node): SelectableNode {
+        return SelectableNode(selectedColor, node)
       }
     }
   }

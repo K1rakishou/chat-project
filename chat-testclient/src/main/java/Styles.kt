@@ -3,25 +3,20 @@ import javafx.scene.text.FontWeight
 import tornadofx.*
 
 class Styles : Stylesheet() {
-  private val bgColorDark = c(45, 46, 49)
-  private val bgColorBright = c(75, 76, 79)
-  private val txtColor = c(196, 198, 197)
-  private val accntColorDark = c(0, 128, 128)
-  private val accntColorBright = c(0, 168, 168)
-
   init {
     initConnectionWindowStyle()
     initLoadingWindowStyle()
     initChatMainWindowStyle()
+    initChatRoomListFragmentStyle()
+    initPositiveButtonStyle()
+    initTextInputStyle()
 
-    positiveButton {
-      backgroundColor += accntColorDark
-      borderColor += box(txtColor)
-      textFill = txtColor
+    splitpane {
+      backgroundColor += bgColorDark
 
-      and(hover) {
-        backgroundColor += accntColorBright
-        borderColor += box(Color.WHITE)
+      splitPaneDivider {
+        backgroundColor += accntColorDark
+        prefWidth = 1.px
       }
     }
 
@@ -33,6 +28,7 @@ class Styles : Stylesheet() {
     }
     chatRoomViewEmptyLabel {
       fontSize = 24.px
+      textFill = txtColor
     }
 
     systemMessage {
@@ -69,9 +65,46 @@ class Styles : Stylesheet() {
     }
   }
 
+  private fun initTextInputStyle() {
+    textInput {
+      backgroundColor += bgColorDark
+      borderColor += box(accntColorDark)
+      textFill = txtColor
+      accentColor = accntColorDark
+
+      and(focused) {
+        backgroundColor += bgColorBright
+      }
+
+      and(hover) {
+        borderColor += box(accntColorBright)
+      }
+    }
+  }
+
+  private fun initPositiveButtonStyle() {
+    positiveButton {
+      backgroundColor += accntColorDark
+      borderColor += box(txtColor)
+      textFill = txtColor
+
+      and(hover) {
+        backgroundColor += accntColorBright
+        borderColor += box(Color.WHITE)
+      }
+    }
+  }
+
+  private fun initChatRoomListFragmentStyle() {
+    chatRoomListFragment {
+      backgroundColor += bgColorDark
+    }
+  }
+
   private fun initChatMainWindowStyle() {
     chatMainWindow {
       backgroundColor += bgColorDark
+      borderColor += box(bgColorDark)
 
       menuBar {
         backgroundColor += bgColorDark
@@ -116,27 +149,20 @@ class Styles : Stylesheet() {
           label {
             textFill = txtColor
           }
-
-          textField {
-            backgroundColor += bgColorDark
-            borderColor += box(accntColorDark)
-            textFill = txtColor
-            accentColor = accntColorDark
-
-            and(focused) {
-              backgroundColor += bgColorBright
-            }
-
-            and(hover) {
-              borderColor += box(accntColorBright)
-            }
-          }
         }
       }
     }
   }
 
   companion object {
+    val bgColorDark = c(45, 46, 49)
+    val bgColorBright = c(75, 76, 79)
+    val txtColor = c(196, 198, 197)
+    val accntColorDark = c(0, 128, 128)
+    val accntColorBright = c(0, 168, 168)
+    val complementaryDark = c(128, 0, 0)
+    val complementaryBright = c(168, 0, 0)
+
     //connection window
     val connectionWindow by cssclass()
 
@@ -145,6 +171,11 @@ class Styles : Stylesheet() {
 
     //chat main window
     val chatMainWindow by cssclass()
+
+    //chat room list fragment
+    val chatRoomListFragment by cssclass()
+
+    val splitpane by cssclass()
 
     val chatRoomTextArea by cssclass()
     val chatRoomTextField by cssclass()
@@ -160,5 +191,6 @@ class Styles : Stylesheet() {
     val foreignTextChatMessage by cssclass()
 
     val positiveButton by cssclass()
+    val textInput by cssclass()
   }
 }

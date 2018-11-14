@@ -98,7 +98,11 @@ class ChatRoomListFragment : BaseFragment() {
   })
 
   override val root = vbox {
+    addClass(Styles.chatRoomListFragment)
+
     searchTextInput = textfield {
+      addClass(Styles.textInput)
+
       val context = ValidationContext()
       context.addValidator(this@textfield, this.textProperty()) { searchString ->
         UiValidators.validateSearchString(this, searchString)
@@ -118,7 +122,7 @@ class ChatRoomListFragment : BaseFragment() {
     }
 
     add(VirtualizedScrollPane(virtualListView.getVirtualFlow().apply {
-      background = Background(BackgroundFill(Paint.valueOf("#ffffff"), CornerRadii.EMPTY, Insets.EMPTY))
+      background = Background(BackgroundFill(Styles.bgColorDark, CornerRadii.EMPTY, Insets.EMPTY))
       prefHeightProperty().bind(chatMainWindowSize.heightProperty)
     }))
   }
@@ -210,6 +214,7 @@ class ChatRoomListFragment : BaseFragment() {
       maxWidthProperty().bind(widthProperty - rightMargin)
 
       label(message) {
+        textFill = Styles.txtColor
         alignment = Pos.CENTER_LEFT
         minWidth = 8.0
       }

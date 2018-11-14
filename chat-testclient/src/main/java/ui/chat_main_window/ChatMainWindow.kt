@@ -19,6 +19,8 @@ import ui.chat_main_window.create_chat_room_dialog.CreateChatRoomDialogFragment
 import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
 
 class ChatMainWindow : BaseView("Chat") {
+  private val leftPaneMinWidth = 230.0
+
   private val controller: ChatMainWindowController by inject()
   private val chatMainWindowSettings: ChatMainWindowSettings by lazy { ChatApp.settingsStore.chatMainWindowSettings }
   private val selectedRoomStore: SelectedRoomStore by lazy { ChatApp.selectedRoomStore }
@@ -84,6 +86,8 @@ class ChatMainWindow : BaseView("Chat") {
 
     center {
       splitpane {
+        addClass(Styles.splitpane)
+
         orientation = Orientation.HORIZONTAL
         setDividerPositions(0.0)
         vboxConstraints { vGrow = Priority.ALWAYS }
@@ -91,7 +95,7 @@ class ChatMainWindow : BaseView("Chat") {
         vbox {
           SplitPane.setResizableWithParent(this, false)
 
-          minWidth = 200.0
+          minWidth = leftPaneMinWidth
           border = Border.EMPTY
 
           chatRoomListViewSizeParams.widthProperty.bind(this@vbox.widthProperty())
