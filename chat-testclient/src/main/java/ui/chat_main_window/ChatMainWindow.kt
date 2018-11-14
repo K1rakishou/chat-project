@@ -65,6 +65,8 @@ class ChatMainWindow : BaseView("Chat") {
   }
 
   override val root = borderpane {
+    addClass(Styles.chatMainWindow)
+
     prefWidth = chatMainWindowSettings.windowWidth
     prefHeight = chatMainWindowSettings.windowHeight
 

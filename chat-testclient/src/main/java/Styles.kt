@@ -10,9 +10,9 @@ class Styles : Stylesheet() {
   private val accntColorBright = c(0, 168, 168)
 
   init {
-    //connection window
     initConnectionWindowStyle()
     initLoadingWindowStyle()
+    initChatMainWindowStyle()
 
     positiveButton {
       backgroundColor += accntColorDark
@@ -69,6 +69,34 @@ class Styles : Stylesheet() {
     }
   }
 
+  private fun initChatMainWindowStyle() {
+    chatMainWindow {
+      backgroundColor += bgColorDark
+
+      menuBar {
+        backgroundColor += bgColorDark
+
+        menu {
+          label {
+            textFill = txtColor
+          }
+
+          and(hover) {
+            backgroundColor += bgColorBright
+          }
+
+          menuItem {
+            backgroundColor += bgColorDark
+
+            and(hover) {
+              backgroundColor += bgColorBright
+            }
+          }
+        }
+      }
+    }
+  }
+
   private fun initLoadingWindowStyle() {
     loadingWindow {
       backgroundColor += bgColorDark
@@ -115,7 +143,8 @@ class Styles : Stylesheet() {
     //loading window
     val loadingWindow by cssclass()
 
-    val positiveButton by cssclass()
+    //chat main window
+    val chatMainWindow by cssclass()
 
     val chatRoomTextArea by cssclass()
     val chatRoomTextField by cssclass()
@@ -129,5 +158,7 @@ class Styles : Stylesheet() {
     val myTextChatMessageAcceptedByServer by cssclass()
     val systemTextChatMessage by cssclass()
     val foreignTextChatMessage by cssclass()
+
+    val positiveButton by cssclass()
   }
 }
