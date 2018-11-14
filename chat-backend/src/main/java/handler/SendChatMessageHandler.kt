@@ -38,6 +38,7 @@ class SendChatMessageHandler(
     val userName = packet.userName
     val message = packet.message
 
+    //TODO: validate
     if (roomName.isEmpty() || userName.isEmpty() || message.isEmpty()) {
       if (roomName.isEmpty()) {
         println("roomName is empty")

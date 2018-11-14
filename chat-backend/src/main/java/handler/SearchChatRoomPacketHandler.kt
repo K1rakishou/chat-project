@@ -34,6 +34,7 @@ class SearchChatRoomPacketHandler(
   private suspend fun handleInternalV1(packet: SearchChatRoomPacket, clientId: String) {
     val chatRoomName = packet.chatRoomName
 
+    //TODO: validate
     if (chatRoomName.isBlank()) {
       println("chatRoomName is blank")
       connectionManager.sendResponse(clientId, SearchChatRoomResponsePayload.fail(Status.BadParam))
