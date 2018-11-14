@@ -1,7 +1,9 @@
 package ui.chat_main_window.full_image_view_window
 
 import ChatApp
+import builders.TransformationBuilder
 import core.CachingImageLoader
+import core.SaveStrategy
 import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Cursor
@@ -67,6 +69,8 @@ class FullImageViewWindow : BaseFragment() {
     doOnBg {
       val image = imageLoader.newRequest()
         .load(url)
+        .transformations(TransformationBuilder().noTransformations())
+        .saveStrategy(SaveStrategy.SaveOriginalImage)
         .getAsync()
         .await()
 
