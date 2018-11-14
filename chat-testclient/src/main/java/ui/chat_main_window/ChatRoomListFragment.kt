@@ -238,13 +238,15 @@ class ChatRoomListFragment : BaseFragment() {
       label { minWidth = 8.0 }
       vbox {
         label(item.roomName) {
+          textFill = Styles.txtColor
           textOverrun = OverrunStyle.ELLIPSIS
         }
         label {
+          textFill = Styles.txtColor
+          textOverrun = OverrunStyle.ELLIPSIS
+
           //TODO: remove null assert
           textProperty().bind(chatRoomsStore.getChatRoomByName(item.roomName)!!.lastMessageProperty)
-
-          textOverrun = OverrunStyle.ELLIPSIS
         }
       }
     }
@@ -267,6 +269,7 @@ class ChatRoomListFragment : BaseFragment() {
       label { minWidth = 8.0 }
       vbox {
         label(item.roomName) {
+          textFill = Styles.txtColor
           textOverrun = OverrunStyle.ELLIPSIS
         }
       }
@@ -294,7 +297,7 @@ class ChatRoomListFragment : BaseFragment() {
             .circleCrop(
               CircleCropParametersBuilder()
                 .backgroundColor(Color(0f, 0f, 0f, 0f))
-                .stroke(6f, Color.DARK_GRAY)
+                .stroke(6f, Color.WHITE)
             )
         )
         .saveStrategy(SaveStrategy.SaveTransformedImage)

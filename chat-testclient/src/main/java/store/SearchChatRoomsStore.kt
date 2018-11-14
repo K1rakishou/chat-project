@@ -21,6 +21,7 @@ class SearchChatRoomsStore {
       .filterNot { publicChatRoom -> alreadyJoinedRoomsSet.contains(publicChatRoom.chatRoomName) }
       .map { publicChatRoom -> SearchChatRoomItem(publicChatRoom.chatRoomName, publicChatRoom.chatRoomImageUrl) }
 
+    //FIXME: sometime crashes with java.lang.IndexOutOfBoundsException: toIndex = 1
     searchChatRoomList.clear()
 
     if (convertedList.isEmpty()) {

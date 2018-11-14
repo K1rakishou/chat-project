@@ -16,15 +16,43 @@ class Styles : Stylesheet() {
 
       splitPaneDivider {
         backgroundColor += accntColorDark
-        prefWidth = 1.px
+        prefWidth = 4.px
       }
     }
 
-    chatRoomTextArea {
-      fontSize = 18.px
+    scrollView {
+      backgroundColor += bgColorDark
+
+      incrementArrow {
+        backgroundColor += accntColorBright
+      }
+
+      incrementArrowButton {
+        backgroundColor += accntColorBright
+      }
+
+      decrementArrow {
+        backgroundColor += accntColorBright
+      }
+
+      decrementArrowButton {
+        backgroundColor += accntColorBright
+      }
+
+      track {
+        prefWidth = 2.px
+        backgroundColor += accntColorDark
+      }
+
+      thumb {
+        prefWidth = 8.px
+        backgroundColor += accntColorBright
+      }
     }
+
     chatRoomTextField {
       fontSize = 18.px
+      textFill = txtColor
     }
     chatRoomViewEmptyLabel {
       fontSize = 24.px
@@ -32,19 +60,19 @@ class Styles : Stylesheet() {
     }
 
     systemMessage {
-      fontSize = 20.px
+      fontSize = 18.px
       fontWeight = FontWeight.BOLD
-      textFill = c(47, 47, 175)
+      textFill = c(0, 187, 205)
     }
     senderName {
-      fontSize = 20.px
+      fontSize = 18.px
       fontWeight = FontWeight.BOLD
-      textFill = c(175, 47, 47)
+      textFill = c(102, 205, 0)
     }
     receiverName {
-      fontSize = 20.px
+      fontSize = 18.px
       fontWeight = FontWeight.BOLD
-      textFill = c(47, 175, 47)
+      textFill = c(244, 0, 122)
     }
 
     myTextChatMessage {
@@ -53,15 +81,15 @@ class Styles : Stylesheet() {
     }
     myTextChatMessageAcceptedByServer {
       fontSize = 16.px
-      textFill = c(0, 0, 0)
+      textFill = txtColor
     }
     systemTextChatMessage {
       fontSize = 16.px
-      textFill = c(0, 0, 0)
+      textFill = txtColor
     }
     foreignTextChatMessage {
       fontSize = 16.px
-      textFill = c(0, 0, 0)
+      textFill = txtColor
     }
   }
 
@@ -158,10 +186,12 @@ class Styles : Stylesheet() {
     val bgColorDark = c(45, 46, 49)
     val bgColorBright = c(75, 76, 79)
     val txtColor = c(196, 198, 197)
-    val accntColorDark = c(0, 128, 128)
-    val accntColorBright = c(0, 168, 168)
+    val accntColorDark = c(0, 108, 108)
+    val accntColorBright = c(0, 148, 148)
     val complementaryDark = c(128, 0, 0)
     val complementaryBright = c(168, 0, 0)
+    val analogousDark = c(0, 32, 128)
+    val analogousBright = c(0, 64, 160)
 
     //connection window
     val connectionWindow by cssclass()
@@ -176,8 +206,8 @@ class Styles : Stylesheet() {
     val chatRoomListFragment by cssclass()
 
     val splitpane by cssclass()
+    val scrollView by cssclass()
 
-    val chatRoomTextArea by cssclass()
     val chatRoomTextField by cssclass()
     val chatRoomViewEmptyLabel by cssclass()
 

@@ -19,10 +19,11 @@ class VirtualMultiSelectListView<T>(
   private val items: ObservableList<T>,
   private val cellFactory: (T) -> Node
 ) {
+  private val selectedColor = Background(BackgroundFill(Styles.accntColorDark, CornerRadii.EMPTY, Insets.EMPTY))
   private var selectedItemIndexes = TreeSet<Int>()
 
   private val virtualFlow = VirtualFlow.createVertical(items) { item ->
-    Cell.wrapNode(SelectableNode.wrapNode(cellFactory(item)))
+    Cell.wrapNode(SelectableNode.wrapNode(selectedColor, cellFactory(item)))
   }
 
   fun onMouseClick(event: MouseEvent) {
@@ -114,9 +115,9 @@ class VirtualMultiSelectListView<T>(
   }
 
   class SelectableNode private constructor(
+    private val selectedColor: Background,
     private val node: Node
   ) : Region() {
-    private val selectedColor = Background(BackgroundFill(Paint.valueOf("#cde4ff"), CornerRadii.EMPTY, Insets.EMPTY))
     private var isSelected = false
 
     init {
@@ -134,8 +135,8 @@ class VirtualMultiSelectListView<T>(
     }
 
     companion object {
-      fun wrapNode(node: Node): SelectableNode {
-        return SelectableNode(node)
+      fun wrapNode(selectedColor: Background, node: Node): SelectableNode {
+        return SelectableNode(selectedColor, node)
       }
     }
   }

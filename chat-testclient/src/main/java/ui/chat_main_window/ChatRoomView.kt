@@ -87,10 +87,11 @@ class ChatRoomView : BaseView() {
       virtualListView.onMouseClick(event)
     }
   }).apply {
+    addClass(Styles.scrollView)
+
     hbarPolicy = ScrollPane.ScrollBarPolicy.NEVER
     vbarPolicy = ScrollPane.ScrollBarPolicy.ALWAYS
-
-    background = Background(BackgroundFill(Paint.valueOf("#ffffff"), CornerRadii.EMPTY, Insets.EMPTY))
+    background = Background(BackgroundFill(Styles.bgColorDark, CornerRadii.EMPTY, Insets.EMPTY))
   }
 
   override val root = vbox {
