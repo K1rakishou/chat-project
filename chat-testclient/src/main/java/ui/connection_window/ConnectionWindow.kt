@@ -94,7 +94,7 @@ class ConnectionWindow : BaseView("Connection parameters") {
       alignment = Pos.BASELINE_RIGHT
 
       button("Connect") {
-        addClass(Styles.connectButton)
+        addClass(Styles.positiveButton)
 
         isDefaultButton = true
         enableWhen { model.valid }

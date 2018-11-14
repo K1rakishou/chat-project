@@ -11,41 +11,17 @@ class Styles : Stylesheet() {
 
   init {
     //connection window
-    connectionWindow {
-      backgroundColor += bgColorDark
+    initConnectionWindowStyle()
+    initLoadingWindowStyle()
 
-      fieldset {
-        field {
-          label {
-            textFill = txtColor
-          }
+    positiveButton {
+      backgroundColor += accntColorDark
+      borderColor += box(txtColor)
+      textFill = txtColor
 
-          textField {
-            backgroundColor += bgColorDark
-            borderColor += box(accntColorDark)
-            textFill = txtColor
-            accentColor = accntColorDark
-
-            and(focused) {
-              backgroundColor += bgColorBright
-            }
-
-            and(hover) {
-              borderColor += box(accntColorBright)
-            }
-          }
-        }
-      }
-
-      connectButton {
-        backgroundColor += accntColorDark
-        borderColor += box(txtColor)
-        textFill = txtColor
-
-        and(hover) {
-          backgroundColor += accntColorBright
-          borderColor += box(Color.WHITE)
-        }
+      and(hover) {
+        backgroundColor += accntColorBright
+        borderColor += box(Color.WHITE)
       }
     }
 
@@ -93,10 +69,53 @@ class Styles : Stylesheet() {
     }
   }
 
+  private fun initLoadingWindowStyle() {
+    loadingWindow {
+      backgroundColor += bgColorDark
+
+      progressIndicator {
+        progressColor = accntColorDark
+      }
+    }
+  }
+
+  private fun initConnectionWindowStyle() {
+    connectionWindow {
+      backgroundColor += bgColorDark
+
+      fieldset {
+        field {
+          label {
+            textFill = txtColor
+          }
+
+          textField {
+            backgroundColor += bgColorDark
+            borderColor += box(accntColorDark)
+            textFill = txtColor
+            accentColor = accntColorDark
+
+            and(focused) {
+              backgroundColor += bgColorBright
+            }
+
+            and(hover) {
+              borderColor += box(accntColorBright)
+            }
+          }
+        }
+      }
+    }
+  }
+
   companion object {
     //connection window
     val connectionWindow by cssclass()
-    val connectButton by cssclass()
+
+    //loading window
+    val loadingWindow by cssclass()
+
+    val positiveButton by cssclass()
 
     val chatRoomTextArea by cssclass()
     val chatRoomTextField by cssclass()

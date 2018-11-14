@@ -34,6 +34,8 @@ class LoadingWindow : BaseView("Chat") {
   }
 
   override val root = vbox(alignment = Pos.CENTER) {
+    addClass(Styles.loadingWindow)
+
     prefHeight = 200.0
     prefWidth = 300.0
 
@@ -47,6 +49,8 @@ class LoadingWindow : BaseView("Chat") {
     paddingBottom = 32.0
 
     button("Cancel") {
+      addClass(Styles.positiveButton)
+
       action {
         loadingWindowController.stopConnectionToServer()
       }
