@@ -1,11 +1,54 @@
+import javafx.scene.paint.Color
 import javafx.scene.text.FontWeight
-import tornadofx.Stylesheet
-import tornadofx.c
-import tornadofx.cssclass
-import tornadofx.px
+import tornadofx.*
 
 class Styles : Stylesheet() {
+  private val bgColorDark = c(45, 46, 49)
+  private val bgColorBright = c(75, 76, 79)
+  private val txtColor = c(196, 198, 197)
+  private val accntColorDark = c(0, 128, 128)
+  private val accntColorBright = c(0, 168, 168)
+
   init {
+    //connection window
+    connectionWindow {
+      backgroundColor += bgColorDark
+
+      fieldset {
+        field {
+          label {
+            textFill = txtColor
+          }
+
+          textField {
+            backgroundColor += bgColorDark
+            borderColor += box(accntColorDark)
+            textFill = txtColor
+            accentColor = accntColorDark
+
+            and(focused) {
+              backgroundColor += bgColorBright
+            }
+
+            and(hover) {
+              borderColor += box(accntColorBright)
+            }
+          }
+        }
+      }
+
+      connectButton {
+        backgroundColor += accntColorDark
+        borderColor += box(txtColor)
+        textFill = txtColor
+
+        and(hover) {
+          backgroundColor += accntColorBright
+          borderColor += box(Color.WHITE)
+        }
+      }
+    }
+
     chatRoomTextArea {
       fontSize = 18.px
     }
@@ -51,6 +94,10 @@ class Styles : Stylesheet() {
   }
 
   companion object {
+    //connection window
+    val connectionWindow by cssclass()
+    val connectButton by cssclass()
+
     val chatRoomTextArea by cssclass()
     val chatRoomTextField by cssclass()
     val chatRoomViewEmptyLabel by cssclass()

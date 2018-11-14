@@ -48,6 +48,8 @@ class ConnectionWindow : BaseView("Connection parameters") {
   }
 
   override val root = form {
+    addClass(Styles.connectionWindow)
+
     prefHeight = 150.0
     prefWidth = 350.0
     paddingAll = 10.0
@@ -92,6 +94,8 @@ class ConnectionWindow : BaseView("Connection parameters") {
       alignment = Pos.BASELINE_RIGHT
 
       button("Connect") {
+        addClass(Styles.connectButton)
+
         isDefaultButton = true
         enableWhen { model.valid }
 
