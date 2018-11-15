@@ -60,7 +60,7 @@
         <dependency>
             <groupId>com.github.K1rakishou</groupId>
             <artifactId>Caching-Image-Loader</artifactId>
-            <version>0.2</version>
+            <version>0.21</version>
         </dependency>
         <dependency>
             <groupId>com.kirakishou</groupId>
