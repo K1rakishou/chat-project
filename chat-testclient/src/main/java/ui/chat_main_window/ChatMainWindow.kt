@@ -19,7 +19,7 @@ import ui.chat_main_window.create_chat_room_dialog.CreateChatRoomDialogFragment
 import ui.chat_main_window.join_chat_room_dialog.JoinChatRoomDialogFragment
 
 class ChatMainWindow : BaseView("Chat") {
-  private val leftPaneMinWidth = 230.0
+  private val leftPaneMinWidth = 280.0
 
   private val controller: ChatMainWindowController by inject()
   private val chatMainWindowSettings: ChatMainWindowSettings by lazy { ChatApp.settingsStore.chatMainWindowSettings }

@@ -19,7 +19,7 @@ class VirtualMultiSelectListView<T>(
   private val items: ObservableList<T>,
   private val cellFactory: (T) -> Node
 ) {
-  private val selectedColor = Background(BackgroundFill(Styles.accntColorDark, CornerRadii.EMPTY, Insets.EMPTY))
+  private val selectedColor = Background(BackgroundFill(Styles.bgColorBright, CornerRadii.EMPTY, Insets.EMPTY))
   private var selectedItemIndexes = TreeSet<Int>()
 
   private val virtualFlow = VirtualFlow.createVertical(items) { item ->

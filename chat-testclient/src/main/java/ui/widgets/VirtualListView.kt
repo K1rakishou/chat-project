@@ -23,7 +23,7 @@ class VirtualListView<T>(
 ) {
   private val noSelection = -1
   private var selectedItemIndex = noSelection
-  private val selectedColor = Background(BackgroundFill(Styles.accntColorDark, CornerRadii.EMPTY, Insets.EMPTY))
+  private val selectedColor = Background(BackgroundFill(Styles.bgColorBright, CornerRadii.EMPTY, Insets.EMPTY))
 
   private val virtualFlow = VirtualFlow.createVertical(items) { item ->
     Cell.wrapNode(SelectableNode.wrapNode(selectedColor, cellFactory(item)))

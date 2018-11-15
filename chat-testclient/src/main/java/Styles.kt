@@ -16,7 +16,7 @@ class Styles : Stylesheet() {
 
       splitPaneDivider {
         backgroundColor += accntColorDark
-        prefWidth = 4.px
+        prefWidth = 2.px
       }
     }
 
