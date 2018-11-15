@@ -103,8 +103,10 @@ class VirtualMultiSelectListView<T>(
       return
     }
 
+    val range = 0 until items.size
+
     selectedItemIndexes
-      .filter { it in 0 until items.size }
+      .filter { it in range }
       .mapNotNull { virtualFlow.getCell(it) }
       .forEach { cell -> cell.node.clearSelection() }
 
