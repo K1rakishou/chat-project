@@ -104,6 +104,7 @@ class VirtualMultiSelectListView<T>(
     }
 
     selectedItemIndexes
+      .filter { it in 0 until items.size }
       .mapNotNull { virtualFlow.getCell(it) }
       .forEach { cell -> cell.node.clearSelection() }
 
